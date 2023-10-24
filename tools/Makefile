@@ -33,7 +33,6 @@ hostprogs-$(CONFIG_LCD_LOGO) += bmp_logo
 hostprogs-$(CONFIG_VIDEO_LOGO) += bmp_logo
 HOSTCFLAGS_bmp_logo.o := -pedantic
 
-hostprogs-$(CONFIG_DM_VIDEO_SP7021_LOGO) += dm_video_bmp_logo
 hostprogs-$(CONFIG_DM_VIDEO_SP7350_LOGO) += dm_video_bmp_logo_sp7350
 HOSTCFLAGS_dm_video_bmp_logo.o := -pedantic
 HOSTCFLAGS_dm_video_bmp_logo_sp7350.o := -pedantic
@@ -259,14 +258,6 @@ LOGO-$(CONFIG_LCD_LOGO) += $(LOGO_DATA_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_DATA_H)
 
-# Generated SP7021 LCD/video logo
-ifeq ($(CONFIG_DM_VIDEO_SP7021_LOGO),y)
-LOGO_H = $(objtree)/include/dm_video_logo.h
-LOGO_DATA_H = $(objtree)/include/dm_video_logo_data.h
-LOGO-$(CONFIG_DM_VIDEO_SP7021_LOGO) += $(LOGO_H)
-LOGO-$(CONFIG_DM_VIDEO_SP7021_LOGO) += $(LOGO_DATA_H)
-endif
-
 # Generated SP7350 LCD/video logo
 ifeq ($(CONFIG_DM_VIDEO_SP7350_LOGO),y)
 LOGO_H = $(objtree)/include/dm_video_logo.h
@@ -319,13 +310,7 @@ HOST_EXTRACFLAGS += -include $(srctree)/include/compiler.h \
 
 __build:	$(LOGO-y)
 
-ifeq ($(CONFIG_DM_VIDEO_SP7021_LOGO),y)
-$(LOGO_H):	$(obj)/dm_video_bmp_logo $(LOGO_BMP)
-	$(obj)/dm_video_bmp_logo --gen-info $(LOGO_BMP) > $@
-
-$(LOGO_DATA_H):	$(obj)/dm_video_bmp_logo $(LOGO_BMP)
-	$(obj)/dm_video_bmp_logo --gen-data $(LOGO_BMP) > $@
-else ifeq ($(CONFIG_DM_VIDEO_SP7350_LOGO),y)
+ifeq ($(CONFIG_DM_VIDEO_SP7350_LOGO),y)
 $(LOGO_H):	$(obj)/dm_video_bmp_logo_sp7350 $(LOGO_BMP)
 	$(obj)/dm_video_bmp_logo_sp7350 --gen-info $(LOGO_BMP) > $@
 
