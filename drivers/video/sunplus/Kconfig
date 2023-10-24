@@ -2,6 +2,4 @@
 # Sunplus Video configuration
 #
 
-source "drivers/video/sunplus/sp7021/disp/Kconfig"
 source "drivers/video/sunplus/sp7350/disp/Kconfig"
-#source "drivers/video/sunplus/sp7021/mipi/Kconfig"
