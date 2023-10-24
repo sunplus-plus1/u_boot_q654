@@ -302,11 +302,8 @@ static int spi_flash_xfer_DMAwrite(struct sp_spi_nor_priv *priv, UINT8 *cmd, siz
 		}
 
 		value =  spi_reg->spi_cfg0;
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+
 		spi_reg->spi_cfg0 = (value & CLEAR_DATA64_LEN) | temp_len | (1<<19);//| DATA64_EN;
-#else
-		spi_reg->spi_cfg0 = (value & CLEAR_DATA64_LEN) | temp_len;//| DATA64_EN;
-#endif
 		spi_reg->spi_mem_data_addr = desc_w->phys;
 
 		autocfg = DMA_TRIGGER | (cmd[0]<<8) | (1);
@@ -753,7 +750,6 @@ static int sp_spi_nor_claim_bus(struct udevice *dev)
 	else
 		value = B_CHIP;
 
-#if defined (CONFIG_TARGET_PENTAGRAM_SP7350)
 	if (plat->clock >= 100000000) {
 		if (plat->source_clk != 614285714)
 			clk_set_rate(&plat->ctrl_clk, 614285714);
@@ -782,50 +778,14 @@ static int sp_spi_nor_claim_bus(struct udevice *dev)
 		else
 			value |= SPI_CLK_D_32;
 	}
-#elif defined (CONFIG_TARGET_PENTAGRAM_Q645)
-	// SPI-NOR source clock = 360 MHz
-	if (plat->clock >= 90000000)
-		value |= SPI_CLK_D_4;
-	else if (plat->clock >= 60000000)
-		value |= SPI_CLK_D_6;
-	else if (plat->clock >= 45000000)
-		value |= SPI_CLK_D_8;
-	else if (plat->clock >= 22000000)
-		value |= SPI_CLK_D_16;
-	else if (plat->clock >= 15000000)
-		value |= SPI_CLK_D_24;
-	else
-		value |= SPI_CLK_D_32;
-#else
-	// SPI-NOR source clock = 202.3 MHz
-	if (plat->clock >= 100000000)
-		value |= SPI_CLK_D_2;
-	else if (plat->clock >= 50000000)
-		value |= SPI_CLK_D_4;
-	else if (plat->clock >= 33000000)
-		value |= SPI_CLK_D_6;
-	else if (plat->clock >= 25000000)
-		value |= SPI_CLK_D_8;
-	else if (plat->clock >= 12000000)
-		value |= SPI_CLK_D_16;
-	else if (plat->clock >=  8000000)
-		value |= SPI_CLK_D_24;
-	else
-		value |= SPI_CLK_D_32;
-#endif
-
 	spi_reg->spi_ctrl = value;
 #if (SP_SPINOR_DMA)
-#if defined (CONFIG_TARGET_PENTAGRAM_Q645) || defined (CONFIG_TARGET_PENTAGRAM_SP7350)
 	//value = spi_reg->spi_timing;
 	spi_reg->spi_timing = ((0x2 << 22) | (0x16 << 16) | plat->rwTimingSel); //2 = 200(MHz) * 10 / 1000 (minium val = 3), 0x16 = 105 * 200(MHz) / 1000. detail in reg spec.
 	//if (plat->source_clk == 358333333)
 	//	spi_reg->spi_timing = ((0x4 << 22) | (0x26 << 16) | plat->rwTimingSel); //4 = 360(MHz) * 10 / 1000 (minium val = 3), 0x26 = 105 * 360(MHz) / 1000. detail in reg spec.
 	//else
 	//	spi_reg->spi_timing = ((0x6 << 22) | (0x3F << 16) | plat->rwTimingSel); //6 = 614(MHz) * 10 / 1000 (minium val = 3), 0x40 = 105 * 614(MHz) / 1000. detail in reg spec.
-#else
-	spi_reg->spi_timing = ((0x2 << 22) | (0x16 << 16) | plat->rwTimingSel); //2 = 200(MHz) * 10 / 1000 (minium val = 3), 0x16 = 105 * 200(MHz) / 1000. detail in reg spec.
-#endif
 #else
 	spi_reg->spi_timing = (spi_reg->spi_timing & (~0x3)) | plat->rwTimingSel;
 #endif
