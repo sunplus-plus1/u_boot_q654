@@ -92,8 +92,6 @@ static int sunplus_clk_probe(struct udevice *dev)
 
 static const struct udevice_id sunplus_clk_ids[] = {
 	{ .compatible = "sunplus,sp-clkc" },
-	{ .compatible = "sunplus,sp7021-clkc" },
-	{ .compatible = "sunplus,q645-clkc" },
 	{ .compatible = "sunplus,sp7350-clkc" },
 	{ }
 };

@@ -10,14 +10,7 @@
 #include <asm/io.h>
 #include <dm.h>
 #include <reset-uclass.h>
-#ifdef CONFIG_TARGET_PENTAGRAM_I143_P
-#include <dt-bindings/reset/sp-i143.h>
-#elif defined(CONFIG_TARGET_PENTAGRAM_Q645)
-#include <dt-bindings/reset/sp-q645.h>
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #include <dt-bindings/reset/sp7350.h>
-#else
-#include <dt-bindings/reset/sp-q628.h>
 #endif
 
 #define BITASSERT(id, val)	(BIT(16 + (id)) | ((val) << (id)))
@@ -83,8 +76,6 @@ struct reset_ops sp_reset_ops = {
 
 static const struct udevice_id sp_reset_ids[] = {
 	{ .compatible = "sunplus,sp-reset" },
-	{ .compatible = "sunplus,sp7021-reset" },
-	{ .compatible = "sunplus,q645-reset" },
 	{ .compatible = "sunplus,sp7350-reset" },
 	{ /* sentinel */ }
 };
