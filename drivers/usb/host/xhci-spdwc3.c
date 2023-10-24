@@ -29,9 +29,9 @@ struct xhci_dwc3_plat {
 #define RF_MASK_V(_mask, _val)       (((_mask) << 16) | (_val))
 #define RF_MASK_V_SET(_mask)         (((_mask) << 16) | (_mask))
 #define RF_MASK_V_CLR(_mask)         (((_mask) << 16) | 0)
-
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define REG_BASE           0xF8000000
-
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define RF_GRP_AO(_grp, _reg)           ((((_grp) * 32 + (_reg)) * 4) + REG_BASE_AO)
 #define REG_BASE_AO        0xF8800000
 
@@ -51,7 +51,7 @@ struct moon2_regs {
 	unsigned int rsvd3[5];         // 2.27 - 2.31
 };
 #define MOON2_REG ((volatile struct moon2_regs *)RF_GRP_AO(2, 0))
-
+#endif
 /* start of xhci */
 struct uphy_u3_regs {
 	unsigned int cfg[32];		       // 189.0
@@ -61,14 +61,16 @@ struct gpio_desc *gpiodir;
 struct udevice *phydev;
 
 #define UPHY0_U3_REG ((volatile struct uphy_u3_regs *)RF_AMBA(189, 0))
+#endif
 
 static void uphy_init(void)
 {
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #ifndef CONFIG_BOOT_ON_ZEBU
 	volatile struct uphy_u3_regs *dwc3phy_reg;
 	u32 result, i = 0;
 #endif
-
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	MOON2_REG->clken[5] = RF_MASK_V_SET(1 << 14); // U3PHY0_CLKEN=1
 
 	MOON0_REG->reset[5] = RF_MASK_V_SET(1 << 14); // U3PHY0_RESET=1
@@ -76,6 +78,7 @@ static void uphy_init(void)
 	mdelay(1);
 	MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 14); // U3PHY0_RESET=0
 	MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
+#endif
 
 #ifndef CONFIG_BOOT_ON_ZEBU
 	dwc3phy_reg = (volatile struct uphy_u3_regs *) UPHY0_U3_REG;
@@ -113,6 +116,7 @@ static void uphy_init(void)
 		}
 		mdelay(1);
 	}
+#endif
 #endif
 }
 
@@ -206,12 +210,13 @@ static int xhci_dwc3_probe(struct udevice *dev)
 	//struct xhci_dwc3_plat *plat = dev_get_plat(dev);
 	const char *phy;
 	u32 reg;
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	ofnode node;
 	int ret = 0;
-
+#endif
 	hccr = (struct xhci_hccr *)((uintptr_t)dev_remap_addr(dev));
 	hcor = (struct xhci_hcor *)((uintptr_t)hccr + HC_LENGTH(xhci_readl(&(hccr)->cr_capbase)));
-
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	node = ofnode_by_compatible(ofnode_null(), "sunplus,usb3-phy");
 	if (!ofnode_valid(node))
 		debug("%s phy node failed\n", __func__);
@@ -219,6 +224,7 @@ static int xhci_dwc3_probe(struct udevice *dev)
 	ret = uclass_get_device_by_ofnode(UCLASS_PHY, node, &phydev);
 
 	gpiodir = devm_gpiod_get(phydev, "typec", GPIOD_IS_IN);
+#endif
 	uphy_init();
 
 	dwc3_reg = (struct dwc3 *)((char *)(hccr) + DWC3_REG_OFFSET);
@@ -261,8 +267,9 @@ static int xhci_dwc3_remove(struct udevice *dev)
 	//struct xhci_dwc3_plat *plat = dev_get_plat(dev);
 
 	//dwc3_shutdown_phy(dev, &plat->phys);
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	dm_gpio_free(phydev, gpiodir);
-
+#endif
 	return xhci_deregister(dev);
 }
 
