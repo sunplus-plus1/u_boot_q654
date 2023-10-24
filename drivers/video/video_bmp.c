@@ -387,8 +387,8 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 
 #if defined(CONFIG_VIDEO_SP7350)
 	/*
-	 * We support displaying 8bpp/24bpp/32bpp BMPs transfer to SP7021 display engine
-	 * and SP7021 display engine can select 8bpp(palette=ARGB),RGB565,ARGB8888
+	 * We support displaying 8bpp/24bpp/32bpp BMPs transfer to SP7350 display engine
+	 * and SP7350 display engine can select 8bpp(palette=ARGB),RGB565,ARGB8888
 	 */
 	if (bpix != bmp_bpix &&
 			!(bmp_bpix == 8 && bpix == 16) &&
@@ -488,10 +488,10 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		else if (bpix == 16)
 			byte_width = width * 2;
 		else if (bpix == 24)
-			;//SP7021 didn't support this setting
+			;//SP7350 didn't support this setting
 		else if (bpix == 32)
 			byte_width = width * 4;
-			
+
 		for (i = 0; i < height; ++i) {
 			WATCHDOG_RESET();
 			for (j = 0; j < width; j++) {
@@ -506,7 +506,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 					bmap++;
 					fb += sizeof(uint16_t) / sizeof(*fb);
 				} else if (bpix == 24) {
-					;//SP7021 didn't support this setting
+					;//SP7350 didn't support this setting
 				} else if (bpix == 32) {
 					//fmt is ARGB8888
 					*(uint32_t *)fb = DISP_SWAP32((uint32_t)cmap_base[*bmap+VIDEO_CMAP_OFFSET]);
@@ -575,8 +575,8 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 			debug("BMP RGB888 to OSD 16bpp \n");
 		} else if (bpix == 24) {
 			debug("BMP RGB888 to OSD 24bpp \n");
-			debug("SP7021 not support! \n");
-		} else { //bpix == 32	
+			debug("SP7350 not support! \n");
+		} else { //bpix == 32
 			debug("BMP RGB888 to OSD 32bpp \n");
 		}
 
@@ -606,7 +606,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 					bmap += 3;
 					fb += 2;
 				} else if (bpix == 24) {
-					;//SP7021 didn't support
+					;//SP7350 didn't support
 				} else { //bpix == 32
 					*(fb++) = *(bmap++);
 					*(fb++) = *(bmap++);
@@ -667,7 +667,7 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 					bmap += 4;
 					fb += 2;
 				} else if (bpix == 24) {
-					;//SP7021 didn't support
+					;//SP7350 didn't support
 				} else { //bpix == 32
 					*(fb++) = *(bmap++);
 					*(fb++) = *(bmap++);
