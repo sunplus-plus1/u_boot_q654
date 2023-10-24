@@ -5,17 +5,12 @@
 #define SUPPORT_WRITE_OTP
 //#define OTP_PIO_MODE
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define REG_BASE           0xF8000000
-#elif (defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C)) || \
-		(defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C))
-#define REG_BASE           0x9c000000
-#endif
 #define RF_GRP(_grp, _reg) ((((_grp) * 32 + (_reg)) * 4) + REG_BASE)
 
-#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define REG_BASE_AO        0xF8800000
 #define RF_GRP_AO(_grp, _reg)           ((((_grp) * 32 + (_reg)) * 4) + REG_BASE_AO)
+
 struct hb_gp_regs {
 	u32 hb_gpio_rgst_bus32[32];
 };
@@ -28,19 +23,6 @@ struct otp_key_regs {
 	unsigned int reserved_8[26];
 };
 #define OTP_KEY_REG    ((volatile struct otp_key_regs *)RF_GRP_AO(73, 0))
-#else  //for CONFIG_TARGET_PENTAGRAM_Q645
-struct moon2_otp_regs {
-	unsigned int sft_cfg[32];
-};
-#define MOON2_OTP_REG ((volatile struct moon2_otp_regs *)RF_GRP(2, 0))
-
-struct hb_gp_regs {
-	u32 hb_gpio_rgst_bus32[13];
-};
-#define HB_GP_REG ((volatile struct hb_gp_regs *)RF_GRP(350, 0))
-#define KEY_HB_GP_REG ((volatile struct hb_gp_regs *)RF_GRP(779, 0))
-#define CUSTOMER_HB_GP_REG ((volatile struct hb_gp_regs *)RF_GRP(79, 0))
-#endif
 
 struct otprx_regs {
 	u32 sw_trim;
@@ -66,13 +48,7 @@ struct otprx_regs {
 	u32 otp_addr;
 	u32 otp_data;
 };
-#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define SP_OTPRX_REG    ((volatile struct otprx_regs *)RF_GRP_AO(72, 0))
-#else
-#define SP_OTPRX_REG    ((volatile struct otprx_regs *)RF_GRP(351, 0))
-#define KEY_OTPRX_REG   ((volatile struct otprx_regs *)RF_GRP(780, 0))
-#define CUSTOMER_OTPRX_REG   ((volatile struct otprx_regs *)RF_GRP(80, 0))
-#endif
 
 /*
  * OTP memory
@@ -137,9 +113,6 @@ struct otprx_regs {
 #define RD_OTP_ADDRESS                  0x1F
 
 int read_otp_data(volatile struct hb_gp_regs *otp_data, volatile struct otprx_regs *regs, int addr, char *value);
-#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 int read_otp_key(volatile struct otp_key_regs *otp_data, volatile struct otprx_regs *regs, int addr, char *value);
-#endif
-
 #endif /* __SP_OTP_H */
 
