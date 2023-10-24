@@ -3,10 +3,6 @@
 
 #include <common.h>
 
-#ifdef CONFIG_PINCTRL_SUNPLUS
-#define SUPPORT_PINMUX
-#endif
-
 #define pctl_err(fmt, arg...)            printf(fmt, ##arg)
 #if 0
 #define pctl_info(fmt, arg...)           printf(fmt, ##arg)
@@ -15,11 +11,7 @@
 #endif
 
 #define GPIO_PINGRP(x)  moon1_regs[x]
-#ifdef SUPPORT_PINMUX
-#define GPIO_PINMUX(x)  moon2_regs[x]
-#endif
 
-#if defined(CONFIG_PINCTRL_SUNPLUS_Q645) || defined(CONFIG_PINCTRL_SUNPLUS_SP7350)
 #define GPIO_MASTER(x)  gpioxt_regs[x]
 #define GPIO_OE(x)      gpioxt_regs[x+13]
 #define GPIO_OUT(x)     gpioxt_regs[x+26]
@@ -27,27 +19,9 @@
 #define GPIO_I_INV(x)   gpioxt_regs[x+32+15]
 #define GPIO_O_INV(x)   gpioxt_regs[x+32+28]
 #define GPIO_OD(x)      gpioxt_regs[x+64+9]
-#else
-#define GPIO_MASTER(x)  gpioxt_regs[x]
-#define GPIO_OE(x)      gpioxt_regs[x+8]
-#define GPIO_OUT(x)     gpioxt_regs[x+16]
-#define GPIO_IN(x)      gpioxt_regs[x+24]
-#define GPIO_I_INV(x)   gpioxt2_regs[x]
-#define GPIO_O_INV(x)   gpioxt2_regs[x+8]
-#define GPIO_OD(x)      gpioxt2_regs[x+16]
-#endif
 #define GPIO_FIRST(x)   first_regs[x]
 
-
-#ifdef CONFIG_PINCTRL_SUNPLUS
-#define MAX_PINS        99
-#elif defined (CONFIG_PINCTRL_SUNPLUS_Q645)
 #define MAX_PINS        108
-#elif defined (CONFIG_PINCTRL_SUNPLUS_SP7350)
-#define MAX_PINS        108
-#else
-#define MAX_PINS        108
-#endif
 #define D(x,y)          ((x)*8+(y))
 
 typedef enum {
@@ -105,13 +79,7 @@ extern struct func_t list_funcs[];
 extern const size_t list_funcsSZ;
 
 extern volatile u32 *moon1_regs;
-#ifdef SUPPORT_PINMUX
-extern volatile u32 *moon2_regs;
-#endif
 extern volatile u32 *gpioxt_regs;
-#if defined(CONFIG_PINCTRL_SUNPLUS)
-extern volatile u32 *gpioxt2_regs;
-#endif
 extern volatile u32 *first_regs;
 
 int sp_gpio_pin_mux_set(u32 func, u32 pin);

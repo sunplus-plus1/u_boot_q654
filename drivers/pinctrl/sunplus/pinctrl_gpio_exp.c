@@ -3,63 +3,9 @@
 #include <dm/devres.h>
 
 #include "pinctrl_sunplus.h"
-#ifdef CONFIG_PINCTRL_SUNPLUS
-#include <mach/gpio_drv.h>
-#include <dt-bindings/pinctrl/sppctl-sp7021.h>
-#elif defined (CONFIG_PINCTRL_SUNPLUS_Q645)
-#include <mach/gpio_drv.h>
-#include <dt-bindings/pinctrl/sppctl-q645.h>
-#elif defined (CONFIG_PINCTRL_SUNPLUS_SP7350)
 #include <mach/gpio_drv.h>
 #include <dt-bindings/pinctrl/sppctl-sp7350.h>
-#else
-#include <asm/arch/gpio_drv.h>
-#include <dt-bindings/pinctrl/sppctl-i143.h>
-#endif
 
-
-#ifdef SUPPORT_PINMUX
-int sp_gpio_pin_mux_set(u32 func, u32 pin)
-{
-	u32 idx, pos;
-
-	if ((func > MUXF_GPIO_INT7) || (func < MUXF_L2SW_CLK_OUT)) {
-		pctl_err("[%s] Invalid function: %d\n", __func__, func);
-		return -EINVAL;
-	}
-	if (pin == 0) {
-		// zero_func
-		pin = 7;
-	} else if ((pin < 8) || (pin > 71)) {
-		pctl_err("[%s] Invalid G_MX%d\n", __func__, pin);
-		return -EINVAL;
-	}
-
-	func -= MUXF_L2SW_CLK_OUT;
-	idx = func / 2;
-	pos = (func & 0x01) ? 8 : 0;
-	GPIO_PINMUX(idx) = (0x7f0000 | (pin-7)) << pos;
-
-	return 0;
-}
-
-int sp_gpio_pin_mux_get(u32 func, u32 *pin)
-{
-	u32 idx, pos;
-
-	if ((func > MUXF_GPIO_INT7) || (func < MUXF_L2SW_CLK_OUT)) {
-		pctl_err("[%s] Invalid function: %d\n", __func__, func);
-		return -EINVAL;
-	}
-
-	func -= MUXF_L2SW_CLK_OUT;
-	idx = func / 2;
-	pos = (func & 0x01) ? 8 : 0;
-	*pin = (GPIO_PINMUX(idx) >> pos) & 0x7f;
-
-	return 0;
-}
-#endif
 
 int sp_gpio_input_invert_set(u32 offset, u32 value)
 {

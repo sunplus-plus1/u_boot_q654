@@ -7,28 +7,14 @@
 #include <asm-generic/gpio.h>
 
 #include "pinctrl_sunplus.h"
-#ifdef CONFIG_PINCTRL_SUNPLUS
-#include <dt-bindings/pinctrl/sppctl-sp7021.h>
-#elif defined (CONFIG_PINCTRL_SUNPLUS_Q645)
-#include <dt-bindings/pinctrl/sppctl-q645.h>
-#elif defined (CONFIG_PINCTRL_SUNPLUS_SP7350)
 #include <dt-bindings/pinctrl/sppctl-sp7350.h>
-#else
-#include <dt-bindings/pinctrl/sppctl-i143.h>
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 //#define PINCTRL_DEBUG
 
 volatile u32 *moon1_regs = NULL;
-#ifdef SUPPORT_PINMUX
-volatile u32 *moon2_regs = NULL;
-#endif
 volatile u32 *gpioxt_regs = NULL;
-#ifdef CONFIG_PINCTRL_SUNPLUS
-volatile u32 *gpioxt2_regs = NULL;
-#endif
 volatile u32 *first_regs = NULL;
 void* pin_registered_by_udev[MAX_PINS];
 
@@ -57,62 +43,6 @@ void pinmux_grps_dump(void)
 	}
 }
 
-#ifdef SUPPORT_PINMUX
-void pinmux_reg_dump(void)
-{
-	u32 pinmux_value[120];
-	int i;
-
-	printf("pinmux_reg_dump \n");
-	for (i = MUXF_L2SW_CLK_OUT; i <= MUXF_GPIO_INT7; i++)
-		sp_gpio_pin_mux_get(i, &pinmux_value[i-MUXF_L2SW_CLK_OUT]);
-
-	printf("l2sw = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[0], pinmux_value[1], pinmux_value[2], pinmux_value[3], pinmux_value[4],
-		pinmux_value[5], pinmux_value[6], pinmux_value[7], pinmux_value[8], pinmux_value[9]);
-	printf("l2sw = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[10], pinmux_value[11], pinmux_value[12], pinmux_value[13], pinmux_value[14],
-		pinmux_value[15], pinmux_value[16], pinmux_value[17], pinmux_value[18], pinmux_value[19]);
-	printf("l2sw = 0x%02x 0x%02x ---- ---- ---- ---- ---- ---- ---- ---- \n",
-		pinmux_value[20], pinmux_value[21]);
-	printf("sdio = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- ---- ---- \n",
-		pinmux_value[22], pinmux_value[23], pinmux_value[24], pinmux_value[25], pinmux_value[26],
-		pinmux_value[27]);
-	printf("pwm  = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- \n",
-		pinmux_value[28], pinmux_value[29], pinmux_value[30], pinmux_value[31], pinmux_value[32],
-		pinmux_value[33], pinmux_value[34], pinmux_value[35]);
-	printf("icm  = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- \n",
-		pinmux_value[36], pinmux_value[37], pinmux_value[38], pinmux_value[39], pinmux_value[40],
-		pinmux_value[41], pinmux_value[42], pinmux_value[43]);
-	printf("spim = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[44], pinmux_value[45], pinmux_value[46], pinmux_value[47], pinmux_value[48],
-		pinmux_value[49], pinmux_value[50], pinmux_value[51], pinmux_value[52], pinmux_value[53]);
-	printf("spim = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[54], pinmux_value[55], pinmux_value[56], pinmux_value[57], pinmux_value[58],
-		pinmux_value[59], pinmux_value[60], pinmux_value[61], pinmux_value[62], pinmux_value[63]);
-	printf("spis = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[64], pinmux_value[65], pinmux_value[66], pinmux_value[67], pinmux_value[68],
-		pinmux_value[69], pinmux_value[70], pinmux_value[71], pinmux_value[72], pinmux_value[73]);
-	printf("spis = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[74], pinmux_value[75], pinmux_value[76], pinmux_value[77], pinmux_value[78],
-		pinmux_value[79], pinmux_value[80], pinmux_value[81], pinmux_value[82], pinmux_value[83]);
-	printf("i2c  = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- \n",
-		pinmux_value[84], pinmux_value[85], pinmux_value[86], pinmux_value[87], pinmux_value[88],
-		pinmux_value[89], pinmux_value[90], pinmux_value[91]);
-	printf("uart = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n",
-		pinmux_value[92], pinmux_value[93], pinmux_value[94], pinmux_value[95], pinmux_value[96],
-		pinmux_value[97], pinmux_value[98], pinmux_value[99], pinmux_value[100], pinmux_value[101]);
-	printf("uart = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- ---- ---- \n",
-		pinmux_value[102], pinmux_value[103], pinmux_value[104], pinmux_value[105], pinmux_value[106],
-		pinmux_value[107]);
-	printf("tim  = 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- ---- ---- ---- ---- \n",
-		pinmux_value[108], pinmux_value[109], pinmux_value[110], pinmux_value[111]);
-	printf("int  = 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x ---- ---- \n",
-		pinmux_value[112], pinmux_value[113], pinmux_value[114], pinmux_value[115], pinmux_value[116],
-		pinmux_value[117], pinmux_value[118], pinmux_value[119]);
-}
-#endif
-
 void gpio_reg_dump(void)
 {
 	u32 gpio_value[MAX_PINS];
@@ -126,13 +56,8 @@ void gpio_reg_dump(void)
 			gpio_value[i-7],gpio_value[i-6],gpio_value[i-5],gpio_value[i-4],
 			gpio_value[i-3],gpio_value[i-2],gpio_value[i-1],gpio_value[i]);
 		} else if (i == (MAX_PINS-1)) {
-#ifdef CONFIG_PINCTRL_SUNPLUS
-			printf("GPIO_P%-2d 0x%02x 0x%02x 0x%02x\n",(i/8),
-			gpio_value[i-2],gpio_value[i-1],gpio_value[i]);
-#else
 			printf("GPIO_P%-2d 0x%02x 0x%02x 0x%02x 0x%02x\n",(i/8),
 			gpio_value[i-3],gpio_value[i-2],gpio_value[i-1],gpio_value[i]);
-#endif
 		}
 	}
 }
@@ -177,9 +102,6 @@ static int sp_pinctrl_pins(struct udevice *dev)
 	int offset = dev_of_offset(dev);
 	u32 pin_mux[MAX_PINS];
 	int len, i;
-#ifdef SUPPORT_PINMUX
-	u32 val;
-#endif
 
 	// Get property: "sunplus,pins"
 	len = fdtdec_get_int_array_count(gd->fdt_blob, offset, "sunplus,pins",
@@ -219,22 +141,9 @@ found_pins:
 		int pins = pin_mux[i];
 		int pin  = (pins >> 24) & 0xff;
 		int type = (pins >> 16) & 0xff;
-#ifdef SUPPORT_PINMUX
-		int func = (pins >> 8) & 0xff;
-#endif
 		int flag = pins & 0xff;
 		pctl_info("pins = 0x%08x\n", pins);
 
-#ifdef SUPPORT_PINMUX
-		if (type == SPPCTL_PCTL_G_PMUX) {
-			// It's a PinMux pin.
-			sp_gpio_pin_mux_set(func, pin);
-			sp_gpio_first_set(pin, 0);
-			sp_gpio_master_set(pin, 1);
-			sp_gpio_pin_mux_get(func, &val);
-			pctl_info("pinmux get = 0x%02x \n", val);
-		} else
-#endif
 		if (type == SPPCTL_PCTL_G_IOPP) {
 			// It's a IOP pin.
 			sp_gpio_first_set(pin, 1);
@@ -276,9 +185,6 @@ static int sp_pinctrl_zero(struct udevice *dev)
 	int offset = dev_of_offset(dev);
 	u32 pin_mux[MAX_PINS];
 	int len, i, mask;
-#ifdef SUPPORT_PINMUX
-	u32 val;
-#endif
 
 	// Get property: "sunplus,zerofunc"
 	len = fdtdec_get_int_array_count(gd->fdt_blob, offset, "sunplus,zerofunc",
@@ -314,13 +220,6 @@ found_zero_func:
 
 		struct func_t *f = &list_funcs[func];
 		switch (f->freg) {
-#ifdef SUPPORT_PINMUX
-		case fOFF_M:
-			sp_gpio_pin_mux_set(func, 0);
-			sp_gpio_pin_mux_get(func, &val);
-			pctl_info("pinmux get = 0x%02x\n", val);
-			break;
-#endif
 		case fOFF_G:
 			mask = (1 << f->blen) - 1;
 			GPIO_PINGRP(f->roff) = (mask << (f->boff+16)) | (0 << f->boff);
@@ -447,9 +346,6 @@ static int sp_pinctrl_set_state(struct udevice *dev, struct udevice *config)
 		return ret;
 
 #ifdef PINCTRL_DEBUG
-#ifdef SUPPORT_PINMUX
-	pinmux_reg_dump();
-#endif
 	gpio_reg_dump();
 	pinmux_grps_dump();
 #endif
@@ -573,16 +469,6 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 	ofnode node;
 	int i;
 
-#ifdef SUPPORT_PINMUX
-	// Get address of MOON2 registers.
-	moon2_regs = (void*)devfdt_get_addr_name(dev, "moon2");
-	pctl_info("moon2_regs = %px\n", moon2_regs);
-	if (moon2_regs == (void*)-1) {
-		pctl_err("Failed to get base address of MOON2!\n");
-		return -EINVAL;
-	}
-#endif
-
 	// Get address of GPIOXT registers.
 	gpioxt_regs = (void*)devfdt_get_addr_name(dev, "gpioxt");
 	pctl_info("gpioxt_regs = %px\n", gpioxt_regs);
@@ -590,14 +476,6 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 		pctl_err("Failed to get base address of GPIOXT!\n");
 		return -EINVAL;
 	}
-
-#ifdef CONFIG_PINCTRL_SUNPLUS
-	// Get address of GPIOXT2 registers.
-	gpioxt2_regs = (void*)devfdt_get_addr_name(dev, "gpioxt2");
-	pctl_info("gpioxt2_regs = %px\n", gpioxt2_regs);
-	if (gpioxt2_regs == (void*)-1)
-		gpioxt2_regs = gpioxt_regs + 0x80;
-#endif
 
 	// Get address of FIRST registers.
 	first_regs = (void*)devfdt_get_addr_name(dev, "first");
@@ -635,15 +513,7 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 }
 
 static const struct udevice_id sunplus_pinctrl_ids[] = {
-#ifdef CONFIG_PINCTRL_SUNPLUS
-	{ .compatible = "sunplus,sp7021-pctl" },
-#elif defined (CONFIG_PINCTRL_SUNPLUS_Q645)
-	{ .compatible = "sunplus,q645-pctl" },
-#elif defined (CONFIG_PINCTRL_SUNPLUS_SP7350)
 	{ .compatible = "sunplus,sp7350-pctl" },
-#else
-	{ .compatible = "sunplus,i143-pctl" },
-#endif
 	{ /* zero */ }
 };
 
