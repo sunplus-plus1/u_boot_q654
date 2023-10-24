@@ -11,7 +11,6 @@
 #include <dm.h>
 #include <reset-uclass.h>
 #include <dt-bindings/reset/sp7350.h>
-#endif
 
 #define BITASSERT(id, val)	(BIT(16 + (id)) | ((val) << (id)))
 
