@@ -286,8 +286,8 @@
 #define NOR_LOAD_KERNEL \
 	dbg_scr("echo kernel from ${addr_src_kernel} to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"setexpr kernel_off ${addr_src_kernel} - 0xf0000000; " \
-	"echo sf probe 0 50000000; " \
-	"sf probe 0 50000000; " \
+	"echo sf probe 0; " \
+	"sf probe 0; " \
 	"echo sf read ${addr_temp_kernel} ${kernel_off} ${sz_kernel}; " \
 	"sf read ${addr_temp_kernel} ${kernel_off} ${sz_kernel}; " \
 	"setexpr sz_kernel ${sz_kernel} + 0xffff; " \
@@ -296,11 +296,21 @@
 	"setenv bootargs ${b_c} root=/dev/mtdblock6 rw rootfstype=jffs2 user_debug=255 rootwait " \
 	"mtdparts=f8000b00.spinor:96k@0(iboot)ro,192k(xboot)ro,128k(dtb)ro,768k(uboot)ro,864k(fip)ro,0x${sz_kernel}(kernel),-(rootfs); "
 #else
+#if 1 // using direct addressing
 #define NOR_LOAD_KERNEL \
 	"setexpr sz_kernel ${sz_kernel} + 3; setexpr sz_kernel ${sz_kernel} / 4; " \
 	dbg_scr("echo kernel from ${addr_src_kernel} to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"echo cp.l ${addr_src_kernel} ${addr_temp_kernel} ${sz_kernel}; " \
 	"cp.l ${addr_src_kernel} ${addr_temp_kernel} ${sz_kernel}; "
+#else // using SPI-NOR driver
+#define NOR_LOAD_KERNEL \
+	dbg_scr("echo kernel from ${addr_src_kernel} to ${addr_temp_kernel} sz ${sz_kernel}; ") \
+	"setexpr kernel_off ${addr_src_kernel} - 0xf0000000; " \
+	"echo sf probe 0; " \
+	"sf probe 0; " \
+	"echo sf read ${addr_temp_kernel} ${kernel_off} ${sz_kernel}; " \
+	"sf read ${addr_temp_kernel} ${kernel_off} ${sz_kernel}; "
+#endif
 #endif
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
