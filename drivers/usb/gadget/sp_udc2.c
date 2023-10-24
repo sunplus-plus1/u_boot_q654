@@ -91,87 +91,6 @@ static void uphy_init(int port_num)
 {
 	unsigned int val, set;
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	if (0 == port_num) {
-		/* enable clock for UPHY, USBC and OTP */
-		writel(RF_MASK_V_SET(1 << 8), moon0_reg + CLOCK_ENABLE3);
-		writel(RF_MASK_V_SET(1 << 13), moon0_reg + CLOCK_ENABLE3);
-		writel(RF_MASK_V_SET(1 << 2), moon0_reg + CLOCK_ENABLE2);
-
-		/* disable reset for OTP */
-		writel(RF_MASK_V_CLR(1 << 2), moon0_reg + HARDWARE_RESET2);
-
-		/* reset UPHY */
-		writel(RF_MASK_V_SET(1 << 8), moon0_reg + HARDWARE_RESET3);
-		mdelay(1);
-		writel(RF_MASK_V_CLR(1 << 8), moon0_reg + HARDWARE_RESET3);
-		mdelay(1);
-
-		/* Default value modification */
-		writel(0x08888101, uphy0_reg + GLOBAL_CONTROL0);
-
-		/* PLL power off/on twice */
-		writel(0x88, uphy0_reg + GLOBAL_CONTROL2);
-		mdelay(1);
-		writel(0x80, uphy0_reg + GLOBAL_CONTROL2);
-		mdelay(1);
-		writel(0x88, uphy0_reg + GLOBAL_CONTROL2);
-		mdelay(1);
-		writel(0x80, uphy0_reg + GLOBAL_CONTROL2);
-		mdelay(20);
-		writel(0x0, uphy0_reg + GLOBAL_CONTROL2);
-
-		/* USBC 0 reset */
-		writel(RF_MASK_V_SET(1 << 13), moon0_reg + HARDWARE_RESET3);
-		mdelay(1);
-		writel(RF_MASK_V_CLR(1 << 13), moon0_reg + HARDWARE_RESET3);
-		mdelay(1);
-
-		/* fix rx-active question */
-		val = readl(uphy0_reg + UPHY0_CONFIGS19);
-		set = val | 0xf;
-		writel(set, uphy0_reg + UPHY0_CONFIGS19);
-
-		/* OTP for USB phy tx clock invert */
-		val = readl(hb_gp_reg + HB_OTP_DATA2);
-		if ((val >> 1) & 1) {
-			val = readl(uphy0_reg + GLOBAL_CONTROL1);
-			set = val | (1 << 5);
-			writel(set, uphy0_reg + GLOBAL_CONTROL1);
-		}
-
-		/* OTP for USB phy rx clock invert */
-		val = readl(hb_gp_reg + HB_OTP_DATA2);
-		if (val & 1) {
-			val = readl(uphy0_reg + GLOBAL_CONTROL1);
-			set = val | (1 << 6);
-			writel(set, uphy0_reg + GLOBAL_CONTROL1);
-		}
-
-		/* OTP for USB DISC (disconnect voltage) */
-		val = readl(hb_gp_reg + HB_OTP_DATA6);
-		set = val & 0x1f;
-		if (!set)
-			set = DEFAULT_UPHY_DISC;
-
-		val = readl(uphy0_reg + UPHY0_CONFIGS7);
-		set |= (val & ~0x1f);
-		writel(set, uphy0_reg + UPHY0_CONFIGS7);
-
-		/* OTP for USB phy current source adjustment */
-		writel(RF_MASK_V_CLR(1 << 5), moon3_reg + M3_CONFIGS20);
-
-		/* OTP for RX squelch level control to APHY */
-		val = readl(hb_gp_reg + HB_OTP_DATA6);
-		set = (val >> 5) & 0x7;
-		if (!set)
-			set = DEFAULT_SQ_CT;
-
-		val = readl(uphy0_reg + UPHY0_CONFIGS25);
-		set |= (val & ~0x7);
-		writel(set, uphy0_reg + UPHY0_CONFIGS25);
-	}
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	if (0 == port_num) {
 		/* enable clock for UPHY, USBC and OTP */
 		writel(RF_MASK_V_SET(1 << 12), moon2_reg + M2_CONFIGS6);	// UPHY0_CLKEN=1
@@ -250,25 +169,10 @@ static void uphy_init(int port_num)
 		set |= (val & ~0x1f);
 		writel(set, uphy0_reg + UPHY0_CONFIGS7);
 	}
-#endif
 }
 
 static void usb_power_init(int is_host, int port_num)
 {
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	/* USB control register:		*/
-	/* Host:   ctrl=1, host sel=1, type=1	*/
-	/* Device  ctrl=1, host sel=0, type=0	*/
-	if (is_host) {
-		if (0 == port_num)
-			writel(RF_MASK_V_SET(7 << 0), moon3_reg + M3_CONFIGS22);
-	} else {
-		if (0 == port_num) {
-			writel(RF_MASK_V_SET(1 << 0), moon3_reg + M3_CONFIGS22);
-			writel(RF_MASK_V_CLR(3 << 1), moon3_reg + M3_CONFIGS22);
-		}
-	}
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	/* USB control register:		*/
 	/* Host:   ctrl=1, host sel=1, type=1	*/
 	/* Device  ctrl=1, host sel=0, type=0	*/
@@ -278,7 +182,6 @@ static void usb_power_init(int is_host, int port_num)
 		writel(RF_MASK_V_SET(1 << 0), moon4_reg + M4_CONFIGS10);
 		writel(RF_MASK_V_CLR(3 << 1), moon4_reg + M4_CONFIGS10);
 	}
-#endif
 }
 
 static const struct usb_gadget_ops sp_ops = {
@@ -1217,11 +1120,7 @@ static void hal_udc_fill_ep_desc(struct sp_udc *udc, struct udc_endpoint *ep)
 		tmp_ep0_desc->cfgs = AUTO_RESPONSE;					/* auto response configure setting */
 		tmp_ep0_desc->cfgm = AUTO_RESPONSE;					/* auto response configure setting */
 		tmp_ep0_desc->speed = udc->def_run_full_speed ? UDC_FULL_SPEED : UDC_HIGH_SPEED; /* high speed */
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-		tmp_ep0_desc->aset = AUTO_SET_CONF | AUTO_SET_INF;			/* auto setting config & interface */
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 		tmp_ep0_desc->aset = AUTO_SET_CONF | AUTO_SET_INF | AUTO_SET_ADDR;	/* auto setting config & interface & address */
-#endif
 		tmp_ep0_desc->dcs = udc->event_ccs;					/* set cycle bit 1 */
 		tmp_ep0_desc->sofic = 0;
 		tmp_ep0_desc->dptr = SHIFT_LEFT_BIT4(ep->ep_transfer_ring.trb_pa);
@@ -2542,39 +2441,6 @@ static int sp_udc_probe(struct udevice *udev)
 	if (!udc->reg)
 		return -ENOMEM;
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	base = dev_read_addr_index(udev, 1);
-	if (base == FDT_ADDR_T_NONE)
-		return -EINVAL;
-
-	moon3_reg = ioremap(base, 128);
-	if (!moon3_reg)
-		return -ENOMEM;
-
-	base = dev_read_addr_index(udev, 2);
-	if (base == FDT_ADDR_T_NONE)
-		return -EINVAL;
-
-	moon0_reg = ioremap(base, 128);
-	if (!moon0_reg)
-		return -ENOMEM;
-
-	base = dev_read_addr_index(udev, 3);
-	if (base == FDT_ADDR_T_NONE)
-		return -EINVAL;
-
-	uphy0_reg = ioremap(base, 128);
-	if (!uphy0_reg)
-		return -ENOMEM;
-
-	base = dev_read_addr_index(udev, 4);
-	if (base == FDT_ADDR_T_NONE)
-		return -EINVAL;
-
-	hb_gp_reg = ioremap(base, 128);
-	if (!hb_gp_reg)
-		return -ENOMEM;
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	base = dev_read_addr_index(udev, 1);
 	if (base == FDT_ADDR_T_NONE)
 		return -EINVAL;
@@ -2622,7 +2488,6 @@ static int sp_udc_probe(struct udevice *udev)
 	hb_gp_reg = ioremap(base, 128);
 	if (!hb_gp_reg)
 		return -ENOMEM;
-#endif
 
 	cfg_udc_ep(udc);
 	udc->port_num = 0;
@@ -2630,12 +2495,7 @@ static int sp_udc_probe(struct udevice *udev)
 	udc->gadget.ep0 = &(udc->ep_data[0].ep);
 	udc->gadget.name = DRIVER_NAME;
 	udc->gadget.max_speed = USB_SPEED_HIGH;
-
-#if 1	/* High Speed */
 	udc->def_run_full_speed = false;
-#else	/* Full Speed */
-	udc->def_run_full_speed = true;
-#endif
 
 	sp_udc_ep_init(udc);
 	spin_lock_init (&udc->lock);
@@ -2672,11 +2532,7 @@ static int sp_udc_remove(struct udevice *udev)
 }
 
 static const struct udevice_id sp_udc_ids[] = {
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	{ .compatible = "sunplus,q645-usb-udc" },
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	{ .compatible = "sunplus,sp7350-usb-udc" },
-#endif
 	{ },
 };
 

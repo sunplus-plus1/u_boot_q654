@@ -173,34 +173,6 @@
 
 #define	DMA_ADDR_INVALID		(~(dma_addr_t)0)
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-/* MOON0 */
-#define CLOCK_ENABLE2			0xc
-#define CLOCK_ENABLE3			0x10
-#define HARDWARE_RESET2			0x5c
-#define HARDWARE_RESET3			0x60
-
-/* MOON3 */
-#define M3_CONFIGS20			0x50
-#define M3_CONFIGS22			0x58
-
-/* UPHY0 */
-#define UPHY0_CONFIGS7			0x1c
-#define UPHY0_CONFIGS19			0x4c
-#define UPHY0_CONFIGS25			0x64
-#define GLOBAL_CONTROL0			0x70
-#define GLOBAL_CONTROL1			0x74
-#define GLOBAL_CONTROL2			0x78
-
-/* usb spec 2.0 Table 7-3  VHSDSC (min, max) = (525, 625) */
-/* default = 577 mV (374 + 7 * 29) */
-#define DEFAULT_UPHY_DISC		0x7   // 7 (=577mv)
-#define DEFAULT_SQ_CT			0x3
-
-/* OTP */
-#define HB_OTP_DATA2			0x8
-#define HB_OTP_DATA6			0x18
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 /* MOON0 */
 #define HARDWARE_RESET0			0x4
 #define HARDWARE_RESET4			0x14
@@ -232,7 +204,6 @@
 #define HB_OTP_DATA2			0x8
 #define HB_OTP_DATA6			0x18
 #define HB_OTP_DATA19			0x4c
-#endif
 
 #define RF_MASK_V(_mask, _val)       	(((_mask) << 16) | (_val))
 #define RF_MASK_V_SET(_mask)         	(((_mask) << 16) | (_mask))
@@ -463,7 +434,7 @@ struct udc_endpoint {
 	#define			 ENDPOINT_READY	(0)
 	uint16_t		 status;		/* Endpoint status */
 	uint8_t			 num;			/* Endpoint number 0~15*/
-	uint8_t			 type;			/* Endpoint type 0~3,totle is 4 kind of types*/
+	uint8_t			 type;			/* Endpoint type 0~3, total is 4 kind of types*/
 	uint8_t			 *transfer_buff;	/* Pointer to transfer buffer */
 	dma_addr_t 		 transfer_buff_pa;
 	uint32_t		 transfer_len;		/* transfer length */
@@ -508,7 +479,7 @@ struct sp_udc {
 	uint8_t			 event_ring_seg_total;		/* Total number of event ringg seg */
 	struct segment_table 	 *event_seg_table;		/* evnet seg */
 	dma_addr_t 		 event_seg_table_pa;
-	struct udc_ring		 *event_ring;			/* evnet ring pointer ,pointer all segment event ring */
+	struct udc_ring		 *event_ring;			/* evnet ring pointer, pointer all segment event ring */
 	dma_addr_t		 event_ring_pa;			/* event ring pointer phy address */
 	struct trb_data		 *event_ring_dq;		/* event ring dequeue */
 	struct udc_endpoint 	 ep_data[UDC_MAX_ENDPOINT_NUM]; /* endpoint data struct */
