@@ -740,14 +740,6 @@ config MMC_SP_EMMC
 	  If you have a controller with this interface, say Y here.
 	  If unsure, say N.
 	  
-config MMC_SP_7021_SD
-	bool "Sunplus SP7021 SD Host Controller Interface support"
-	depends on DM_MMC && BLK
-	help
-	  This selects the Sunplus SP7021 SD Host Controller Interface.
-	  If you have a controller with this interface, say Y here.
-	  If unsure, say N.
-	  
 config MMC_SP_SD
 	bool "Sunplus SD Host Controller Interface support"
 	depends on DM_MMC && BLK

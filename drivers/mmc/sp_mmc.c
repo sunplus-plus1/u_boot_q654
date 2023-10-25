@@ -1528,11 +1528,6 @@ static sp_mmc_dev_info q628_dev_info[] = {
 		.version = SP_MMC_VER_Q628,
 	},
 
-	{
-		.id = 1,
-		.type = SPMMC_DEVICE_TYPE_SD,
-		.version = SP_MMC_VER_Q628,
-	},
 #elif defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C)
 	{
 		.id = 0,
@@ -1557,25 +1552,6 @@ static sp_mmc_dev_info q628_dev_info[] = {
 
 static const struct udevice_id sunplus_mmc_ids[] = {
 #if defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C) && !defined(CONFIG_TARGET_PENTAGRAM_Q645) && !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
-
-	#if defined(CONFIG_MMC_SP_7021_SD)
-		{
-			.compatible	= "sunplus,sunplus-q628-sd",
-			.data		= (ulong)&q628_dev_info[1],
-		},
-		{
-			.compatible	= "sunplus,sp7021-card",
-			.data		= (ulong)&q628_dev_info[1],
-		},
-		{
-			.compatible	= "sunplus,sp7021-card1",
-			.data		= (ulong)&q628_dev_info[1],
-		},
-		{
-			.compatible	= "sunplus,sp7021-sdhci",
-			.data		= (ulong)&q628_dev_info[1],
-		},
-	#endif
 
 	#if defined(CONFIG_MMC_SP_EMMC) && !defined(CONFIG_SP_SPINAND)
 		{
