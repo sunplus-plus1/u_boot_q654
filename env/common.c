@@ -20,9 +20,7 @@
 #include <errno.h>
 #include <malloc.h>
 #include <u-boot/crc.h>
-#if defined(CONFIG_ARCH_PENTAGRAM) || defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #include <asm/arch/sp_bootinfo.h>
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -118,12 +116,10 @@ int env_import(const char *buf, int check, int flags)
 {
 	env_t *ep = (env_t *)buf;
 
-#if defined(CONFIG_ARCH_PENTAGRAM) || defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	if (SP_IS_ISPBOOT()) {
 		env_set_default("!ISP mode",0);
 		return 0;
 	}
-#endif
 
 	if (check) {
 		uint32_t crc;

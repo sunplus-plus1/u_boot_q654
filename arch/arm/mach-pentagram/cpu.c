@@ -1,27 +1,16 @@
 #include <common.h>
 #include <cpu_func.h>
 #include <fdtdec.h>
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #include <asm/armv8/mmu.h>
-#endif
 #include <asm/global_data.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define PENTAGRAM_BASE_ADDR     (0xf8000000)
-#else
-#define PENTAGRAM_BASE_ADDR     (0x9C000000)
-#endif
 
-#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 #define PENTAGRAM_AO_BASE_ADDR  (0xf8800000)   /*  sp7350  AO Domain base address */
 #define PENTAGRAM_MOON0         (PENTAGRAM_AO_BASE_ADDR + (0 << 7))
 #define PENTAGRAM_RTC_ADDR      (PENTAGRAM_AO_BASE_ADDR + (35 << 7))
-#else
-#define PENTAGRAM_MOON0         (PENTAGRAM_BASE_ADDR + (0 << 7))
-#define PENTAGRAM_RTC_ADDR      (PENTAGRAM_BASE_ADDR + (116 << 7))
-#endif
 
 #define PENTAGRAM_MOON4         (PENTAGRAM_BASE_ADDR + (4 << 7))
 #define PENTAGRAM_OTP_ADDR      (PENTAGRAM_BASE_ADDR + (350<<7))
@@ -51,21 +40,8 @@ void reset_cpu(ulong ignored)
 
 	puts("System is going to reboot ...\n");
 
-#if !defined(CONFIG_TARGET_PENTAGRAM_Q645) && !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
-	/*
-	 * Enable all methods (in Grp(4, 29)) to cause chip reset:
-	 * Bit [4:1]
-	 */
-	ptr = (volatile unsigned int *)(PENTAGRAM_MOON4 + (29 << 2));
-	*ptr = (0x001E << 16) | 0x001E;
-#endif
-
 	/* System reset */
-#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 	ptr = (volatile unsigned int *)(PENTAGRAM_MOON0 + (1 << 2));
-#else
-	ptr = (volatile unsigned int *)(PENTAGRAM_MOON0 + (21 << 2));
-#endif
 	*ptr = (0x0001 << 16) | 0x0001;
 
 	while (1) {
@@ -120,9 +96,7 @@ int dram_init(void)
 	}
 #endif
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	mem_map_fill();
-#endif
 
 	return 0;
 }
@@ -142,17 +116,6 @@ int print_cpuinfo(void)
 #ifdef CONFIG_ARCH_MISC_INIT
 int arch_misc_init(void)
 {
-	volatile unsigned int *ptr;
-
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
-	return 0;
-#endif
-	ptr = (volatile unsigned int *)(PENTAGRAM_RTC_ADDR + (22 << 2));
-	printf("\nReason(s) of reset: REG(116, 22): 0x%04x\n", *ptr);
-	*ptr = 0xFFFF0000;
-	printf("\nAfter cleaning  REG(116, 22): 0x%04x\n\n", *ptr);
-
-	printf("%s, %s: TBD.\n", __FILE__, __func__);
 	return 0;
 }
 #endif
@@ -165,24 +128,6 @@ void enable_caches(void)
 }
 #endif
 
-#ifdef CONFIG_ARMV7_NONSEC
-#ifndef CONFIG_ARMV7_PSCI
-//void smp_kick_all_cpus(void) {}
-void smp_set_core_boot_addr(unsigned long addr, int corenr)
-{
-	volatile u32 *cpu_boot_regs = (void *)(CONFIG_SMP_PEN_ADDR - 12);
-
-	/* wakeup core 1~3 */
-	cpu_boot_regs[0] = addr;
-	cpu_boot_regs[1] = addr;
-	cpu_boot_regs[2] = addr;
-
-	__asm__ __volatile__ ("dsb ishst; sev");
-}
-#endif
-#endif
-
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 /* 1 for register */
 #define SP_MEM_MAP_USED 1
 /* add 1 for dram, 1 for end  */
@@ -191,15 +136,9 @@ void smp_set_core_boot_addr(unsigned long addr, int corenr)
 static struct mm_region sp_mem_map[SP_MEM_MAP_MAX] = {
 	{
 		/* RGST */
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645)
-		.virt = 0xE0000000UL,
-		.phys = 0xE0000000UL,
-		.size = 0x20000000UL,
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 		.virt = 0xF0000000UL,
 		.phys = 0xF0000000UL,
 		.size = 0x10000000UL,
-#endif
 		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 			 PTE_BLOCK_NON_SHARE
 	},
@@ -232,5 +171,3 @@ void mem_map_fill(void)
 
 	sp_mem_map[bank].size = 0; /*  end  */
 }
-
-#endif

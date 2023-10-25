@@ -1,6 +1,0 @@
-Q645 BOARD
-M:	Wells Lu <wells.lu@sunplus.com>
-S:	Maintained
-F:	board/sunplus/q645/
-F:	include/configs/pentagram_common_q645_c.h
-F:	configs/q645_*_defconfig
