@@ -18,18 +18,11 @@
 //#define HS200
 #define MAX_SDDEVICES   2
 
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #ifdef HS200
 #define SPMMC_CLK_SRC CLOCK_800M    /* Host controller's clk source */
 #else
 #define SPMMC_CLK_SRC CLOCK_360M    /* Host controller's clk source */
 #endif
-#elif defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-#define SPMMC_CLK_SRC CLOCK_202M    /* Host controller's clk source */
-#elif defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-#define SPMMC_CLK_SRC CLOCK_222M    /* Host controller's clk source */
-#endif
-
 
 #define SPMMC_MAX_CLK CLOCK_25M     /* Max supported SD Card frequency */
 #ifdef HS200
@@ -365,8 +358,6 @@ static void sp_mmc_prep_cmd_rsp(struct sp_mmc_host *host, struct mmc_cmd *cmd)
 
 	return;
 }
-
-
 
 static void sp_mmc_check_sdstatus_errors(struct sp_mmc_host *host, struct mmc_data *data, int *ret)
 {
@@ -1521,65 +1512,19 @@ int sp_mmc_set_dmapio(struct mmc *mmc, uint val)
 }
 
 static sp_mmc_dev_info q628_dev_info[] = {
-#if defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C) && !defined(CONFIG_TARGET_PENTAGRAM_Q645) && !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
-	{
-		.id = 0,
-		.type = SPMMC_DEVICE_TYPE_EMMC,
-		.version = SP_MMC_VER_Q628,
-	},
-
-#elif defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-	{
-		.id = 0,
-		.type = SPMMC_DEVICE_TYPE_EMMC,
-		.version = SP_MMC_VER_I143,
-	},
-#elif defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	{
-		.id = 0,
-		.type = SPMMC_DEVICE_TYPE_EMMC,
-		.version = SP_MMC_VER_Q645,
-	},
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	{
 		.id = 0,
 		.type = SPMMC_DEVICE_TYPE_EMMC,
 		.version = SP_MMC_VER_SP7350,
 	},
-#endif
 };
 
 
 static const struct udevice_id sunplus_mmc_ids[] = {
-#if defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C) && !defined(CONFIG_TARGET_PENTAGRAM_Q645) && !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
-
-	#if defined(CONFIG_MMC_SP_EMMC) && !defined(CONFIG_SP_SPINAND)
-		{
-			.compatible	= "sunplus,sunplus-q628-emmc",
-			.data		= (ulong)&q628_dev_info[0],
-		},
-		{
-			.compatible	= "sunplus,sp7021-emmc",
-			.data		= (ulong)&q628_dev_info[0],
-		},
-	#endif
-
-#elif defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-	{
-		.compatible	= "sunplus,i143-emmc",
-		.data		= (ulong)&q628_dev_info[0],
-	},
-#elif defined(CONFIG_TARGET_PENTAGRAM_Q645)
-	{
-		.compatible = "sunplus,q645-emmc",
-		.data		= (ulong)&q628_dev_info[0],
-	},
-#elif defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	{
 		.compatible = "sunplus,sp7350-emmc",
 		.data		= (ulong)&q628_dev_info[0],
 	},
-#endif
 	{
 	}
 };

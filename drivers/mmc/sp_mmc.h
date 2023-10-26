@@ -44,28 +44,6 @@
 #define CLOCK_80M	80000000
 #define CLOCK_100M	100000000
 
-#if defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-#define CLOCK_202M      202500000
-#elif defined(CONFIG_TARGET_PENTAGRAM_I143_P) || defined(CONFIG_TARGET_PENTAGRAM_I143_C)
-#define CLOCK_168M      168750000
-#define CLOCK_175M      175500000
-#define CLOCK_182M      182250000
-#define CLOCK_189M      189000000
-#define CLOCK_195M      195750000
-#define CLOCK_202M      202500000
-#define CLOCK_209M      209250000
-#define CLOCK_216M      216000000
-#define CLOCK_222M      222750000
-#define CLOCK_229M      229500000
-#define CLOCK_236M      236250000
-#define CLOCK_243M      243000000
-#define CLOCK_249M      249750000
-#define CLOCK_256M      256500000
-#define CLOCK_263M      263250000
-#define CLOCK_270M      270000000
-#endif
-
-#if defined(CONFIG_TARGET_PENTAGRAM_Q645) || defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 #define CLOCK_168M      168750000
 #define CLOCK_175M      175500000
 #define CLOCK_182M      182250000
@@ -85,7 +63,6 @@
 #define CLOCK_270M      270000000
 #define CLOCK_360M      360000000
 #define CLOCK_800M      800000000
-#endif
 
 typedef struct sp_mmc_dev_info {
 	uint	id;
