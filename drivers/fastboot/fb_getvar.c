@@ -184,8 +184,7 @@ static void getvar_current_slot(char *var_parameter, char *response)
 #if CONFIG_IS_ENABLED(FASTBOOT_FLASH)
 static void getvar_has_slot(char *part_name, char *response)
 {
-	#if !defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_Q645) && \
-							!defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+	#if !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	char part_name_wslot[PART_NAME_LEN];
 	size_t len;
 	#endif
@@ -194,8 +193,7 @@ static void getvar_has_slot(char *part_name, char *response)
 	if (!part_name || part_name[0] == '\0')
 		goto fail;
 
-	#if !defined(CONFIG_ARCH_PENTAGRAM) && !defined(CONFIG_TARGET_PENTAGRAM_Q645) && \
-							!defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+	#if !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	/* part_name_wslot = part_name + "_a" */
 	len = strlcpy(part_name_wslot, part_name, PART_NAME_LEN - 3);
 	if (len > PART_NAME_LEN - 3)
