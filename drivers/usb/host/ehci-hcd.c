@@ -600,7 +600,7 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 	flush_dcache_range((unsigned long)qtd,
 			   ALIGN_END_ADDR(struct qTD, qtd, qtd_count));
 
-#ifdef CONFIG_ARCH_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 	/* Set async. queue head pointer. */
 	ehci_writel(&ctrl->hcor->or_asynclistaddr, virt_to_phys(&ctrl->qh_list));
 #endif
@@ -631,7 +631,7 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 		WATCHDOG_RESET();
 	} while (get_timer(ts) < timeout);
 
-#ifdef CONFIG_ARCH_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 	udelay(1);
 #endif
 
@@ -1032,7 +1032,7 @@ void *ehci_get_controller_priv(int index)
 }
 #endif
 
-#ifdef CONFIG_ARCH_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 #define RETRY_WRITE_USBRUNCMD_MAX_TIMES  50
 #endif
 
@@ -1043,7 +1043,7 @@ static int ehci_common_init(struct ehci_ctrl *ctrl, uint tweaks)
 	uint32_t reg;
 	uint32_t cmd;
 	int i;
-#ifdef CONFIG_ARCH_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 	int retry_max_count = RETRY_WRITE_USBRUNCMD_MAX_TIMES;
 #endif
 
@@ -1132,7 +1132,7 @@ static int ehci_common_init(struct ehci_ctrl *ctrl, uint tweaks)
 	cmd |= CMD_RUN;
 	ehci_writel(&ctrl->hcor->or_usbcmd, cmd);
 
-#ifdef CONFIG_ARCH_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 	i = 0;
 	while((!(ehci_readl(&ctrl->hcor->or_usbcmd) & 0x1)) && (retry_max_count > 0)){
 		cmd |= CMD_RUN;
