@@ -11,7 +11,7 @@
 #include <dm/devres.h>
 #include <dm.h>
 
-#include "sp_udc2.h"
+#include "sp_udc.h"
 
 #define DRIVER_NAME "sp-udc"
 

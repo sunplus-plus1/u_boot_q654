@@ -11,8 +11,8 @@
  * (at your option) any later version.
  */
 
-#ifndef _SP_UDC2_H
-#define _SP_UDC2_H
+#ifndef _SP_UDC_H
+#define _SP_UDC_H
 
 #include <linux/usb/gadget.h>
 
