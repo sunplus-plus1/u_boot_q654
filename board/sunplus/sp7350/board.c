@@ -6,7 +6,7 @@
 #include <asm/global_data.h>
 #include <net.h>
 
-#ifdef CONFIG_SP_SPINAND_Q645
+#ifdef CONFIG_SP_SPINAND
 extern void board_spinand_init(void);
 #endif
 
@@ -74,7 +74,7 @@ int misc_init_r(void)
 
 void board_nand_init(void)
 {
-#ifdef CONFIG_SP_SPINAND_Q645
+#ifdef CONFIG_SP_SPINAND
 	board_spinand_init();
 #endif
 #ifdef CONFIG_SP_PARANAND

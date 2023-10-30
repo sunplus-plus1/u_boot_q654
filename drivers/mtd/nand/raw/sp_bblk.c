@@ -2,15 +2,17 @@
 #include <malloc.h>
 #include "sp_bblk.h"		/* nand.h, nand_curr_device */
 #include "sp_bch.h"
-#ifdef CONFIG_SP_SPINAND
 #include "sp_spinand.h"
-#define sp_nand_info sp_spinand_info
+#ifdef CONFIG_SP_PARANAND
+#include "sp_paranand/sp_paranand.h"
 #endif
 #include <jffs2/load_kernel.h>	/* struct part_info */
 #include <linux/mtd/mtd.h>	/* struct mtd_info */
 #include <command.h>
 #include <linux/build_bug.h>
 #include "../../../cmd/legacy-mtd-utils.h"
+
+#define sp_nand_info sp_spinand_info
 
 extern loff_t g_nand_last_wr_offs; /* defined in drivers/mtd/nand/nand_util.c */
 
@@ -66,21 +68,22 @@ uint32_t sp_nand_lookup_bdata_sect_sz(nand_info_t *nand)
 	return sz_sect;
 }
 
+#ifndef CONFIG_SP_PARANAND
 static uint8_t sp_get_addr_cycle(struct nand_chip *nand)
 {
 	struct sp_nand_info *info = (struct sp_nand_info *)
 		container_of(nand, struct sp_nand_info, nand);
 
-#ifdef CONFIG_SP_SPINAND
+	#ifdef CONFIG_SP_SPINAND
 	struct sp_spinand_info *sinfo = (struct sp_spinand_info *)info;
 	return (sinfo->cac + sinfo->rac);
-#endif
+	#endif
 	return info->cac + info->rac;
 }
 
 static u64 get_mtd_env_off(void)
 {
-#ifdef CONFIG_ENV_IS_IN_SP_NAND
+	#ifdef CONFIG_ENV_IS_IN_SP_NAND
 	struct mtd_device *dev;
 	struct part_info *part;
 	u8 pnum;
@@ -90,17 +93,33 @@ static u64 get_mtd_env_off(void)
 		return 0;
 	}
 	off = part->offset;
-#ifdef ENV_PART_NAME_REDUND
+		#ifdef ENV_PART_NAME_REDUND
 	if (find_dev_and_part(ENV_PART_NAME_REDUND, &dev, &pnum, &part)) {
 		printf("err: no env_redund part!\n");
 		return 0;
 	}
-#endif
+		#endif
 	return (off <= part->offset) ? off : part->offset;
-#else
+	#else
 	return 0;
-#endif
+	#endif
 }
+
+void sp_nand_info(nand_info_t *mtd)
+{
+	struct nand_chip *nand = (struct nand_chip *)mtd->priv;
+	struct sp_nand_info *info = (struct sp_nand_info *)
+		container_of(nand, struct sp_nand_info, nand);
+	//debug("  mtd=%p nand=%p sp=%p\n", mtd, nand, info);
+	#ifdef CONFIG_SP_SPINAND
+	struct sp_spinand_info *sinfo = (struct sp_spinand_info *)info;
+	printf("  cycle cac=%d rac=%d\n", sinfo->cac, sinfo->rac);
+	return;
+	#endif
+	// parallel nand
+	printf("  cycle cac=%d rac=%d\n", info->cac, info->rac);
+}
+#endif
 
 /*
  * sp_nand_compose_bhdr
@@ -111,12 +130,12 @@ static u64 get_mtd_env_off(void)
 int sp_nand_compose_bhdr(nand_info_t *mtd, struct BootProfileHeader *hdr,
 		uint32_t xboot_sz)
 {
-	struct nand_chip *nand = (struct nand_chip *)mtd->priv;
+	struct nand_chip *nand = mtd_to_nand(mtd);
 	uint32_t sz_sect = sp_nand_lookup_bdata_sect_sz(mtd);
-	#ifdef CONFIG_SP_SPINAND
+#ifdef CONFIG_SP_SPINAND
 	struct sp_spinand_info *sinfo = (struct sp_spinand_info *)
 		container_of(nand, struct sp_spinand_info, nand);
-	#endif
+#endif
 
 	debug("%s xboot_sz=%u\n", __func__, xboot_sz);
 
@@ -134,7 +153,11 @@ int sp_nand_compose_bhdr(nand_info_t *mtd, struct BootProfileHeader *hdr,
 
 	// 16
 	hdr->BchType       = 0; // 1K60
+	#ifdef CONFIG_SP_PARANAND
+	hdr->addrCycle     = 0; //unused for parallel nand
+	#else
 	hdr->addrCycle     = sp_get_addr_cycle(nand);
+	#endif
 	hdr->ReduntSize    = mtd->oobsize;
 	hdr->BlockNum      = mtd->size >> nand->phys_erase_shift;
 	hdr->BadBlockNum   = 0; //TODO
@@ -144,10 +167,10 @@ int sp_nand_compose_bhdr(nand_info_t *mtd, struct BootProfileHeader *hdr,
 	hdr->PageSize      = mtd->writesize;
 	//ACWriteTiming
 	//ACWriteTiming
-	#ifdef CONFIG_SP_SPINAND
+#ifdef CONFIG_SP_SPINAND
 	hdr->PlaneSelectMode = sinfo->plane_sel_mode;
 	printf("PlaneSelectMode=%x\n", hdr->PlaneSelectMode);
-	#endif
+#endif
 
 	// 48
 	hdr->xboot_copies  = 2;                                 // assume xboot has 2 copies
@@ -156,7 +179,14 @@ int sp_nand_compose_bhdr(nand_info_t *mtd, struct BootProfileHeader *hdr,
 	//reserved60
 
 	//64
+	#ifdef CONFIG_SP_PARANAND
+	hdr->ac_timing0    = 0x0f1f0f1f;
+	hdr->ac_timing1    = 0x00007f7f;//bit 16 tRLAT
+	hdr->ac_timing2    = 0x7f7f7f7f;
+	hdr->ac_timing3    = 0xff1f001f;
+	#else
 	hdr->uboot_env_off = get_mtd_env_off(); // u64 hint for "Scanning for env"
+	#endif
 	//reserved72
 	//reserved76
 
@@ -195,15 +225,19 @@ int sp_nand_compose_bhdr(nand_info_t *mtd, struct BootProfileHeader *hdr,
 int sp_nand_write_bsect(struct mtd_info *nand,
 		loff_t maxsize, void *buf, uint32_t off, uint32_t sz_sect, int no_skip)
 {
-	int ret, res;
+	int ret;
 	size_t rwsize = nand->writesize;
+#ifndef CONFIG_SP_PARANAND
+	int res;
 	uint32_t i;
+#endif
 
 	if (off % nand->writesize) {
 		printf("%s: offset must be aligend to page size\n", __func__);
 		return -EINVAL;
 	}
 
+#ifndef CONFIG_SP_PARANAND
 	// Append 1K60 ecc to buf. That is, buf[] = (data of sz_sect) + (its ecc).
 	// Each 1K data has a 128 ecc.
 	for (i = 0; i < sz_sect / 1024; i++) {
@@ -212,7 +246,7 @@ int sp_nand_write_bsect(struct mtd_info *nand,
 			printf("%s: bch 1k60 failed at i=%u, res=%d\n", __func__, i, res);
 		}
 	}
-
+#endif
 	if (no_skip) {
 		// Write buf to a page (even if it's in a bad block)
 		ret = nand_write(nand, off, &rwsize, (u_char *)buf);
@@ -242,9 +276,12 @@ int sp_nand_write_bsect(struct mtd_info *nand,
 int sp_nand_read_bsect(nand_info_t *nand,
 		loff_t maxsize, void *buf, uint32_t off, uint32_t sz_sect, int no_skip, int *skipped)
 {
-	int ret, res;
+	int ret;
 	size_t rwsize = nand->writesize;
+#ifndef CONFIG_SP_PARANAND
+	int res;
 	uint32_t i;
+#endif
 	int max_skip_blk = 20;
 	uint32_t org_off = off;
 
@@ -263,10 +300,11 @@ int sp_nand_read_bsect(nand_info_t *nand,
 	} else {
 		// Skip bad blocks before read.
 		// Otherwise, always read next good block's page 0
-		while (max_skip_blk-- &&
+		while (max_skip_blk &&
 			nand_block_isbad(nand, off & ~(nand->erasesize - 1))) {
 			off += nand->erasesize; // next block
 			(*skipped)++;
+			max_skip_blk--;
 		}
 
 		if (!max_skip_blk) {
@@ -283,6 +321,7 @@ int sp_nand_read_bsect(nand_info_t *nand,
 		printf("%s: sz_sect=%u off=%u err=%d\n", __func__, sz_sect, off, ret);
 	}
 
+#ifndef CONFIG_SP_PARANAND
 	// Decode 1K60 ecc in buf[] = (data of sz_sect) + (its ecc).
 	// Each 1K data has a 128 ecc.
 	for (i = 0; i < sz_sect / 1024; i++) {
@@ -291,7 +330,7 @@ int sp_nand_read_bsect(nand_info_t *nand,
 			printf("%s: bch decode 1k60 failed at i=%u, res=%d\n", __func__, i, res);
 		}
 	}
-
+#endif
 	return ret;
 }
 
@@ -325,7 +364,7 @@ int sp_nand_write_bblk(nand_info_t *nand, loff_t off, size_t *length,
 	 */
 	printf("%s: alloc size %d\n", __func__, nand->writesize + CONFIG_SYS_CACHELINE_SIZE);
 	raw_buf = malloc(nand->writesize + CONFIG_SYS_CACHELINE_SIZE);
-	buf = (u_char *)(((u32)raw_buf + CONFIG_SYS_CACHELINE_SIZE - 1)
+	buf = (u_char *)(((u64)raw_buf + CONFIG_SYS_CACHELINE_SIZE - 1)
 			 & ~(CONFIG_SYS_CACHELINE_SIZE - 1));
 
 	if (!raw_buf) {
@@ -344,17 +383,27 @@ int sp_nand_write_bblk(nand_info_t *nand, loff_t off, size_t *length,
 		}
 
 		// buf = data + 0xff .... 0xff
-		printf("%s: memcpy size %d, off=0x%x\n", __func__, *length,
+		printf("%s: memcpy size %ld, off=0x%x\n", __func__, *length,
 		       (uint32_t)off);
 		memcpy(buf, data, *length);
 		memset(buf + *length, 0xff, nand->writesize - *length);
-
+#if 0//debug
+		printk("Dump header from buf in sp_nand_write_bblk():\n");
+		for (int i = 0; i < (nand->writesize >> 4); i++) {
+			printk("%04xh:", 16*i);
+			for(int j = 0; j < 16; j++) {
+				printk("%02x ", *((u8 *)buf+j+16*i));
+			}
+			printk("\n");
+		}
+#endif
 		// write bhdr every 4 pages
 		for (i = 0; i < pgnr; i += 4) {
 			//TODO: write block 0 w/o skip bad
 
 			// write a nand page
 			res = sp_nand_write_bsect(nand, maxsize, buf, off, sect_sz, 1);
+			//res = sp_nand_write_bsect(nand, maxsize, buf, off, sect_sz, 0);
 			if (res)
 				ret = res;
 
@@ -456,7 +505,7 @@ int sp_nand_read_bblk(struct mtd_info *nand, loff_t off, size_t *length,
 	printf("%s: alloc size %d\n", __func__,
 	       nand->writesize + CONFIG_SYS_CACHELINE_SIZE);
 	raw_buf = malloc(nand->writesize + CONFIG_SYS_CACHELINE_SIZE);
-	buf = (u_char *)(((u32)raw_buf + CONFIG_SYS_CACHELINE_SIZE - 1)
+	buf = (u_char *)(((u64)raw_buf + CONFIG_SYS_CACHELINE_SIZE - 1)
 			 & ~(CONFIG_SYS_CACHELINE_SIZE - 1));
 
 	if (!raw_buf) {
@@ -507,21 +556,6 @@ int sp_nand_read_bblk(struct mtd_info *nand, loff_t off, size_t *length,
 	return ret;
 }
 
-void sp_nand_info(nand_info_t *mtd)
-{
-	struct nand_chip *nand = (struct nand_chip *)mtd->priv;
-	struct sp_nand_info *info = (struct sp_nand_info *)
-		container_of(nand, struct sp_nand_info, nand);
-	//debug("  mtd=%p nand=%p sp=%p\n", mtd, nand, info);
-#ifdef CONFIG_SP_SPINAND
-	struct sp_spinand_info *sinfo = (struct sp_spinand_info *)info;
-	printf("  cycle cac=%d rac=%d\n", sinfo->cac, sinfo->rac);
-	return;
-#endif
-	// parallel nand
-	printf("  cycle cac=%d rac=%d\n", info->cac, info->rac);
-}
-
 static int do_sp_bblk(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	int ret = 0;
@@ -553,7 +587,16 @@ static int do_sp_bblk(struct cmd_tbl *cmdtp, int flag, int argc, char * const ar
 	       __func__, (u32)addr, (u32)off, (u32)size, (u32)maxsize,
 	       mtd->writesize, mtd->erasesize);
 #endif
-
+#ifdef CONFIG_SP_PARANAND
+	/* Store the original ecc parameter temporarily */
+	struct sp_pnand_info temp_info;
+	/*
+	 * CMD nand read/write use 512byte/2bit (Load kernel/rootfs).
+	 * So we need modify the ecc correct bit and step size to 1K60bit (boot block).
+	 * Pnand controller dont use the sunplus BCH IP, do ecc with cntr internal hw module.
+	 */
+	sp_pnand_set_ecc_for_bblk(&temp_info, 0);
+#endif
 	if (!strcmp(argv[1], "read") && !strcmp(argv[2], "bblk")) {
 		ret = sp_nand_read_bblk(mtd, off, (size_t *)&size, maxsize, (u_char *)addr, 0);
 	} else if (!strcmp(argv[1], "read") && !strcmp(argv[2], "bhdr")) {
@@ -564,6 +607,15 @@ static int do_sp_bblk(struct cmd_tbl *cmdtp, int flag, int argc, char * const ar
 		struct BootProfileHeader hdr;
 		sp_nand_compose_bhdr(mtd, &hdr, size);
 		size = sizeof(hdr);
+#if 0//debug
+		printk("Dump header from hdr:\n");
+		for (int i = 0; i < (size >> 4); i++) {
+			for(int j = 0; j < 16; j++) {
+				printk("%02x ", *((u8 *)&hdr+j+16*i));
+			}
+			printk("\n");
+		}
+#endif
 		ret = sp_nand_write_bblk(mtd, off, (size_t *)&size, maxsize, (u_char *)&hdr, 1);
 	} else if (!strcmp(argv[1], "write") && !strcmp(argv[2], "bhdr")) {
 		ret = sp_nand_write_bblk(mtd, off, (size_t *)&size, maxsize, (u_char *)addr, 1);
@@ -571,6 +623,10 @@ static int do_sp_bblk(struct cmd_tbl *cmdtp, int flag, int argc, char * const ar
 		printf("invalid parameter\n");
 	}
 
+#ifdef CONFIG_SP_PARANAND
+	/* Restore the original ECC configure */
+	sp_pnand_set_ecc_for_bblk(&temp_info, 1);
+#endif
 	return ret;
 }
 

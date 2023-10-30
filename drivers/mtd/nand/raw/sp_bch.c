@@ -127,7 +127,7 @@ static int sp_bch_reset(struct sp_spinand_info *info)
 		return ret;
 	}
 
-	writel(~(IER_FAIL|IER_DONE), &regs->ier);
+	writel((uint32_t) (~(IER_FAIL|IER_DONE)), &regs->ier);
 	writel(SR_DONE|SR_FAIL, &regs->sr);
 	writel(ISR_BCH, &regs->isr);
 
@@ -340,8 +340,8 @@ int sp_bch_encode(struct mtd_info *mtd, void *buf, void *ecc)
 	flush_dcache_range((ulong) ecc, (ulong) ecc + mtd->oobsize);
 
 	writel(SRR_RESET, &regs->srr);
-	writel((uint32_t) buf, &regs->buf);
-	writel((uint32_t) ecc, &regs->ecc);
+	writel((uint32_t)(uint64_t) buf, &regs->buf);
+	writel((uint32_t)(uint64_t) ecc, &regs->ecc);
 
 	writel(CR0_START | CR0_ENCODE | info->cr0, &regs->cr0);
 	ret = sp_bch_wait(info);
@@ -365,8 +365,8 @@ int sp_bch_encode_1024x60(void *buf, void *ecc)
 	flush_dcache_range((ulong) ecc, (ulong) ecc + 128);
 
 	writel(SRR_RESET, &regs->srr);
-	writel((uint32_t) buf, &regs->buf);
-	writel((uint32_t) ecc, &regs->ecc);
+	writel((uint32_t)(uint64_t) buf, &regs->buf);
+	writel((uint32_t)(uint64_t) ecc, &regs->ecc);
 
 	writel(CR0_BMODE(5)|CR0_START | CR0_ENCODE | CR0_CMODE_1024x60, &regs->cr0);
 
@@ -391,8 +391,8 @@ int sp_bch_decode_1024x60(void *buf, void *ecc)
 	flush_dcache_range((ulong) ecc, (ulong) ecc + 128);
 
 	writel(SRR_RESET, &regs->srr);
-	writel((uint32_t) buf, &regs->buf);
-	writel((uint32_t) ecc, &regs->ecc);
+	writel((uint32_t)(uint64_t) buf, &regs->buf);
+	writel((uint32_t)(uint64_t) ecc, &regs->ecc);
 
 	writel(CR0_BMODE(5)|CR0_START | CR0_DECODE | CR0_CMODE_1024x60, &regs->cr0);
 
@@ -433,8 +433,8 @@ int sp_bch_decode(struct mtd_info *mtd, void *buf, void *ecc)
 	flush_dcache_range((ulong) buf, (ulong) buf + mtd->writesize);
 	flush_dcache_range((ulong) ecc, (ulong) ecc + mtd->oobsize);
 
-	writel((uint32_t) buf, &regs->buf);
-	writel((uint32_t) ecc, &regs->ecc);
+	writel((uint32_t)(uint64_t) buf, &regs->buf);
+	writel((uint32_t)(uint64_t) ecc, &regs->ecc);
 	writel(CR0_START | CR0_DECODE | info->cr0, &regs->cr0);
 
 	ret = sp_bch_wait(info);
@@ -442,7 +442,7 @@ int sp_bch_decode(struct mtd_info *mtd, void *buf, void *ecc)
 
 	if (ret) {
 		printk("sp_bch: decode timeout\n");
-	} else if (readl(&regs->fsr) != 0) {
+	} else if ((readl(&regs->fsr) != 0) || (status&SR_BLANK_00)) {
 		if (status & SR_BLANK_FF) {
 			//printk("sp_bch: decode all FF!\n");
 			ret = 0;
@@ -459,18 +459,19 @@ int sp_bch_decode(struct mtd_info *mtd, void *buf, void *ecc)
 	return ret;
 }
 
-int sp_autobch_config(struct mtd_info *mtd, void *buf, void *ecc, int enc)
+int sp_autobch_config(struct mtd_info *mtd, void *buf, void *ecc, int enc, int dec_src)
 {
 	struct sp_spinand_info *info = get_spinand_info();
 	struct sp_bch_regs *regs = info->bch_regs;
 	int value;
 
 	writel(SRR_RESET, &regs->srr);
-	writel((uint32_t) buf, &regs->buf);
-	writel((uint32_t) ecc, &regs->ecc);
+	writel((uint32_t)(uint64_t) buf, &regs->buf);
+	writel((uint32_t)(uint64_t) ecc, &regs->ecc);
 
 	value = info->cr0
 		| (enc ? CR0_ENCODE : CR0_DECODE)
+		| CR0_DECSRC(dec_src)
 		| CR0_AUTOSTART;
 	writel(value, &regs->cr0);
 
@@ -485,11 +486,11 @@ int sp_autobch_result(struct mtd_info *mtd)
 	int status;
 
 	status = readl(&regs->sr);
-	if (readl(&regs->fsr) != 0) {
-		if((status & SR_BLANK_FF)) {
+	if ((readl(&regs->fsr) != 0) || (status&SR_BLANK_00)) {
+		if ((status & SR_BLANK_FF)) {
 			//printk("sp_bch: decode all FF!\n");
 			ret = 0;
-		}  else {
+		} else {
 			printk("sp_bch: decode failed, status:0x%x\n", status);
 			mtd->ecc_stats.failed += SR_ERR_BITS(status);
 			ret = -1;
@@ -500,7 +501,5 @@ int sp_autobch_result(struct mtd_info *mtd)
 	}
 	return ret;
 }
-
-
 
 

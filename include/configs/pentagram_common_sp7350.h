@@ -52,7 +52,7 @@
 /* Main storage selection */
 #if (SPINOR == 1) || (NOR_JFFS2 == 1)
 #define SP_MAIN_STORAGE			"nor"
-#elif defined(CONFIG_SP_SPINAND_Q645) || defined(CONFIG_SP_PARANAND)
+#elif defined(CONFIG_SP_SPINAND) || defined(CONFIG_SP_PARANAND)
 #define SP_MAIN_STORAGE			"nand"
 #elif defined(CONFIG_MMC_SP_EMMC)
 #define SP_MAIN_STORAGE			"emmc"
@@ -505,7 +505,7 @@
 
 #define CONFIG_ENV_OVERWRITE    /* Allow to overwrite ethaddr and serial */
 
-#if !defined(CONFIG_SP_SPINAND_Q645)
+#if !defined(CONFIG_SP_SPINAND)
 #define SPEED_UP_SPI_NOR_CLK    /* Set CLK based on flash id */
 #endif
 

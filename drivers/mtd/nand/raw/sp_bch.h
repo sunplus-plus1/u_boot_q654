@@ -24,10 +24,11 @@ struct sp_bch_regs {
 /*
  *  macros for cr0 register
  */
-#define CR0_START                  BIT(0)
-#define CR0_AUTOSTART              BIT(1)
-#define CR0_ENCODE                 0
-#define CR0_DECODE                 BIT(4)
+#define CR0_START                 BIT(0)
+#define CR0_AUTOSTART             BIT(1)
+#define CR0_ENCODE                0
+#define CR0_DECODE                BIT(4)
+#define CR0_DECSRC(n)             (((n)==0) << 2)
 #define CR0_CMODE_1024x60         (0 << 8)
 #define CR0_CMODE_1024x40         (1 << 8)
 #define CR0_CMODE_1024x24         (2 << 8)
@@ -35,7 +36,7 @@ struct sp_bch_regs {
 #define CR0_CMODE_512x8           (4 << 8)
 #define CR0_CMODE_512x4           (5 << 8)
 #define CR0_CMODE(n)              (((n) & 7) << 8)
-#define CR0_DMODE(n)              ((n) ? BIT(11) : 0)
+#define CR0_DMODE(n)              ((n) ?  BIT(11) : 0)
 #define CR0_NBLKS(n)              ((((n) - 1) & 0x1f) << 16)
 #define CR0_BMODE(n)              (((n) & 7) << 28)
 
@@ -74,7 +75,7 @@ int sp_bch_decode(struct mtd_info *mtd, void *buf, void *ecc);
 int sp_bch_encode_1024x60(void *buf, void *ecc);
 int sp_bch_decode_1024x60(void *buf, void *ecc);
 
-int sp_autobch_config(struct mtd_info *mtd, void *buf, void *ecc, int enc);
+int sp_autobch_config(struct mtd_info *mtd, void *buf, void *ecc, int enc, int dec_src);
 int sp_autobch_result(struct mtd_info *mtd);
 
 

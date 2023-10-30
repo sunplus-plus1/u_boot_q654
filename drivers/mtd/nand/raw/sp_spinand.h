@@ -10,27 +10,56 @@
  *  spi nand platform related configs
  */
 //#define CONFIG_SPINAND_USE_SRAM
+//#define CONFIG_SPINAND_MEASURE_TIMIMNG
 #ifdef  CONFIG_SPINAND_USE_SRAM
-#define CONFIG_SPINAND_SRAM_ADDR    0x9e800000
+#define CONFIG_SPINAND_SRAM_ADDR    0xfa200000
 #endif
-#define SPI_NAND_DIRECT_MAP         0x9dff0000
+#define SPI_NAND_DIRECT_MAP         0xf4000000
 
-#define SPINAND_CLKSRC_REG          ((volatile u32 *)(0x9c000000 + (4*32 + 13)*4))
-#define SPINAND_SET_CLKSRC(a)       (*SPINAND_CLKSRC_REG = (0x001e0000+(((a)&0x0f)<<1)))
-#define SPINAND_GET_CLKSRC()        (((*SPINAND_CLKSRC_REG)>>1)&0x0f)
+#define SPINAND_CLKSRC_REG          ((volatile u32 *)(0xf8800000 + (3*32 + 25)*4))
+#define SPINAND_SET_CLKSRC(a)       (*SPINAND_CLKSRC_REG = (0x00700000+(((a)&0x07)<<4)))
+#define SPINAND_GET_CLKSRC()        (((*SPINAND_CLKSRC_REG)>>4)&0x07)
+#define SPINAND_CLKSRC_MAX          7
+#define SPINAND_CLKSRC_MIN          0
 
 /*
  *  spi nand functional related configs
  */
-#define CONFIG_SPINAND_CLK_DIV               (1)
+#ifdef CONFIG_SPINAND_MEASURE_TIMIMNG
+	#if 0 // CLK freq is 150MHz
+#define CONFIG_SPINAND_CLK_DIV               (2)	// CLK_SPI/4. 600/4 = 150 MHz
+	#else // CLK freq is 100MHz
+#define CONFIG_SPINAND_CLK_DIV               (3)	// CLK_SPI/6. 600/6 = 100 MHz
+	#endif
 #define CONFIG_SPINAND_CLK_SRC               (14)
 #define CONFIG_SPINAND_READ_BITMODE          SPINAND_4BIT_MODE
 #define CONFIG_SPINAND_WRITE_BITMODE         SPINAND_4BIT_MODE
 #define CONFIG_SPINAND_BUF_SZ                (8 << 10)
 #define CONFIG_SPINAND_TIMEOUT               (100)   /* unit: ms */
 #define CONFIG_SPINAND_READ_TIMING_SEL       (2)
-#define CONFIG_SPINAND_TRSMODE               SPINAND_TRS_DMA
+#define CONFIG_SPINAND_CS_DISACTIVE_CYC      22		/* 55ns = 22 x 1.6ns + 20ns */
+#define CONFIG_SPINAND_TRSMODE               SPINAND_TRS_DMA_AUTOBCH
 #define CONFIG_SPINAND_TRSMODE_RAW           SPINAND_TRS_DMA
+#define CONFIG_SPINAND_AUTOBCH_DECSRC        0		/* 0:spi-nand ctrl, 1:system memory */
+#else
+#define CONFIG_SPINAND_CLK_DIV               (4)	// CLK_SPI/8. 600/8 = 75 MHz
+#define CONFIG_SPINAND_CLK_SRC               (14)
+#define CONFIG_SPINAND_READ_BITMODE          SPINAND_4BIT_MODE
+#define CONFIG_SPINAND_WRITE_BITMODE         SPINAND_4BIT_MODE
+#define CONFIG_SPINAND_BUF_SZ                (8 << 10)
+#define CONFIG_SPINAND_TIMEOUT               (100)   /* unit: ms */
+	#if 0 // For zebu sim
+#define CONFIG_SPINAND_READ_TIMING_SEL       (0)
+#define CONFIG_SPINAND_CS_DISACTIVE_CYC      0		/* 20ns = 0 x 1.6ns + 20ns */
+#define CONFIG_SPINAND_TRSMODE               SPINAND_TRS_DMA_AUTOBCH
+	#else
+#define CONFIG_SPINAND_READ_TIMING_SEL       (2)
+#define CONFIG_SPINAND_CS_DISACTIVE_CYC      22		/* 55ns = 22 x 1.6ns + 20ns */
+#define CONFIG_SPINAND_TRSMODE               SPINAND_TRS_DMA_AUTOBCH
+	#endif
+#define CONFIG_SPINAND_TRSMODE_RAW           SPINAND_TRS_DMA
+#define CONFIG_SPINAND_AUTOBCH_DECSRC        0		/* 0:spi-nand ctrl, 1:system memory */
+#endif
 
 #define SPINAND_DEBUG_ON
 #ifdef SPINAND_DEBUG_ON
@@ -49,15 +78,15 @@
 /*
  *  spi nand vendor ids
  */
-#define VID_GD      0xC8
-#define VID_WINBOND 0xEF
-#define VID_TOSHIBA 0x98
-#define VID_PHISON  0x6B
-#define VID_ETRON   0xD5
-#define VID_MXIC    0xC2
-#define VID_ESMT    0xC8
-#define VID_ISSI    0xC8
-#define VID_MICRON  0x2C
+#define VID_GD          0xC8
+#define VID_WINBOND     0xEF
+#define VID_TOSHIBA     0x98
+#define VID_PHISON      0x6B
+#define VID_ETRON       0xD5
+#define VID_MXIC        0xC2
+#define VID_ESMT        0xC8
+#define VID_ISSI        0xC8
+#define VID_MICRON      0x2C
 #define VID_XTX         0x0B
 #define VID_FORESEE     0xCD
 
@@ -164,7 +193,7 @@
  *  macros for spi_timing register
  */
 #define SPINAND_CS_SH_CYC(x)         (((x)&0x3f)<<22)
-#define SPINAND_CD_DISACTIVE_CYC(x)  (((x)&0x3f)<<16)
+#define SPINAND_CS_DISACTIVE_CYC(x)  (((x)&0x3f)<<16)
 #define SPINAND_READ_TIMING(x)       (((x)&0x07)<<1)  //0~7 are allowed
 #define SPINAND_WRITE_TIMING(x)      (((x)&0x01))     //0~1 are allowed
 
@@ -237,6 +266,7 @@
  *  macros for spi_bch register
  */
 #define SPINAND_BCH_DATA_LEN(x)      (((x)&0xff)<<8)
+#define SPINAND_BCH_DECSRC(x)        (((x)&0x01)<<7) //0:spi-nand ctrl, 1:memory
 #define SPINAND_BCH_1K_MODE          (1<<6)
 #define SPINAND_BCH_512B_MODE        (0<<6)
 #define SPINAND_BCH_ALIGN_32B        (0<<5)
@@ -278,7 +308,15 @@ enum SPINAND_BIT_MODE {
 #define ERASE_STATUS            0x04
 
 /*protect status */
-#define PROTECT_STATUS          0x38
+#define PROTECT_STATUS                  0x38
+
+/* macro for device status register */
+#define DEVICE_STATUS_PFAIL_MSK         (1<<3)
+#define DEVICE_STATUS_EFAIL_MSK         (1<<2)
+#define DEVICE_STATUS_WEL_MSK           (1<<1)
+#define DEVICE_STATUS_OIP_MSK           (1<<0)
+
+#define DEVICE_STATUS_WEL               (DEVICE_STATUS_WEL_MSK)
 
 /*
  *  spi nand device feature address
@@ -289,24 +327,25 @@ enum SPINAND_BIT_MODE {
 
 /* spi nand regs */
 struct sp_spinand_regs {
-	unsigned int spi_ctrl;       // 87.0
-	unsigned int spi_timing;     // 87.1
-	unsigned int spi_page_addr;  // 87.2
-	unsigned int spi_data;       // 87.3
-	unsigned int spi_status;     // 87.4
-	unsigned int spi_auto_cfg;   // 87.5
-	unsigned int spi_cfg[3];     // 87.6
-	unsigned int spi_data_64;    // 87.9
-	unsigned int spi_buf_addr;   // 87.10
-	unsigned int spi_statu_2;    // 87.11
-	unsigned int spi_err_status; // 87.12
-	unsigned int mem_data_addr;  // 87.13
-	unsigned int mem_parity_addr;// 87.14
-	unsigned int spi_col_addr;   // 87.15
-	unsigned int spi_bch;        // 87.16
-	unsigned int spi_intr_msk;   // 87.17
-	unsigned int spi_intr_sts;   // 87.18
-	unsigned int spi_page_size;  // 87.19
+	unsigned int spi_ctrl;           // 87.0
+	unsigned int spi_timing;         // 87.1
+	unsigned int spi_page_addr;      // 87.2
+	unsigned int spi_data;           // 87.3
+	unsigned int spi_status;         // 87.4
+	unsigned int spi_auto_cfg;       // 87.5
+	unsigned int spi_cfg[3];         // 87.6
+	unsigned int spi_data_64;        // 87.9
+	unsigned int spi_buf_addr;       // 87.10
+	unsigned int spi_statu_2;        // 87.11
+	unsigned int spi_err_status;     // 87.12
+	unsigned int mem_data_addr;      // 87.13
+	unsigned int mem_parity_addr;    // 87.14
+	unsigned int spi_col_addr;       // 87.15
+	unsigned int spi_bch;            // 87.16
+	unsigned int spi_intr_msk;       // 87.17
+	unsigned int spi_intr_sts;       // 87.18
+	unsigned int spi_page_size;      // 87.19
+	unsigned int device_parity_addr; // 87.20
 };
 
 struct sp_spinand_info {
@@ -346,7 +385,7 @@ struct sp_spinand_info {
 	u8 trs_mode;       /* refer to SPINAND_TRSMODE*/
 	u8 raw_trs_mode;   /* used in raw data access,refer to SPINAND_TRSMODE*/
 	u8 dev_protection; /* protection value by reading feature(0xA0) */
-
+	u8 bch_dec_src;    /* 0: spi-nand controller, 1: system memory */
 	int cac;      /* col address cycles, unused for spi-nand */
 	int rac;      /* row address cycles, unused for spi-nand */
 };

@@ -968,7 +968,7 @@ struct nand_chip {
 	struct nand_bbt_descr *badblock_pattern;
 
 	void *priv;
-#if defined(CONFIG_SP_SPINAND) || defined(CONFIG_SP_SPINAND_Q645)
+#if defined(CONFIG_SP_SPINAND)
 	unsigned int drv_options;
 #endif
 };
@@ -1102,7 +1102,7 @@ struct nand_flash_dev {
 		uint16_t step_ds;
 	} ecc;
 	int onfi_timing_mode_default;
-#if defined(CONFIG_SP_SPINAND) || defined(CONFIG_SP_SPINAND_Q645)
+#if defined(CONFIG_SP_SPINAND)
 	unsigned int drv_options;
 #endif
 };
