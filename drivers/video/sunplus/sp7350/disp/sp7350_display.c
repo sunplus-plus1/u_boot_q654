@@ -62,6 +62,12 @@ static int sp7350_display_probe(struct udevice *dev)
 
 	printf("Disp: probe ... \n");
 	printf("Disp: init %dx%d settings\n", width, height);
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		width = 720;
+		height = 480;
+	}
+#endif
 
 	fb_alloc = malloc((width*height*
 					(CONFIG_VIDEO_SP7350_MAX_BPP >> 3)) + 64 );
@@ -125,6 +131,12 @@ static int sp7350_display_probe(struct udevice *dev)
 	}
 
 	//printf("G189.02 0x%08x\n", G189_OSD0_REG->osd_base_addr);
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		width = 480;
+		height = 272;
+	}
+#endif
 
 	uc_plat->base = (ulong)fb_alloc;
 	uc_plat->size = width * height * (max_bpp >> 3);
@@ -170,6 +182,11 @@ static int sp7350_display_probe(struct udevice *dev)
 		}
 	}
 	printf("Disp: init lt8912b bridge ic\n");
+
+	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		width = 720;
+		height = 480;
+	}
 
 	lt8912_write_init_config(priv->chip1);
 

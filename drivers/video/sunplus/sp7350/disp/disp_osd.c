@@ -64,6 +64,13 @@ int API_OSD_UI_Init(int w, int h, u32 fb_addr, int input_fmt)
 	UINT32 UI_width = w;
 	UINT32 UI_height = h;
 
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		UI_width = 480;
+		UI_height = 272;
+	}
+#endif
+
 	if(input_fmt == DRV_OSD_REGION_FORMAT_8BPP)
 		osd0_header[0] = SWAP32(0x82001000);
 		//osd0_header[0] = SWAP32(0x820011ff);
@@ -93,6 +100,13 @@ int API_OSD_UI_Init(int w, int h, u32 fb_addr, int input_fmt)
 	//printf("0x%08x 0x%08x 0x%08x 0x%08x \n", SWAP32(osd0_header[56]),SWAP32(osd0_header[57]),SWAP32(osd0_header[58]),SWAP32(osd0_header[59]));
 	//printf("0x%08x 0x%08x 0x%08x 0x%08x \n", SWAP32(osd0_header[60]),SWAP32(osd0_header[61]),SWAP32(osd0_header[62]),SWAP32(osd0_header[63]));
 	//printf("*** [E] dump osd0_header info *** \n");
+
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		UI_width = 720;
+		UI_height = 480;
+	}
+#endif
 
 	G189_OSD0_REG->osd_base_addr = (u32)(uintptr_t)&osd0_header;
 
