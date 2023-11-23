@@ -186,8 +186,8 @@
 #define FREQ_SETTING			CONFIG_PNANDC_MEM_CLK
 
 #if CONFIG_PNANDC_DEBUG > 0
-	#define TAG "[PARA-NAND] "
-	#define sp_pnand_dbg(fmt, ...) printk(KERN_INFO TAG fmt, ##__VA_ARGS__)
+	#define PTAG "[PARA-NAND] "
+	#define sp_pnand_dbg(fmt, ...) printk(KERN_INFO PTAG fmt, ##__VA_ARGS__)
 #else
 	#define sp_pnand_dbg(fmt, ...) do {} while (0)
 #endif
@@ -325,7 +325,8 @@ struct sp_pnand_info {
 	int inverse;
 	int scramble;
 	int clkfreq;
-	char *name;
+	char *dev_name;
+	int timing_mode;
 
 	int (*write_oob) (struct nand_chip *nand, u8 *buf, int len);
 	int (*read_oob) (struct nand_chip *nand, u8 *buf);
@@ -337,7 +338,6 @@ struct sp_pnand_info {
 };
 
 extern void sp_pnand_select_chip(struct mtd_info *, int);
-
 extern int sp_pnand_issue_cmd(struct nand_chip *, struct cmd_feature *);
 extern void sp_pnand_set_default_timing(struct nand_chip *);
 extern int sp_pnand_wait(struct mtd_info *, struct nand_chip *);
@@ -361,7 +361,8 @@ int sp_pnand_write_page_lp(struct mtd_info *mtd,
 				       int oob_required, int page);
 
 extern void sp_pnand_set_ecc_for_bblk(struct sp_pnand_info *temp_info, int restore);
-
 extern struct sp_pnand_info *sp_pnand_init_param(void);
-
 extern struct sp_pnand_info *get_pnand_info(void);
+extern void sp_pnand_abort(struct nand_chip *nand);
+extern void sp_pnand_regdump(struct nand_chip *nand);
+extern int BMC_region_status_empty(struct sp_pnand_info *info);

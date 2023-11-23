@@ -127,9 +127,10 @@ void sp_pnand_abort(struct nand_chip *nand)
 	cmd_f.cq3 = 0;
 	cmd_f.cq4 = CMD_COMPLETE_EN | CMD_FLASH_TYPE(info->flash_type) |\
 	            CMD_START_CE(info->sel_chip);
-	if (info->flash_type == ONFI2 || info->flash_type == ONFI3)
-		cmd_f.cq4 |= CMD_INDEX(ONFI_FIXFLOW_SYNCRESET);
-	else
+	/* FIXME: ONFI_FIXFLOW_SYNCRESET is in trouble */
+	//if (info->flash_type == ONFI2 || info->flash_type == ONFI3)
+		//cmd_f.cq4 |= CMD_INDEX(ONFI_FIXFLOW_SYNCRESET);
+	//else
 		cmd_f.cq4 |= CMD_INDEX(FIXFLOW_RESET);
 
 	sp_pnand_issue_cmd(nand, &cmd_f);
@@ -422,45 +423,6 @@ int rd_pg_w_oob(struct nand_chip *nand, int real_pg,
 	return 0;
 }
 
-int rd_pg_w_oob_sp(struct nand_chip *nand, int real_pg,
-			uint8_t *data_buf, u8 *spare_buf)
-{
-	struct mtd_info *mtd = nand_to_mtd(nand);
-	struct sp_pnand_info *info = nand_get_controller_data(nand);
-	struct cmd_feature cmd_f;
-	int status, i;
-	u32 *lbuf;
-
-	cmd_f.row_cycle = ROW_ADDR_2CYCLE;
-	cmd_f.col_cycle = COL_ADDR_1CYCLE;
-	cmd_f.cq1 = real_pg | SCR_SEED_VAL1(info->seed_val);
-	cmd_f.cq2 = SCR_SEED_VAL2(info->seed_val);
-	cmd_f.cq3 = CMD_COUNT(1) | (info->column & 0xFF);
-	cmd_f.cq4 = CMD_COMPLETE_EN | CMD_FLASH_TYPE(info->flash_type) |\
-			CMD_START_CE(info->sel_chip) | CMD_SPARE_NUM(info->spare) |\
-			CMD_INDEX(SMALL_FIXFLOW_PAGEREAD);
-
-	status = sp_pnand_issue_cmd(nand, &cmd_f);
-	if (status < 0)
-		return 1;
-
-	sp_pnand_wait(mtd, nand);
-
-	if(!BMC_region_status_empty(info)) {
-		lbuf = (u32 *)data_buf;
-		for (i = 0; i < mtd->writesize; i += 4)
-			*lbuf++ = *(volatile unsigned *)(nand->IO_ADDR_R);
-	} else {
-		printk(KERN_ERR "Transfer timeout!");
-	}
-
-	for(i = 0; i < mtd->oobsize / 4; i++) {
-		memcpy(spare_buf + 4 * i, info->io_base + SPARE_SRAM + 4 * i, 4);
-	}
-
-	return 0;
-}
-
 int rd_oob(struct nand_chip *nand, int real_pg, u8 *spare_buf)
 {
 	struct mtd_info *mtd = nand_to_mtd(nand);
@@ -476,35 +438,6 @@ int rd_oob(struct nand_chip *nand, int real_pg, u8 *spare_buf)
 	cmd_f.cq4 = CMD_COMPLETE_EN | CMD_FLASH_TYPE(info->flash_type) |\
 			CMD_START_CE(info->sel_chip) | CMD_SPARE_NUM(info->spare) |\
 			CMD_INDEX(LARGE_FIXFLOW_READOOB);
-
-	status = sp_pnand_issue_cmd(nand, &cmd_f);
-	if (status < 0)
-		return 1;
-
-	sp_pnand_wait(mtd, nand);
-
-	for(i = 0; i < mtd->oobsize / 4; i++) {
-		memcpy(spare_buf + 4 * i, info->io_base + SPARE_SRAM + 4 * i, 4);
-	}
-
-	return 0;
-}
-
-static int rd_oob_sp(struct nand_chip *nand, int real_pg, u8 *spare_buf)
-{
-	struct mtd_info *mtd = nand_to_mtd(nand);
-	struct sp_pnand_info *info = nand_get_controller_data(nand);
-	struct cmd_feature cmd_f;
-	int status, i;
-
-	cmd_f.row_cycle = ROW_ADDR_2CYCLE;
-	cmd_f.col_cycle = COL_ADDR_1CYCLE;
-	cmd_f.cq1 = real_pg | SCR_SEED_VAL1(info->seed_val);
-	cmd_f.cq2 = SCR_SEED_VAL2(info->seed_val);
-	cmd_f.cq3 = CMD_COUNT(1);
-	cmd_f.cq4 = CMD_COMPLETE_EN | CMD_FLASH_TYPE(info->flash_type) |\
-			CMD_START_CE(info->sel_chip) | CMD_SPARE_NUM(info->spare) |\
-			CMD_INDEX(SMALL_FIXFLOW_READOOB);
 
 	status = sp_pnand_issue_cmd(nand, &cmd_f);
 	if (status < 0)
@@ -683,17 +616,6 @@ int sp_pnand_check_bad_spare(struct nand_chip *nand, int pg)
 
 }
 
-
-int sp_pnand_read_page(struct mtd_info *mtd, struct nand_chip *nand,
-			      uint8_t *buf, int oob_required, int page)
-{
-	struct sp_pnand_info *info = nand_get_controller_data(nand);
-
-	info->page_addr = page;
-
-	return info->read_page(nand, buf);
-}
-
 int sp_pnand_write_page_lowlevel(struct mtd_info *mtd,
 				 struct nand_chip *nand, const uint8_t *buf,
 				 int oob_required, int page)
@@ -760,6 +682,21 @@ retry:
 		ret = rd_pg(nand, real_pg, buf);
 	if(ret)
 		goto out;
+
+#if 0//debug
+	if(real_pg == 0x480) {
+		printk("Dump Page 0x480:\n");
+		data_size = info->sector_per_page << info->eccbasft;
+		for (i = 0; i < (data_size >> 4); i++) {
+			printk("%04xh:", 16*i);
+			for(int j = 0; j < 16; j++) {
+				printk("%02x ", *((u8 *)buf+j+16*i));
+			}
+			printk("\n");
+		}
+	}
+#endif
+
 	if (info->cmd_status &
 		(CMD_ECC_FAIL_ON_DATA | CMD_ECC_FAIL_ON_SPARE)) {
 		// Store the original setting
@@ -800,8 +737,8 @@ retry:
 
 			lbuf = (u32 *)buf;
 #if 0//debug
-			if(real_pg == 0) {
-				printk("Dump Page 0:\n");
+			if(real_pg == 0x480) {
+				printk("Dump Page 0x480:\n");
 				data_size = info->sector_per_page << info->eccbasft;
 				for (i = 0; i < (data_size >> 4); i++) {
 					printk("%04xh:", 16*i);
@@ -878,7 +815,8 @@ int sp_pnand_write_page_lp(struct mtd_info *mtd,
 {
 	struct sp_pnand_info *info = nand_get_controller_data(nand);
 	struct cmd_feature cmd_f;
-	u8 *p, w_wo_spare = 1;
+	u8 *p;
+	//u8 w_wo_spare = 1;
 	u32 *lbuf;
 	int real_pg;
 	int i, status = 0;
