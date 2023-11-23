@@ -24,6 +24,13 @@ config SP7350_LT8912B_BRIDGE
 	help
 		Enable this will init LT8912B_HDMI bridge via I2C6.
 
+config SP7350_RASPBERRYPI_DSI_PANEL
+	bool "Enable SP7350 RASPBERRYPI_DSI_PANEL"
+	depends on DM_VIDEO && VIDEO_SP7350
+	default n
+	help
+		Enable this will init RASPBERRYPI_DSI_PANEL via I2C6.
+
 config VIDEO_SP7350_MAX_XRES
 	int "Maximum horizontal resolution (for memory allocation purposes)"
 	depends on VIDEO_SP7350

@@ -24,6 +24,8 @@
 
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 #include "disp_i2c_lt8912b.h"
+#elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+#include "disp_i2c_raspberrypi.h"
 #endif
 
 //#define debug printf
@@ -31,6 +33,11 @@
 extern u32 osd0_header[];
 struct sp7350_disp_priv *sp_gpio;
 
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+extern int raspberrypi_check_exist(struct udevice *p1);
+extern void raspberrypi_pre_init(struct udevice *p1);
+extern void raspberrypi_post_init(struct udevice *p1);
+#endif
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 extern void lt8912_write_init_config(struct udevice *p1);
 extern void lt8912_write_mipi_basic_config(struct udevice *p2);
@@ -52,6 +59,8 @@ static int sp7350_display_probe(struct udevice *dev)
 	void *fb_alloc;
 	u32 osd_base_addr;
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	int i;
+#elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 	int i;
 #endif
 	struct sp7350_disp_priv *priv = dev_get_priv(dev);
@@ -95,6 +104,7 @@ static int sp7350_display_probe(struct udevice *dev)
 	DRV_OSD_Init(width, height);
 
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+#elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 #else
 	if (is_mipi_dsi_tx) {
 		ret = gpio_request_by_name(dev, "reset-gpios", 0, &priv->reset, GPIOD_IS_OUT);
@@ -161,6 +171,37 @@ static int sp7350_display_probe(struct udevice *dev)
 	}
 	#endif
 
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+	for (i = 0; i < 8; i++) {
+		ret = i2c_get_chip_for_busnum(i, ATMEL_MCU_I2C_ADDR, 1, &priv->chip1);
+		//printf("i2c bus%d chip1 scan ret %d\n", i, ret);
+		if (ret) {
+			//printf("i2c bus%d chip1 scan ret %d\n", i, ret);
+			if (i == 7) {
+				printf("Disp: dsi panel not found\n");
+				goto skip_attiny88;
+			}
+		} else {
+			break;
+		}
+	}
+
+	ret = raspberrypi_check_exist(priv->chip1);
+	//if (ret)
+	//	goto skip_attiny88;
+
+	raspberrypi_pre_init(priv->chip1);
+
+	DRV_mipitx_Init(is_mipi_dsi_tx, width, height);
+
+	raspberrypi_post_init(priv->chip1);
+
+	printf("Disp: init dsi panel RASPBERRYPI_DSI_PANEL\n");
+	//printf("MIPITX DSI Panel : RASPBERRYPI_DSI_PANEL(%dx%d)\n", width, height);
+
+skip_attiny88:
+
+#endif
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 	for (i = 0; i < 8; i++) {
 		ret = i2c_get_chip_for_busnum(i, LT8912B_I2C_ADDR_MAIN, 1, &priv->chip1);

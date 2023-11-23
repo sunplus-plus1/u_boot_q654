@@ -83,10 +83,20 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 			//G205_MIPITX_REG1->sft_cfg[11] = 0x00021B00; //TXPLL MIPITX CLK = 168.75MHz
 
 		} else if ((width == 800) && (height == 480)) {
-			;//TBD
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+			#if 1//fine tune PLLH clk to fit 26.563MHz
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780058; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x15 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 26.563MHz
+			#else
 			//DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH
 			//DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 30MHz
+			#endif
 			//G205_MIPITX_REG1->sft_cfg[11] = 0x00021E00; //TXPLL MIPITX CLK = 175MHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00000d10; //TXPLL MIPITX CLK = 650MHz
+#else
+			;//TBD
+#endif
 		} else if ((width == 1024) && (height == 600)) { // 1024x600
 			;//TBD
 			//DISP_MOON3_REG->sft_cfg[14] = 0x00780020; //PLLH
@@ -148,6 +158,10 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 
 	if ((width == 240) && (height == 320))
 		lane = 1;
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+	else if ((width == 800) && (height == 480))
+		lane = 1;
+#endif
 	//if ((width == xxx) && (height == xxx))
 	//	lane = 2;
 	else if ((width == 480) && (height == 1280))
@@ -166,6 +180,10 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 
 	if ((width == 240) && (height == 320))
 		G204_MIPITX_REG0->sft_cfg[12] = 0x00000030; //vtf = sync pluse RGB888
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+	else if ((width == 800) && (height == 480))
+		G204_MIPITX_REG0->sft_cfg[12] = 0x00000030; //vtf = sync pluse RGB888
+#endif
 	else //if ((width == 480) && (height == 1280))
 		G204_MIPITX_REG0->sft_cfg[12] = 0x00001030; //vtf = sync event RGB888
 
@@ -204,9 +222,13 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 	if ((width == 720) && (height == 480)) { // 720x480
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 	} else if ((width == 800) && (height == 480)) { // 800x480
-		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
-		G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
+		G204_MIPITX_REG0->sft_cfg[0] = 0x70080005; //fix
+		G204_MIPITX_REG0->sft_cfg[1] = 0x00020715; //VSA=0x02 VFP=0x07 VBP=0x15
+		//G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
+		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
+#endif
 	} else if ((width == 480) && (height == 1280)) { // 480x1280
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080004; //fix
 		G204_MIPITX_REG0->sft_cfg[1] = 0x00011010; //VSA=0x01 VFP=0x10 VBP=0x10
@@ -881,6 +903,33 @@ void DRV_mipitx_panel_Init(int is_mipi_dsi_tx, int width, int height)
 
 			//mdelay(20);
 			#endif
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+		} else if ((width == 800) && (height == 480)) {
+			//printf("MIPITX DSI Panel : RASPBERRYPI_DSI_PANEL(%dx%d)\n", width, height);
+
+			/*read i2c REG_ID*/
+			/*write i2c REG_POWERON = 0 turn off*/
+			/*write i2c REG_POWERON = 1 turn on*/
+			/*write i2c REG_PORTB*/
+
+			sp7350_dcs_write_seq(0x10, 0x02, 0x03, 0x00, 0x00, 0x00); /*dsi DSI_LANEENABLE = 0x0210*/
+			sp7350_dcs_write_seq(0x64, 0x01, 0x05, 0x00, 0x00, 0x00); /*dsi PPI_D0S_CLRSIPOCOUNT = 0x0164*/
+			sp7350_dcs_write_seq(0x68, 0x01, 0x05, 0x00, 0x00, 0x00); /*dsi PPI_D1S_CLRSIPOCOUNT = 0x0168*/
+			sp7350_dcs_write_seq(0x44, 0x01, 0x00, 0x00, 0x00, 0x00); /*dsi PPI_D0S_ATMR = 0x0144*/
+			sp7350_dcs_write_seq(0x48, 0x01, 0x00, 0x00, 0x00, 0x00); /*dsi PPI_D1S_ATMR = 0x0148*/
+			sp7350_dcs_write_seq(0x14, 0x01, 0x03, 0x00, 0x00, 0x00); /*dsi PPI_LPTXTIMECNT = 0x0114*/
+
+			sp7350_dcs_write_seq(0x50, 0x04, 0x00, 0x00, 0x00, 0x00); /*dsi SPICMR = 0x0450*/
+			sp7350_dcs_write_seq(0x20, 0x04, 0x50, 0x01, 0x10, 0x00); /*dsi LCDCTRL = 0x0420*/
+			sp7350_dcs_write_seq(0x64, 0x04, 0x0f, 0x04, 0x00, 0x00); /*dsi SYSCTRL = 0x0464*/
+			mdelay(100); //msleep(100);
+			sp7350_dcs_write_seq(0x04, 0x01, 0x01, 0x00, 0x00, 0x00); /*dsi PPI_STARTPPI = 0x0104*/
+			sp7350_dcs_write_seq(0x04, 0x02, 0x01, 0x00, 0x00, 0x00); /*dsi DSI_STARTDSI = 0x0204*/
+			mdelay(100); //msleep(100);
+
+			/*write i2c REG_PWM = 255*/
+			/*write i2c REG_PORTA = 0x04*/
+#endif
 		}
 	} else {
 		printf("DRV_mipitx_panel_Init for CSI(none)\n");

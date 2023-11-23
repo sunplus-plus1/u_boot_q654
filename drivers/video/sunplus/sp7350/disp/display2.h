@@ -50,10 +50,8 @@ typedef char                SINT8;
 #include <asm/gpio.h>
 
 struct sp7350_disp_priv {
-	#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 	struct udevice *chip1;
 	struct udevice *chip2;
-	#endif
 	void __iomem *regs;
 	//struct display_timing timing;
 	struct gpio_desc reset;

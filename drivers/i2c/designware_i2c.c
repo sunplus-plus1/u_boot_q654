@@ -485,6 +485,14 @@ static int __dw_i2c_read(struct i2c_regs *i2c_base, u8 dev, uint addr,
 	      addr);
 #endif
 
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+	/*
+	 * This modification only works for raspberrypi 7" touchscreen
+	 * atmel ATTINY88 i2c read under speed 100KkHz
+	 */
+	udelay(10);
+#endif
+
 	if (i2c_xfer_init(i2c_base, dev, addr, alen))
 		return 1;
 

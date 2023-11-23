@@ -35,18 +35,22 @@ void DRV_TCON_Init(int width, int height)
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
 	}
 	else if ((width == 800) && (height == 480)) {
-		G199_TCON0_REG0->sft_cfg[12] = 0x00000398;
-		G199_TCON0_REG0->sft_cfg[13] = 0x00000398;
-		G199_TCON0_REG0->sft_cfg[20] = 0x0000020c;
+#if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+		G199_TCON0_REG0->sft_cfg[12] = 0x00000361;
+		G199_TCON0_REG0->sft_cfg[13] = 0x00000365;
+		G199_TCON0_REG0->sft_cfg[20] = 0x000001fd;
 		G199_TCON0_REG0->sft_cfg[21] = 0x00000000;
 
-		G199_TCON0_REG0->sft_cfg[23] = 0x00000398;
-		G199_TCON0_REG0->sft_cfg[24] = 0x0000039c;
+		G199_TCON0_REG0->sft_cfg[23] = 0x00000361;
+		G199_TCON0_REG0->sft_cfg[24] = 0x00000365;
 
 		G199_TCON0_REG0->sft_cfg[25] = 0x00000000;
 		G199_TCON0_REG0->sft_cfg[26] = 0x0000031f;
 		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
+#else
+	;//TBD
+#endif
 	}
 	else if ((width == 1024) && (height == 600)) {
 		G199_TCON0_REG0->sft_cfg[12] = 0x00000538;
