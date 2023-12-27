@@ -2,6 +2,7 @@ config PINCTRL_SUNPLUS_SP7350
 	bool "Sunplus SP7350 Pinctrl and GPIO driver"
 	depends on DM && TARGET_PENTAGRAM_SP7350
 	select PINCTRL
+	select PINCONF
 	select DM_GPIO
 	default y
 	help

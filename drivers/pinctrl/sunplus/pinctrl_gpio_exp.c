@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0
+
 #include <common.h>
 #include <dm.h>
 #include <dm/devres.h>
@@ -5,7 +7,6 @@
 #include "pinctrl_sunplus.h"
 #include <mach/gpio_drv.h>
 #include <dt-bindings/pinctrl/sppctl-sp7350.h>
-
 
 int sp_gpio_input_invert_set(u32 offset, u32 value)
 {
@@ -244,21 +245,21 @@ u32 sp_gpio_para_get(u32 offset)
 	u32 value;
 
 	//F M I II O OI OE OD
-	sp_gpio_first_get(offset, &value);              // First value
+	sp_gpio_first_get(offset, &value); // First value
 	value_tmp |= (value << 7);
-	sp_gpio_master_get(offset, &value);             // Master value
+	sp_gpio_master_get(offset, &value); // Master value
 	value_tmp |= (value << 6);
-	sp_gpio_in(offset, &value);                     // Input value
+	sp_gpio_in(offset, &value); // Input value
 	value_tmp |= (value << 5);
-	sp_gpio_input_invert_get(offset, &value);       // Input invert value
+	sp_gpio_input_invert_get(offset, &value); // Input invert value
 	value_tmp |= (value << 4);
-	sp_gpio_out_get(offset, &value);                // Output value
+	sp_gpio_out_get(offset, &value); // Output value
 	value_tmp |= (value << 3);
-	sp_gpio_output_invert_get(offset, &value);      // Output invert value
+	sp_gpio_output_invert_get(offset, &value); // Output invert value
 	value_tmp |= (value << 2);
-	sp_gpio_oe_get(offset, &value);                 // Output Enable value
+	sp_gpio_oe_get(offset, &value); // Output Enable value
 	value_tmp |= (value << 1);
-	sp_gpio_open_drain_get(offset, &value);         // Open Drain value
+	sp_gpio_open_drain_get(offset, &value); // Open Drain value
 	value_tmp |= (value << 0);
 
 	return value_tmp;
