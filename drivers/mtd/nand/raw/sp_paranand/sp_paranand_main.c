@@ -62,7 +62,7 @@ static struct sp_pnand_chip_timing chip_timing[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{ //W29N08GZSIBA 1GMiB 1.8V 8-bit
-	15, 5, 5, 5, 0, 20, 10, 0, 0, 0,
+	10, 5, 5, 5, 0, 12, 10, 0, 0, 0,
 	25, 12, 100, 0, 80, 0, 100, 20, 10, 0,
 	150, 100, 0, 15, 0, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -408,7 +408,7 @@ static void sp_pnand_calc_timing(struct nand_chip *nand)
 	tREH -= 1;
 	if (tRES != 0)
 		tRES -= 1;
-
+	t1 -= 1;
 	tPRE -= 1;
 	tPST -= 1;
 	tPSTH -= 1;
