@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <asm-generic/gpio.h>
 #include <common.h>
 #include <dm.h>
 #include <dm/device-internal.h>
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
 #include <linux/io.h>
-#include <asm-generic/gpio.h>
 
-#include "pinctrl_sunplus.h"
+#include "gpio_sunplus.h"
 #include "pinconf_sunplus.h"
-#include <dt-bindings/pinctrl/sppctl-sp7350.h>
+#include "pinctrl_gpio_ops.h"
+#include "pinctrl_sunplus.h"
+#include "pinmux_sunplus.h"
 #include "sp7350_func_group.h"
 #include "sp7350_pins.h"
-#include "pinctrl_gpio_ops.h"
-#include "gpio_sunplus.h"
-#include "pinmux_sunplus.h"
+#include <dt-bindings/pinctrl/sppctl-sp7350.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -74,15 +74,16 @@ void gpio_reg_dump(void)
 	for (i = 0; i < MAX_PINS; i++) {
 		gpio_value[i] = sp_gpio_para_get(i);
 		if ((i % 8) == 7) {
-			pctl_info("GPIO_P%-2d 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
-				  (i / 8), gpio_value[i - 7], gpio_value[i - 6],
-			       gpio_value[i - 5], gpio_value[i - 4],
-			       gpio_value[i - 3], gpio_value[i - 2],
-			       gpio_value[i - 1], gpio_value[i]);
+			pctl_info(
+				"GPIO_P%-2d 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+				(i / 8), gpio_value[i - 7], gpio_value[i - 6],
+				gpio_value[i - 5], gpio_value[i - 4],
+				gpio_value[i - 3], gpio_value[i - 2],
+				gpio_value[i - 1], gpio_value[i]);
 		} else if (i == (MAX_PINS - 1)) {
 			pctl_info("GPIO_P%-2d 0x%02x 0x%02x 0x%02x 0x%02x\n",
 				  (i / 8), gpio_value[i - 3], gpio_value[i - 2],
-			       gpio_value[i - 1], gpio_value[i]);
+				  gpio_value[i - 1], gpio_value[i]);
 		}
 	}
 }
@@ -263,7 +264,8 @@ found_zero_func:
 			break;
 
 		default:
-			pctl_info("bad zero func/group idx:%d, skipped\n", func);
+			pctl_info("bad zero func/group idx:%d, skipped\n",
+				  func);
 			break;
 		}
 	}
@@ -515,6 +517,73 @@ int sunplus_pinctrl_get_pin_muxing(struct udevice *dev, unsigned int selector,
 	return 0;
 }
 
+static int sunplus_pinctrl_mode_select(struct udevice *dev)
+{
+	unsigned int value;
+	const char *ms_val;
+	int ret;
+
+	ret = dev_read_string_index(dev, "sunplus,ms-dvio-group-0", 0,
+				    &ms_val);
+	if (!ret) {
+		if (!strcmp(ms_val, "3V0"))
+			value = 0;
+		else
+			value = 1;
+
+		sunplus_gpio_voltage_mode_select_set(dev, G_MX_MS_TOP_0, value);
+	}
+
+	ret = dev_read_string_index(dev, "sunplus,ms-dvio-group-1", 0,
+				    &ms_val);
+	if (!ret) {
+		if (!strcmp(ms_val, "3V0"))
+			value = 0;
+		else
+			value = 1;
+
+		sunplus_gpio_voltage_mode_select_set(dev, G_MX_MS_TOP_1, value);
+	}
+
+	ret = dev_read_string_index(dev, "sunplus,ms-dvio-ao-group-0", 0,
+				    &ms_val);
+	if (!ret) {
+		if (!strcmp(ms_val, "3V0"))
+			value = 0;
+		else
+			value = 1;
+
+		sunplus_gpio_voltage_mode_select_set(dev, AO_MX_MS_TOP_0,
+						     value);
+	}
+
+	ret = dev_read_string_index(dev, "sunplus,ms-dvio-ao-group-1", 0,
+				    &ms_val);
+	if (!ret) {
+		if (!strcmp(ms_val, "3V0"))
+			value = 0;
+		else
+			value = 1;
+
+		sunplus_gpio_voltage_mode_select_set(dev, AO_MX_MS_TOP_1,
+						     value);
+	}
+
+	ret = dev_read_string_index(dev, "sunplus,ms-dvio-ao-group-2", 0,
+				    &ms_val);
+	if (!ret) {
+		if (!strcmp(ms_val, "3V0"))
+			value = 0;
+		else
+			value = 1;
+
+		sunplus_gpio_voltage_mode_select_set(dev, AO_MX_MS_TOP_2,
+						     value);
+	}
+
+	return 0;
+}
+
 static int sunplus_pinctrl_set_state(struct udevice *dev,
 				     struct udevice *config)
 {
@@ -528,6 +597,7 @@ static int sunplus_pinctrl_set_state(struct udevice *dev,
 	if (ret != 0)
 		return ret;
 #endif
+
 	/* sunplus usage */
 	ret = sunplus_pinctrl_pins(config);
 	if (ret != 0)
@@ -563,12 +633,14 @@ static const struct pinconf_param sunplus_pinconf_params[] = {
 	{ "input-schmitt-enable", PIN_CONFIG_INPUT_SCHMITT_ENABLE, 1 },
 	{ "output-disable", PIN_CONFIG_OUTPUT_ENABLE, 0 },
 	{ "output-enable", PIN_CONFIG_OUTPUT_ENABLE, 1 },
-	{ "output-high", PIN_CONFIG_OUTPUT, 1, },
-	{ "output-low", PIN_CONFIG_OUTPUT, 0, },
+	{ "output-high", PIN_CONFIG_OUTPUT, 1 },
+	{ "output-low", PIN_CONFIG_OUTPUT, 0 },
 	{ "sunplus,input-invert-enable", PIN_CONFIG_INPUT_INVERT, 1 },
 	{ "sunplus,output-invert-enable", PIN_CONFIG_OUTPUT_INVERT, 1 },
 	{ "sunplus,input-invert-disable", PIN_CONFIG_INPUT_INVERT, 0 },
 	{ "sunplus,output-invert-disable", PIN_CONFIG_OUTPUT_INVERT, 0 },
+	{ "sunplus,slew-rate-control-disable", PIN_CONFIG_SLEW_RATE_CTRL, 0 },
+	{ "sunplus,slew-rate-control-enable", PIN_CONFIG_SLEW_RATE_CTRL, 1 },
 	{ "sunplus,bias-strong-pull-up", PIN_CONFIG_BIAS_STRONG_PULL_UP, 1 },
 };
 
@@ -657,6 +729,10 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 #endif
 
 	sunplus_pinmux_resource_init(dev);
+
+	ret = sunplus_pinctrl_mode_select(dev);
+	if (ret != 0)
+		return ret;
 
 	return 0;
 }

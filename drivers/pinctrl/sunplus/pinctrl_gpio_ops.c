@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#include <linux/io.h>
 #include <dt-bindings/pinctrl/sppctl-config-sp7350.h>
+#include <linux/io.h>
 
-#include "pinctrl_sunplus.h"
 #include "pinctrl_gpio_ops.h"
+#include "pinctrl_sunplus.h"
 
 struct sppctl_reg_t {
 	u16 v; // value part
@@ -27,11 +27,13 @@ struct sppctl_reg_t {
 #define REG_OFFSET_DS2 0x30 /* padctl1_regs_base */
 #define REG_OFFSET_DS3 0x40 /* padctl1_regs_base */
 
+#define REG_OFFSET_SLEW_RATE 0x00 /* padctl2_regs_base */
 #define REG_OFFSET_PULL_ENABLE 0x08 /* padctl2_regs_base */
 #define REG_OFFSET_PULL_SELECTOR 0x10 /* padctl2_regs_base */
 #define REG_OFFSET_STRONG_PULL_UP 0x18 /* padctl2_regs_base */
 #define REG_OFFSET_PULL_UP 0x20 /* padctl2_regs_base */
 #define REG_OFFSET_PULL_DOWN 0x28 /* padctl2_regs_base */
+#define REG_OFFSET_MODE_SELECT 0x30 /* padctl2_regs_base */
 
 // (/16)*4
 #define R16_ROF(r) (((r) >> 4) << 2)
@@ -114,7 +116,8 @@ int sunplus_gpio_mode_query(struct udevice *dev, unsigned int offset)
 
 	reg_val = readl(first_regs_base + REG_OFFSET_GPIO_FIRST +
 			R32_ROF(offset));
-	//pctl_info("u F reg_val:%X = %d %px off:%d\n", reg_val, R32_VAL(reg_val,R32_BOF(offset)),
+	// pctl_info("u F reg_val:%X = %d %px off:%d\n", reg_val,
+	// R32_VAL(reg_val,R32_BOF(offset)),
 	// first_regs_base, REG_OFFSET_GPIO_FIRST + R32_ROF(offset));
 
 	return R32_VAL(reg_val, R32_BOF(offset));
@@ -133,7 +136,8 @@ int sunplus_gpio_master_query(struct udevice *dev, unsigned int offset)
 	u32 reg_val;
 
 	reg_val = readl(gpioxt_regs_base + REG_OFFSET_CTL + R16_ROF(offset));
-	//pctl_info("u M reg_val:%X = %d %px off:%d\n", reg_val, R32_VAL(reg_val,R16_BOF(offset)),
+	// pctl_info("u M reg_val:%X = %d %px off:%d\n", reg_val,
+	// R32_VAL(reg_val,R16_BOF(offset)),
 	// gpioxt_regs_base, REG_OFFSET_CTL + R16_ROF(offset));
 
 	return R32_VAL(reg_val, R16_BOF(offset));
@@ -310,6 +314,30 @@ int sunplus_gpio_schmitt_trigger_set(struct udevice *dev, unsigned int offset,
 
 	writel(reg_val, padctl1_regs_base + REG_OFFSET_SCHMITT_TRIGGER +
 				R32_ROF(offset));
+
+	return 0;
+}
+
+/* slew-rate control; for GPIO only */
+int sunplus_gpio_slew_rate_control_set(struct udevice *dev, unsigned int offset,
+				       unsigned int value)
+{
+	unsigned int pin;
+	u32 r;
+
+	if (IS_DVIO(offset))
+		return -EINVAL;
+
+	pin = (offset > 19) ? offset - 60 : offset;
+
+	r = readl(padctl2_regs_base + REG_OFFSET_SLEW_RATE + R32_ROF(pin));
+
+	if (value)
+		r |= BIT(R32_BOF(pin));
+	else
+		r &= ~BIT(R32_BOF(pin));
+
+	writel(r, padctl2_regs_base + REG_OFFSET_SLEW_RATE + R32_ROF(pin));
 
 	return 0;
 }
@@ -550,6 +578,46 @@ int sunplus_gpio_bias_disable(struct udevice *dev, unsigned int offset)
 		writel(reg_val, padctl2_regs_base + REG_OFFSET_STRONG_PULL_UP +
 					R32_ROF(pin));
 	}
+	return 0;
+}
+
+// voltage mode select
+int sunplus_gpio_voltage_mode_select_set(struct udevice *dev,
+					 enum vol_ms_group ms_group,
+					 unsigned int value)
+{
+	unsigned int bit;
+	u32 r;
+
+	switch (ms_group) {
+	case G_MX_MS_TOP_0:
+		bit = 0;
+		break;
+	case G_MX_MS_TOP_1:
+		bit = 1;
+		break;
+	case AO_MX_MS_TOP_0:
+		bit = 2;
+		break;
+	case AO_MX_MS_TOP_1:
+		bit = 3;
+		break;
+	case AO_MX_MS_TOP_2:
+		bit = 4;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	r = readl(padctl2_regs_base + REG_OFFSET_MODE_SELECT);
+
+	if (value)
+		r |= BIT(bit);
+	else
+		r &= ~BIT(bit);
+
+	writel(r, padctl2_regs_base + REG_OFFSET_MODE_SELECT);
+
 	return 0;
 }
 

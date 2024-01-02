@@ -167,6 +167,11 @@ int sunplus_pinconf_set(struct udevice *dev, unsigned int offset,
 		ret = sunplus_pinconf_schmitt_trigger_enable(dev, offset,
 							     argument);
 		break;
+	case PIN_CONFIG_SLEW_RATE_CTRL:
+		pctl_info("GPIO[%d]:%s slew rate control\n", offset,
+			  argument == 0 ? "disable" : "enable");
+		sunplus_gpio_slew_rate_control_set(dev, offset, argument);
+		break;
 	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
 		pctl_info("GPIO[%d]:high-Z\n", offset);
 		ret = sunplus_pinconf_high_impedance(dev, offset);
