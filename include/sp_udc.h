@@ -209,14 +209,6 @@
 #define RF_MASK_V_SET(_mask)         	(((_mask) << 16) | (_mask))
 #define RF_MASK_V_CLR(_mask)         	(((_mask) << 16) | 0)
 
-void __iomem	*moon0_reg;
-void __iomem 	*moon1_reg;
-void __iomem 	*moon2_reg;
-void __iomem 	*moon3_reg;
-void __iomem 	*moon4_reg;
-void __iomem 	*uphy0_reg;
-void __iomem 	*hb_gp_reg;
-
 /* USB device power state */
 enum udc_power_state {
 	UDC_POWER_OFF = 0,	/* USB Device power on */
@@ -494,5 +486,7 @@ int32_t hal_udc_power_control(struct sp_udc *udc, enum udc_power_state power_sta
 int32_t hal_udc_endpoint_transfer(struct sp_udc	*udc, struct sp_request *req, uint8_t ep_addr, uint8_t *data, dma_addr_t data_pa, uint32_t length, uint32_t zero);
 int32_t hal_udc_endpoint_unconfigure(struct sp_udc *udc, uint8_t ep_addr);
 int32_t hal_udc_endpoint_configure(struct sp_udc *udc, uint8_t ep_addr, uint8_t ep_type, uint16_t ep_max_packet_size);
+
+extern int sp_udc_irq(struct sp_udc *udc);
 #endif
 

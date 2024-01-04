@@ -11,7 +11,7 @@
 #include <dm/devres.h>
 #include <dm.h>
 
-#include "sp_udc.h"
+#include <sp_udc.h>
 
 #define DRIVER_NAME "sp-udc"
 
@@ -42,6 +42,13 @@ static uint dmsg = 0x3;
 #define UDC_LOGL(fmt, arg...)		do { if (dmsg & BIT(1)) pr_info(fmt, ##arg); } while (0)
 #define UDC_LOGI(fmt, arg...)		do { if (dmsg & BIT(2)) pr_info(fmt, ##arg); } while (0)
 #define UDC_LOGD(fmt, arg...)		do { if (dmsg & BIT(3)) pr_info(fmt, ##arg); } while (0)
+
+static void __iomem *moon0_reg;
+static void __iomem *moon1_reg;
+static void __iomem *moon2_reg;
+static void __iomem *moon4_reg;
+static void __iomem *uphy0_reg;
+static void __iomem *hb_gp_reg;
 
 /* Produces a mask of set bits covering a range of a 32-bit value */
 static inline uint32_t bitfield_mask(uint32_t shift, uint32_t width)
@@ -1017,7 +1024,7 @@ static void hal_dump_ep_ring(struct sp_udc *udc, uint8_t ep_num)
 }
 #endif
 
-static int sp_udc_irq(struct sp_udc *udc)
+int sp_udc_irq(struct sp_udc *udc)
 {
 	volatile struct udc_reg *USBx;
 
@@ -1035,12 +1042,14 @@ static int sp_udc_irq(struct sp_udc *udc)
 	return 1;
 }
 
+#if 0
 int dm_usb_gadget_handle_interrupts(struct udevice *dev)
 {
 	struct sp_udc *udc = dev_get_priv(dev);
 
 	return sp_udc_irq(udc);
 }
+#endif
 
 static void fill_link_trb(struct trb_data *t_trb, dma_addr_t ring)
 {
