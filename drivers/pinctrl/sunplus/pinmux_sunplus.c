@@ -122,7 +122,7 @@ const char *sunplus_pinmux_get_pin_muxing_name(struct udevice *dev,
 
 	fun_selector = pin_mux_record[pin_selector];
 	if (fun_selector == PINMUX_INITIAL_CODE)
-		return "NA"; /* Not Assignment */
+		return "UNCLAIMED";
 
 	func = sunplus_get_function_by_selector(fun_selector);
 	if (!func)
