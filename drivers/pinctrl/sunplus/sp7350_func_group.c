@@ -476,6 +476,7 @@ static const struct sppctlgrp_t sp7350grps_gpio_ao_int3[] = {
 
 struct func_t list_funcs[] = {
 	FNCN("GPIO", F_OFF_0, 0, 0, 0),
+	FNCN("IOP", F_OFF_0, 0, 0, 0),
 	FNCE("SPI_FLASH", F_OFF_G, 1, 0, 1, sp7350grps_spif),
 	FNCE("EMMC", F_OFF_G, 1, 1, 1, sp7350grps_emmc),
 	FNCE("SPI_NAND", F_OFF_G, 1, 2, 2, sp7350grps_spi_nand),
