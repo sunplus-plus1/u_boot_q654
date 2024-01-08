@@ -61,11 +61,19 @@ void DRV_TGEN_Init(int width, int height)
 	} else if ( (width == 240) && (height == 320) ) {
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 
+		#if 1 //fine tune for screen flicker
+		G197_TGEN_REG->sft_cfg[8] = 0x000002AB;
+		G197_TGEN_REG->sft_cfg[9] = 0x000000F0;
+		G197_TGEN_REG->sft_cfg[10] = 0x00000162;
+		G197_TGEN_REG->sft_cfg[11] = 0x0000015B;
+		G197_TGEN_REG->sft_cfg[12] = 0x000001A;
+		#else
 		G197_TGEN_REG->sft_cfg[8] = 0x000002AB;
 		G197_TGEN_REG->sft_cfg[9] = 0x000000F0;
 		G197_TGEN_REG->sft_cfg[10] = 0x0000016C;
 		G197_TGEN_REG->sft_cfg[11] = 0x00000165;
 		G197_TGEN_REG->sft_cfg[12] = 0x0000024;
+		#endif
 	} else if ( (width == 1280) && (height == 480) ) {
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 

@@ -79,6 +79,18 @@ void DRV_TCON_Init(int width, int height)
 		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
 	} else if ((width == 240) && (height == 320)) {
+		#if 1 //fine tune for screen flicker
+		G199_TCON0_REG0->sft_cfg[12] = 0x000002A3;
+		G199_TCON0_REG0->sft_cfg[13] = 0x000002A7;
+		G199_TCON0_REG0->sft_cfg[20] = 0x00000161;
+		G199_TCON0_REG0->sft_cfg[21] = 0x00000000;
+
+		G199_TCON0_REG0->sft_cfg[23] = 0x000002A3;
+		G199_TCON0_REG0->sft_cfg[24] = 0x000002A7;
+
+		G199_TCON0_REG0->sft_cfg[25] = 0x00000000;
+		G199_TCON0_REG0->sft_cfg[26] = 0x000000EF;
+		#else
 		G199_TCON0_REG0->sft_cfg[12] = 0x000002A3;
 		G199_TCON0_REG0->sft_cfg[13] = 0x000002A7;
 		G199_TCON0_REG0->sft_cfg[20] = 0x0000016B;
@@ -89,6 +101,7 @@ void DRV_TCON_Init(int width, int height)
 
 		G199_TCON0_REG0->sft_cfg[25] = 0x00000000;
 		G199_TCON0_REG0->sft_cfg[26] = 0x000000EF;
+		#endif
 	} else if ((width == 1280) && (height == 480)) {
 		G199_TCON0_REG0->sft_cfg[12] = 0x0000060a;
 		G199_TCON0_REG0->sft_cfg[13] = 0x0000060a;

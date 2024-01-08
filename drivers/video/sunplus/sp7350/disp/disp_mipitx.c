@@ -108,6 +108,15 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00000c00; //TXPLL MIPITX CLK = 300MHz
 			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
 		} else if ((width == 240) && (height == 320)) {
+			#if 1 //fine tune for screen flicker
+			DISP_MOON3_REG->sft_cfg[14] = 0x80000000; //PLLH pre_scal = div1
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH post_div = x101-0xxx
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x14 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800780; //PLLH MIPITX CLK = 14.583MHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00000E00; //TXPLL MIPITX CLK = 350MHz
+			//G205_MIPITX_REG1->sft_cfg[11] = 0x00000F00; //TXPLL MIPITX CLK = 375MHz
+			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			#else
 			DISP_MOON3_REG->sft_cfg[14] = 0x80000000; //PLLH pre_scal = div1
 			DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH post_div = x101-0xxx
 			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x16 << 7)); //PLLH
@@ -115,6 +124,7 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00000E00; //TXPLL MIPITX CLK = 350MHz
 			//G205_MIPITX_REG1->sft_cfg[11] = 0x00000F00; //TXPLL MIPITX CLK = 375MHz
 			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			#endif
 		} else if ((width == 1280) && (height == 480)) {
 			;//TBD
 			//DISP_MOON3_REG->sft_cfg[14] = 0x00780028; //PLLH
@@ -235,8 +245,13 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 		//G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
 	} else if ((width == 240) && (height == 320)) { // 240x320
+		#if 1 //fine tune for screen flicker
+		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
+		G204_MIPITX_REG0->sft_cfg[1] = 0x00010819; //VSA=0x01 VFP=0x08 VBP=0x19
+		#else
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
+		#endif
 	} else if ((width == 1280) && (height == 480)) { // 1280x480
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
