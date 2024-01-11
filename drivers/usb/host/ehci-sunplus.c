@@ -107,8 +107,9 @@ static void uphy_init(int port_num)
 
 		/* Default value modification */
 		/* G149.28 uphy0_gctr0 */
-		UPHY0_RN_REG->gctrl[0] = 0x08888101;
+		UPHY0_RN_REG->gctrl[0] = 0x08888102;
 
+#if 0
 		/* PLL power off/on twice */
 		/* G149.30 uphy0_gctrl2 */
 		UPHY0_RN_REG->gctrl[2] = 0x88;
@@ -128,6 +129,7 @@ static void uphy_init(int port_num)
 		mdelay(1);
 		MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 15);
 		mdelay(1);
+#endif
 
 		/* fix rx-active question */
 		/* G149.19 */
