@@ -29,6 +29,7 @@
 #include <asm/io.h>
 #include <power/regulator.h>
 #include "designware.h"
+#include "sp_otp.h"
 
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {
@@ -689,6 +690,42 @@ int designware_eth_write_hwaddr(struct udevice *dev)
 	return _dw_write_hwaddr(priv, pdata->enetaddr);
 }
 
+int designware_eth_read_rom_hwaddr(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_plat(dev);
+	int node = dev_of_offset(dev);
+	int offset = 0;
+	int i;
+	u32 otp_mac_addr;
+	u8 otp_mac[ARP_HLEN];
+
+	offset = fdtdec_lookup_phandle(gd->fdt_blob, node, "nvmem-cells");
+	if (offset > 0) {
+		otp_mac_addr = fdtdec_get_int(gd->fdt_blob, offset, "reg", -1);
+	}
+
+	if (otp_mac_addr < 128) {
+		for (i = 0; i < ARP_HLEN; i++) {
+			read_otp_data(HB_GP_REG, SP_OTPRX_REG, otp_mac_addr+i, (char*)&otp_mac[i]);
+		}
+
+		//printf("mac address = %pM\n", otp_mac);
+
+		if (is_valid_ethaddr(otp_mac)) {
+			memcpy(pdata->enetaddr, otp_mac, ARP_HLEN);
+		} else {
+			printf("Invalid mac address from OTP[%d:%d] = %pM!\n",
+							otp_mac_addr, otp_mac_addr+5, otp_mac);
+		}
+	} else if (otp_mac_addr == -1) {
+		printf("OTP address of mac address is not defined!\n");
+	} else {
+		printf("Invalid OTP address of mac address!\n");
+	}
+
+	return 0;
+}
+
 static int designware_eth_bind(struct udevice *dev)
 {
 #ifdef CONFIG_DM_PCI
@@ -838,6 +875,7 @@ const struct eth_ops designware_eth_ops = {
 	.free_pkt		= designware_eth_free_pkt,
 	.stop			= designware_eth_stop,
 	.write_hwaddr		= designware_eth_write_hwaddr,
+	.read_rom_hwaddr	= designware_eth_read_rom_hwaddr,
 };
 
 int designware_eth_of_to_plat(struct udevice *dev)
