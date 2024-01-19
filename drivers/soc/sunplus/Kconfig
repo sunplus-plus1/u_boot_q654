@@ -1,6 +1,6 @@
 config OTP_SUNPLUS
 	bool "Enable OTP driver support for Sunplus SoC"
 	help
-	  This OTP driver supports Sunplus SP7021 and I143 SoC.
+	  This OTP driver supports Sunplus SP7350 SoC.
 	  Say Y if you want to enable OTP function.
 

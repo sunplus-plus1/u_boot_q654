@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Sunplus SP7021 Reset Controller driver
+ * Sunplus Reset Controller driver
  *
  * Copyright (C) 2020 Sunplus Inc.
  * Author: qinjian <qinjian@sunmedia.com.cn>

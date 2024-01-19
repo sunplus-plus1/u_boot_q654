@@ -20,7 +20,7 @@
 #define CONFIG_SYS_SDRAM_SIZE           (1024 << 20)
 #elif defined(CONFIG_SYS_ENV_SP7350_EVB)
 #define CONFIG_SYS_SDRAM_SIZE           (1024 << 20)
-#else /* normal SP7021 evb environment can have larger DRAM size */
+#else /* normal SP7350 evb environment can have larger DRAM size */
 #define CONFIG_SYS_SDRAM_SIZE           (1024 << 20)
 #endif
 #define CONFIG_SYS_MALLOC_LEN           (6 << 20)
@@ -342,11 +342,11 @@
 "do_secure="                    __stringify(COMPILE_WITH_SECURE) "\0" \
 "loadbootscr=fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /${bootscr} || " \
 	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /boot/${bootscr} || " \
-	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /sunplus/sp7021/${bootscr}; " \
+	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /sunplus/sp7350/${bootscr}; " \
 	"\0" \
 "loadbootenv=fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /${bootenv} || " \
 	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /boot/${bootenv} || " \
-	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /sunplus/sp7021/${bootenv}; " \
+	"fatload ${isp_if} ${isp_dev}:1 ${scriptaddr} /sunplus/sp7350/${bootenv}; " \
 	"\0" \
 "be2le=setexpr byte *${tmpaddr} '&' 0x000000ff; " \
 	"setexpr tmpval $tmpval + $byte; " \
