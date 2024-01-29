@@ -273,6 +273,7 @@ found_zero_func:
 	return 0;
 }
 
+#ifndef DISABLE_CONFLICT_CODE_WITH_GENERIC_USAGE
 static int sunplus_pinctrl_function(struct udevice *dev)
 {
 	int offset = dev_of_offset(dev);
@@ -374,6 +375,7 @@ found_groups:
 
 	return 0;
 }
+#endif
 
 static int sunplus_pinctrl_get_pins_count(struct udevice *dev)
 {
