@@ -209,6 +209,11 @@ int env_import_redund(const char *buf1, int buf1_read_fail,
 	env_t *ep;
 	int ret;
 
+	if (SP_IS_ISPBOOT()) {
+		env_set_default("!ISP mode",0);
+		return 0;
+	}
+
 	ret = env_check_redund(buf1, buf1_read_fail, buf2, buf2_read_fail);
 
 	if (ret == -EIO) {
