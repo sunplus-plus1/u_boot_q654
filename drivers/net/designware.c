@@ -757,6 +757,11 @@ int designware_eth_probe(struct udevice *dev)
 	clock_nb = dev_count_phandle_with_args(dev, "clocks", "#clock-cells",
 					       0);
 	if (clock_nb > 0) {
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+		// Force clock_nb to 1 because "ptp_ref" (RBUS clock) is always
+		// ON, and cannot be turned off.
+		clock_nb = 1;
+#endif
 		priv->clocks = devm_kcalloc(dev, clock_nb, sizeof(struct clk),
 					    GFP_KERNEL);
 		if (!priv->clocks)
@@ -928,7 +933,7 @@ static const struct udevice_id designware_eth_ids[] = {
 	{ .compatible = "amlogic,meson-axg-dwmac" },
 	{ .compatible = "st,stm32-dwmac" },
 	{ .compatible = "snps,arc-dwmac-3.70a" },
-	{ .compatible = "snps,dwmac-3.70a" },	
+	{ .compatible = "snps,dwmac-3.70a" },
 	{ }
 };
 
