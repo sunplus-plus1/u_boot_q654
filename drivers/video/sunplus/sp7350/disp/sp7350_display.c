@@ -70,6 +70,9 @@ static int sp7350_display_probe(struct udevice *dev)
 	height = CONFIG_VIDEO_SP7350_MAX_YRES;
 
 	printf("Disp: probe ... \n");
+
+	DISP_MOON2_REG->sft_cfg[3] = 0xffffffff; //enable all disp clken
+
 	printf("Disp: init %dx%d settings\n", width, height);
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
