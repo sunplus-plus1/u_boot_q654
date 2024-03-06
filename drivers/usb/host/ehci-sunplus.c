@@ -4,6 +4,7 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 
+#include <clk.h>
 #include <common.h>
 #include <dm.h>
 #include <usb.h>
@@ -80,6 +81,7 @@ struct hb_gp_regs {
 struct sunplus_ehci_priv {
 	struct ehci_ctrl ehcictrl;
 	struct usb_ehci *ehci;
+	struct clk ehci_clk;
 };
 
 static void uphy_init(int port_num)
@@ -87,10 +89,8 @@ static void uphy_init(int port_num)
 	unsigned int val, set;
 
 	if (0 == port_num) {
-		/* enable clock for UPHY, USBC and OTP */
+		/* enable clock for UPHY */
 		MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 12); // UPHY0_CLKEN=1
-		MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 15); // USBC0_CLKEN=1
-		MOON2_REG->sft_cfg[5] = RF_MASK_V_SET(1 << 13); // OTPRX_CLKEN=1
 
 		/* disable reset for OTP */
 		MOON0_REG->reset[0] = RF_MASK_V_CLR(1 << 9);  // RBUS_BLOCKB_RESET=0
@@ -197,11 +197,21 @@ static int ehci_sunplus_probe(struct udevice *dev)
 	struct sunplus_ehci_priv *priv = dev_get_priv(dev);
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
+	int err;
 
 	hccr = (struct ehci_hccr *)((uint64_t)&priv->ehci->ehci_len_rev);
 	hcor = (struct ehci_hcor *)((uint64_t)&priv->ehci->ehci_usbcmd);
 
 	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
+
+	err = clk_get_by_index(dev, 0, &priv->ehci_clk);
+	if (err < 0) {
+		pr_err("not found clk source\n");
+		return err;
+	}
+	clk_enable(&priv->ehci_clk);
+
+	mdelay(5);
 
 	uphy_init(dev->seq_);
 	usb_power_init(1, dev->seq_);
@@ -211,8 +221,12 @@ static int ehci_sunplus_probe(struct udevice *dev)
 
 static int ehci_usb_remove(struct udevice *dev)
 {
+	struct sunplus_ehci_priv *priv = dev_get_priv(dev);
+
 	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
+
 	usb_power_init(0, dev->seq_);
+	clk_disable_unprepare(&priv->ehci_clk);
 
 	return ehci_deregister(dev);
 }
