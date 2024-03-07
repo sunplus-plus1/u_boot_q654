@@ -14,6 +14,10 @@
 #include <malloc.h>
 #include "sp_sd.h"
 #include <asm/cache.h>
+#include <clk.h>
+#include <log.h>
+#include <reset.h>
+
 
 
 #define MAX_SDDEVICES   2
@@ -1092,6 +1096,19 @@ static int sp_mmc_probe(struct udevice *dev)
 	struct mmc_config *cfg = &plat->cfg;
 	struct sp_mmc_host *host = dev_get_priv(dev);
 	sp_mmc_hw_ops *ops;
+	struct clk clk;
+	int ret;
+
+	ret = clk_get_by_index(dev, 0, &clk);
+	if (ret)
+		return ret;
+
+	ret = clk_enable(&clk);
+	if (ret && ret != -ENOSYS && ret != -ENOTSUPP) {
+		clk_free(&clk);
+		IFPRINTK("failed to enable clock\n");
+		return ret;
+	}
 
 	IFPRINTK("base addr:%p\n", host->base);
 	sp_sd_trace();
