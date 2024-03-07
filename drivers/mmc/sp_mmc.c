@@ -14,6 +14,8 @@
 #include <malloc.h>
 #include "sp_mmc.h"
 #include <asm/cache.h>
+#include <clk.h>
+#include <errno.h>
 
 //#define HS200
 #define MAX_SDDEVICES   2
@@ -1437,6 +1439,18 @@ static int sp_mmc_probe(struct udevice *dev)
 	struct mmc_config *cfg = &plat->cfg;
 	struct sp_mmc_host *host = dev_get_priv(dev);
 	sp_mmc_hw_ops *ops;
+	struct clk clk;
+	int ret;
+
+	ret = clk_get_by_index(dev, 0, &clk);
+	if (ret < 0)
+		return ret;
+
+	ret = clk_enable(&clk);
+	if (ret) {
+		clk_free(&clk);
+		return ret;
+	}
 
 	IFPRINTK("base addr:%p\n", host->base);
 	sp_sd_trace();
