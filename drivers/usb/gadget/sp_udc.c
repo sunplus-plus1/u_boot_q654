@@ -1,3 +1,4 @@
+#include <clk.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/usb/composite.h>
@@ -12,6 +13,7 @@
 #include <dm.h>
 
 #include <sp_udc.h>
+#include <usb/sp_usb2.h>
 
 #define DRIVER_NAME "sp-udc"
 
@@ -49,6 +51,10 @@ static void __iomem *moon2_reg;
 static void __iomem *moon4_reg;
 static void __iomem *uphy0_reg;
 static void __iomem *hb_gp_reg;
+
+#if !defined(CONFIG_USB_EHCI_SUNPLUS) && !defined(CONFIG_USB_OHCI_SUNPLUS)
+int clk_usbc0_en = false;
+#endif
 
 /* Produces a mask of set bits covering a range of a 32-bit value */
 static inline uint32_t bitfield_mask(uint32_t shift, uint32_t width)
@@ -99,10 +105,8 @@ static void uphy_init(int port_num)
 	unsigned int val, set;
 
 	if (0 == port_num) {
-		/* enable clock for UPHY, USBC and OTP */
+		/* enable clock for UPHY*/
 		writel(RF_MASK_V_SET(1 << 12), moon2_reg + M2_CONFIGS6);	// UPHY0_CLKEN=1
-		writel(RF_MASK_V_SET(1 << 15), moon2_reg + M2_CONFIGS6);	// USBC0_CLKEN=1
-		writel(RF_MASK_V_SET(1 << 13), moon2_reg + M2_CONFIGS5);
 
 		/* disable reset for OTP */
 		writel(RF_MASK_V_CLR(1 << 9), moon0_reg + HARDWARE_RESET0);	// RBUS_BLOCKB_RESET=0
@@ -1129,7 +1133,8 @@ static void hal_udc_fill_ep_desc(struct sp_udc *udc, struct udc_endpoint *ep)
 		tmp_ep0_desc->cfgs = AUTO_RESPONSE;					/* auto response configure setting */
 		tmp_ep0_desc->cfgm = AUTO_RESPONSE;					/* auto response configure setting */
 		tmp_ep0_desc->speed = udc->def_run_full_speed ? UDC_FULL_SPEED : UDC_HIGH_SPEED; /* high speed */
-		tmp_ep0_desc->aset = AUTO_SET_CONF | AUTO_SET_INF | AUTO_SET_ADDR;	/* auto setting config & interface & address */
+		tmp_ep0_desc->aset = AUTO_SET_ADDR;					/* auto setting address */
+											/* auto setting config & interface are not suggested */
 		tmp_ep0_desc->dcs = udc->event_ccs;					/* set cycle bit 1 */
 		tmp_ep0_desc->sofic = 0;
 		tmp_ep0_desc->dptr = SHIFT_LEFT_BIT4(ep->ep_transfer_ring.trb_pa);
@@ -1837,13 +1842,8 @@ static int hal_udc_setup(struct sp_udc *udc, const struct usb_ctrlrequest *ctrl)
 	/* enable auto set flag */
 	udc->aset_flag = false;
 
-	if ((USB_REQ_SET_CONFIGURATION == ctrl->bRequest
-		&& (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE) == ctrl->bRequestType)
-		|| (USB_REQ_SET_INTERFACE == ctrl->bRequest
-			&& (USB_DIR_OUT | USB_RECIP_INTERFACE) == ctrl->bRequestType)
-		|| (USB_REQ_SET_ADDRESS == ctrl->bRequest && (USB_DIR_OUT) == ctrl->bRequestType)) {
+	if ((USB_REQ_SET_ADDRESS == ctrl->bRequest) && (USB_DIR_OUT == ctrl->bRequestType))
 		udc->aset_flag = true;
-	}
 
 	value = udc->driver->setup(gadget, ctrl);
 	if (value >= 0)
@@ -2440,7 +2440,9 @@ static int sp_udc_stop(struct usb_gadget *gadget)
 static int sp_udc_probe(struct udevice *udev)
 {
 	struct sp_udc *udc = dev_get_priv(udev);
+	struct clk clk;
 	fdt_addr_t base;
+	int err;
 
 	base = dev_read_addr_index(udev, 0);
 	if (base == FDT_ADDR_T_NONE)
@@ -2497,6 +2499,18 @@ static int sp_udc_probe(struct udevice *udev)
 	hb_gp_reg = ioremap(base, 128);
 	if (!hb_gp_reg)
 		return -ENOMEM;
+
+	if (clk_usbc0_en == false) {
+		udc->clock = &clk;
+		err = clk_get_by_index(udev, 0, &clk);
+		if (err < 0) {
+			pr_err("not found clk source\n");
+			return err;
+		}
+
+		clk_enable(&clk);
+		clk_usbc0_en = true;
+	}
 
 	cfg_udc_ep(udc);
 	udc->port_num = 0;
