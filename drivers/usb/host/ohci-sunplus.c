@@ -74,18 +74,26 @@ static int ohci_sunplus_probe(struct udevice *dev)
 
 static int ohci_sunplus_remove(struct udevice *dev)
 {
-	//struct sp_ohci *priv = dev_get_priv(dev);
+	struct sp_ohci *priv = dev_get_priv(dev);
+	int ret;
 
 #ifndef CONFIG_USB_EHCI_SUNPLUS
 	usb_power_init(0, dev->seq_);
 #endif
 
+	ret = ohci_deregister(dev);
+
 	if (clk_usbc0_en == true) {
 		clk_usbc0_en = false;
-		//clk_disable_unprepare(&priv->ehci_clk);
+
+		/* disable clock for UPHY0 */
+		MOON2_REG->sft_cfg[6] = RF_MASK_V_CLR(1 << 12);
+
+		/* disable clock for USBC0 */
+		clk_disable_unprepare(&priv->ohci_clk);
 	}
 
-	return ohci_deregister(dev);
+	return ret;
 }
 
 

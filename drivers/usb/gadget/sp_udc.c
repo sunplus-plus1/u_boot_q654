@@ -2440,7 +2440,6 @@ static int sp_udc_stop(struct usb_gadget *gadget)
 static int sp_udc_probe(struct udevice *udev)
 {
 	struct sp_udc *udc = dev_get_priv(udev);
-	struct clk clk;
 	fdt_addr_t base;
 	int err;
 
@@ -2501,14 +2500,13 @@ static int sp_udc_probe(struct udevice *udev)
 		return -ENOMEM;
 
 	if (clk_usbc0_en == false) {
-		udc->clock = &clk;
-		err = clk_get_by_index(udev, 0, &clk);
+		err = clk_get_by_index(udev, 0, &udc->clock);
 		if (err < 0) {
 			pr_err("not found clk source\n");
 			return err;
 		}
 
-		clk_enable(&clk);
+		clk_enable(&udc->clock);
 		clk_usbc0_en = true;
 	}
 
@@ -2550,6 +2548,16 @@ static int sp_udc_remove(struct udevice *udev)
 
 	usb_del_gadget_udc(&udc->gadget);
 	usb_power_init(1, udev->seq_);
+
+	if (clk_usbc0_en == true) {
+		clk_usbc0_en = false;
+
+		/* disable clock for UPHY0 */
+		writel(RF_MASK_V_SET(1 << 12), moon2_reg + M2_CONFIGS6);
+
+		/* disable clock for USBC0 */
+		clk_disable_unprepare(&udc->clock);
+	}
 
 	return 0;
 }

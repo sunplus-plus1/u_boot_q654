@@ -60,6 +60,7 @@ int board_late_init(void)
 #endif
 
 #if defined(CONFIG_DM_USB_GADGET)
+#include <clk.h>
 #include <dwc3-uboot.h>
 #include <sp_udc.h>
 

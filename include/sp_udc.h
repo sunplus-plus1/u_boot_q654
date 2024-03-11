@@ -446,7 +446,7 @@ struct udc_endpoint {
 
 struct sp_udc {
 	bool 			 aset_flag; 			/* auto set flag, If this flag is true, zero packet will not be sent */
-	struct clk		*clock;
+	struct clk		 clock;
 	int 			 irq_num;
 	struct usb_phy	 	*usb_phy;
 	int 			 port_num;
