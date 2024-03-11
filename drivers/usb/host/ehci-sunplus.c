@@ -167,7 +167,7 @@ static int ehci_usb_remove(struct udevice *dev)
 	int ret;
 
 	usb_power_init(0, dev->seq_);
-	ret = ohci_deregister(dev);
+	ret = ehci_deregister(dev);
 
 	if (clk_usbc0_en == true) {
 		clk_usbc0_en = false;
