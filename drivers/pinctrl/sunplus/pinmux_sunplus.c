@@ -49,6 +49,12 @@ int sunplus_pinmux_pin_set(struct udevice *dev, unsigned int pin_selector,
 			sunplus_pinmux_set(dev, func->roff, func->boff,
 					   func->blen,
 					   func->grps[group_map->g_idx].gval);
+			struct groupSettingExt_t *extSetting = func->grps[group_map->g_idx].extSetting;
+
+			if (extSetting) {
+				sunplus_pinmux_set(dev, extSetting->roff, extSetting->boff,
+				       extSetting->blen, extSetting->bval);
+			}
 			pin_mux_record[pin] = func_selector;
 		} else {
 			pctl_err("invalid pin[%d] for function \"%s\"\n",
@@ -100,10 +106,17 @@ int sunplus_pinmux_group_set(struct udevice *dev, unsigned int group_selector,
 			//pctl_info("[%s:%d]group_map.f_idx=%d, group_map.g_idx:%d\n",
 			//__FUNCTION__, __LINE__, group_map->f_idx, group_map->g_idx);
 			sunplus_gpio_mode_set(dev, pin, 0);
-			sunplus_pinmux_set(dev, func->roff, func->boff,
+			pin_mux_record[pin] = func_selector;
+		}
+
+		sunplus_pinmux_set(dev, func->roff, func->boff,
 					   func->blen,
 					   func->grps[group_map->g_idx].gval);
-			pin_mux_record[pin] = func_selector;
+		struct groupSettingExt_t *extSetting = func->grps[group_map->g_idx].extSetting;
+
+		if (extSetting) {
+			sunplus_pinmux_set(dev, extSetting->roff, extSetting->boff,
+			       extSetting->blen, extSetting->bval);
 		}
 	} else {
 		pctl_err("invalid group \"%s\" for function \"%s\"\n",

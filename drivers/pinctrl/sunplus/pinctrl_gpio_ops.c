@@ -101,7 +101,7 @@ int sunplus_pinmux_get(struct udevice *dev, u8 reg_offset, u8 bit_offset,
 	bit_value = (x->v >> bit_offset) & (~(~0 << bit_nums));
 
 	pctl_info("%s(x%X,x%X,x%X) v:x%X rval:x%X\n", __func__, reg_offset,
-		  bit_offset, bit_nums, x->v, rval);
+		  bit_offset, bit_nums, x->v, bit_value);
 
 	return bit_value;
 }
