@@ -1593,22 +1593,53 @@ static int sp_spinand_probe(struct udevice *dev)
 	struct sp_spinand_info *info;
 	info = our_spinfc = dev_get_priv(dev);
 	const void *blob = gd->fdt_blob;
-	int node;
+	struct clk clk_spind, clk_bch;
+	ofnode node;
+	int node_offset;
 	int ret;
 
 	printk(KERN_INFO "\n");     // used for message alignment
 
 	/* get spi-nand reg */
 	info->regs = (void __iomem*)devfdt_get_addr(dev);
-	SPINAND_LOGI("sp_spinand: regs@0x%p\n", info->regs);
+	//SPINAND_LOGI("sp_spinand: regs@0x%p\n", info->regs);
 
 	/* get bch reg */
-	node = fdt_node_offset_by_compatible(blob, 0, "sunplus,sp7350-bch");
+	node_offset = fdt_node_offset_by_compatible(blob, 0, "sunplus,sp7350-bch");
 	info->bch_regs = (void __iomem *)fdtdec_get_addr_size_auto_parent(blob,
-		dev_of_offset(dev->parent), node, "reg", 0, NULL, false);
+		dev_of_offset(dev->parent), node_offset, "reg", 0, NULL, false);
 
-	SPINAND_LOGI("sp_bch    : regs@0x%p\n", info->bch_regs);
-	SPINAND_LOGI("node: %s, offset: 0x%08x\n", fdt_get_name(blob, node, NULL), node);
+	//SPINAND_LOGI("sp_bch    : regs@0x%p\n", info->bch_regs);
+	//SPINAND_LOGI("node: %s, offset: 0x%08x\n", fdt_get_name(blob, node_offset, NULL), node_offset);
+
+	/* enable spi-nand clock */
+	ret = clk_get_by_index(dev, 0, &clk_spind);
+	if (ret < 0) {
+		SPINAND_LOGE("get clk_spind fail\n");
+		return ret;
+	}
+
+	ret = clk_enable(&clk_spind);
+	if (ret) {
+		clk_free(&clk_spind);
+		return ret;
+	}
+	//SPINAND_LOGI("clk_enable for SPI-NAND succeed\n");
+
+	/* enable bch clock */
+	node = offset_to_ofnode(node_offset);
+	ret = clk_get_by_index_nodev(node, 0, &clk_bch);
+	if (ret < 0) {
+		SPINAND_LOGE("get clk_bch fail\n");
+		return ret;
+	}
+
+	ret = clk_enable(&clk_bch);
+	if (ret) {
+		clk_free(&clk_bch);
+		return ret;
+	}
+	//SPINAND_LOGI("clk_enable for BCH succeed\n");
 
 	/* do sp_spinand initialization */
 	ret = sp_spinand_init(info);
