@@ -11,6 +11,7 @@
 #include <mach/gpio_drv.h>
 #include <cpu_func.h>
 #include <command.h>
+#include <clk.h>
 
 #include "sp_bch.h"
 #include "sp_spinand.h"
