@@ -12,6 +12,19 @@
 
 static unsigned int pin_mux_record[106];
 
+static void sunplus_gmac_pinmux_set(struct udevice *dev, u8 reg_offset,
+				    u8 bit_offset, u8 bit_nums, u8 bit_value)
+{
+	sunplus_pinmux_set(dev, reg_offset, bit_offset, bit_nums, 1);
+	if (bit_value == 1) {
+		//RGMII
+		sunplus_pinmux_set(dev, 0X57, 12, 1, 0);
+	} else if (bit_value == 2) {
+		//RMII
+		sunplus_pinmux_set(dev, 0X57, 12, 1, 1);
+	}
+}
+
 int sunplus_pinmux_pin_set(struct udevice *dev, unsigned int pin_selector,
 			   unsigned int func_selector)
 {
@@ -46,14 +59,14 @@ int sunplus_pinmux_pin_set(struct udevice *dev, unsigned int pin_selector,
 			//__FUNCTION__, __LINE__, group_map->f_idx, group_map->g_idx);
 
 			sunplus_gpio_mode_set(dev, pin, 0);
-			sunplus_pinmux_set(dev, func->roff, func->boff,
-					   func->blen,
-					   func->grps[group_map->g_idx].gval);
-			struct groupSettingExt_t *extSetting = func->grps[group_map->g_idx].extSetting;
-
-			if (extSetting) {
-				sunplus_pinmux_set(dev, extSetting->roff, extSetting->boff,
-				       extSetting->blen, extSetting->bval);
+			if (!strcmp(func->name, "GMAC")) {
+				sunplus_gmac_pinmux_set(
+					dev, func->roff, func->boff, func->blen,
+					func->grps[group_map->g_idx].gval);
+			} else {
+				sunplus_pinmux_set(
+					dev, func->roff, func->boff, func->blen,
+					func->grps[group_map->g_idx].gval);
 			}
 			pin_mux_record[pin] = func_selector;
 		} else {
@@ -109,14 +122,14 @@ int sunplus_pinmux_group_set(struct udevice *dev, unsigned int group_selector,
 			pin_mux_record[pin] = func_selector;
 		}
 
-		sunplus_pinmux_set(dev, func->roff, func->boff,
+		if (!strcmp(func->name, "GMAC")) {
+			sunplus_gmac_pinmux_set(
+				dev, func->roff, func->boff, func->blen,
+				func->grps[group_map->g_idx].gval);
+		} else {
+			sunplus_pinmux_set(dev, func->roff, func->boff,
 					   func->blen,
 					   func->grps[group_map->g_idx].gval);
-		struct groupSettingExt_t *extSetting = func->grps[group_map->g_idx].extSetting;
-
-		if (extSetting) {
-			sunplus_pinmux_set(dev, extSetting->roff, extSetting->boff,
-			       extSetting->blen, extSetting->bval);
 		}
 	} else {
 		pctl_err("invalid group \"%s\" for function \"%s\"\n",
