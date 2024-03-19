@@ -26,7 +26,7 @@
 #define GPIO_FIRST(x) first_regs[x]
 
 #define MAX_PINS 108
-#define D(x, y) ((x) * 8 + (y))
+#define D(x, y) ((x)*8 + (y))
 
 typedef enum {
 	F_OFF_0, // nowhere
@@ -35,14 +35,10 @@ typedef enum {
 	F_OFF_I, // in iop registers
 } F_OFF_t;
 
-#define EGRP_EXT(n, v, p, ext)                                                 \
+#define EGRP(n, v, p)                                                          \
 	{                                                                      \
-		.name = n, .gval = (v), .pins = (p),			       \
-		.pnum = ARRAY_SIZE(p), .extSetting = ext		       \
+		.name = n, .gval = (v), .pins = (p), .pnum = ARRAY_SIZE(p)     \
 	}
-
-#define EGRP(n, v, p) EGRP_EXT(n, v, p, 0)
-
 
 #define FNCE(n, r, o, bo, bl, g)                                               \
 	{                                                                      \
@@ -56,19 +52,11 @@ typedef enum {
 		.grps = NULL, .gnum = 0,                                       \
 	}
 
-struct groupSettingExt_t {
-	const u8 roff; // register offset
-	const u8 boff; // bit offset
-	const u8 blen; // number of bits
-	const u8 bval; // value for register
-};
-
 struct sppctlgrp_t {
 	const char *const name;
 	const u8 gval; // value for register
 	const unsigned *const pins; // list of pins
 	const unsigned int pnum; // number of pins
-	struct groupSettingExt_t *extSetting;
 };
 
 struct func_t {
