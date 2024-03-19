@@ -53,7 +53,7 @@ static void __iomem *uphy0_reg;
 static void __iomem *hb_gp_reg;
 
 #if !defined(CONFIG_USB_EHCI_SUNPLUS) && !defined(CONFIG_USB_OHCI_SUNPLUS)
-int clk_usbc0_en = false;
+int clk_usbc0_cnt = 0;
 #endif
 
 /* Produces a mask of set bits covering a range of a 32-bit value */
@@ -2499,16 +2499,16 @@ static int sp_udc_probe(struct udevice *udev)
 	if (!hb_gp_reg)
 		return -ENOMEM;
 
-	if (clk_usbc0_en == false) {
-		err = clk_get_by_index(udev, 0, &udc->clock);
-		if (err < 0) {
-			pr_err("not found clk source\n");
-			return err;
-		}
-
-		clk_enable(&udc->clock);
-		clk_usbc0_en = true;
+	err = clk_get_by_index(udev, 0, &udc->clock);
+	if (err < 0) {
+		pr_err("not found clk source\n");
+		return err;
 	}
+
+	if (clk_usbc0_cnt == 0)
+		clk_enable(&udc->clock);
+
+	clk_usbc0_cnt++;
 
 	cfg_udc_ep(udc);
 	udc->port_num = 0;
@@ -2549,15 +2549,15 @@ static int sp_udc_remove(struct udevice *udev)
 	usb_del_gadget_udc(&udc->gadget);
 	usb_power_init(1, udev->seq_);
 
-	if (clk_usbc0_en == true) {
-		clk_usbc0_en = false;
-
+	if (clk_usbc0_cnt == 1) {
 		/* disable clock for UPHY0 */
 		writel(RF_MASK_V_SET(1 << 12), moon2_reg + M2_CONFIGS6);
 
 		/* disable clock for USBC0 */
 		clk_disable_unprepare(&udc->clock);
 	}
+
+	clk_usbc0_cnt--;
 
 	return 0;
 }

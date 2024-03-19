@@ -16,7 +16,7 @@
 #define DEFAULT_UPHY_DISC	0x7   // 7 (=577mv)
 #define DEFAULT_SQ_CT		0x3
 
-extern int clk_usbc0_en;
+extern int clk_usbc0_cnt;
 
 struct uphy_rn_regs {
 	u32 cfg[28];		       // 150.0

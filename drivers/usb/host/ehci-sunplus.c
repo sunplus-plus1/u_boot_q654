@@ -22,7 +22,7 @@ struct sunplus_ehci_priv {
 	struct clk ehci_clk;
 };
 
-int clk_usbc0_en = false;
+int clk_usbc0_cnt = 0;
 
 static void uphy_init(int port_num)
 {
@@ -144,16 +144,16 @@ static int ehci_sunplus_probe(struct udevice *dev)
 
 	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
 
-	if (clk_usbc0_en == false) {
-		err = clk_get_by_index(dev, 0, &priv->ehci_clk);
-		if (err < 0) {
-			pr_err("not found clk source\n");
-			return err;
-		}
-
-		clk_enable(&priv->ehci_clk);
-		clk_usbc0_en = true;
+	err = clk_get_by_index(dev, 0, &priv->ehci_clk);
+	if (err < 0) {
+		pr_err("not found clk source\n");
+		return err;
 	}
+
+	if (clk_usbc0_cnt == 0)
+		clk_enable(&priv->ehci_clk);
+
+	clk_usbc0_cnt++;
 
 	uphy_init(dev->seq_);
 	usb_power_init(1, dev->seq_);
@@ -169,15 +169,15 @@ static int ehci_usb_remove(struct udevice *dev)
 	usb_power_init(0, dev->seq_);
 	ret = ehci_deregister(dev);
 
-	if (clk_usbc0_en == true) {
-		clk_usbc0_en = false;
-
+	if (clk_usbc0_cnt == 1) {
 		/* disable clock for UPHY0 */
 		MOON2_REG->sft_cfg[6] = RF_MASK_V_CLR(1 << 12);
 
 		/* disable clock for USBC0 */
 		clk_disable_unprepare(&priv->ehci_clk);
 	}
+
+	clk_usbc0_cnt--;
 
 	return ret;
 }
