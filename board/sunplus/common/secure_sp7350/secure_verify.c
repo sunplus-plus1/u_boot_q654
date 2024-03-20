@@ -3,6 +3,7 @@
 
 #if (COMPILE_WITH_SECURE == 1)
 #include <cpu_func.h>
+#include <linux/io.h>
 #include "crypto_drv.h"
 
 /***********************************
@@ -171,7 +172,7 @@ static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const arg
 	u32 t0, t1;  /* unit:ms */
 	int ret;
 
-	write(RF_MASK_V_SET(1 << 6), MOON2_7); // SEC_CLKEN -> 1
+	writel(RF_MASK_V_SET(1 << 6), MOON2_7); // SEC_CLKEN -> 1
 	t0 = get_timer(0);
 
 	/* initial buffers */
@@ -197,7 +198,7 @@ static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const arg
 	ret = memcmp(dst, src, HASH_SZ);
 
 	t1 = get_timer(t0);
-	write(RF_MASK_V_CLR(1 << 6), MOON2_7); // SEC_CLKEN -> 0
+	writel(RF_MASK_V_CLR(1 << 6), MOON2_7); // SEC_CLKEN -> 0
 
 	//prn_dump("decrypted hash", dst, HASH_SZ);
 	//prn_dump("hash", src, HASH_SZ);
