@@ -154,6 +154,11 @@ static void sp_expmod(u8 *dst, u8 *src, u8 *e, u8 *n, u32 len)
 
 #define HEADER_SZ	(sizeof(struct image_header))
 
+#define RF_MASK_V_SET(_mask)	(((_mask) << 16) | (_mask))
+#define RF_MASK_V_CLR(_mask)	(((_mask) << 16) | 0)
+
+static void __iomem *MOON2_7 = (void __iomem *)0xf880011c;
+
 static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
 {
 	if (argc < 2)
@@ -166,6 +171,7 @@ static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const arg
 	u32 t0, t1;  /* unit:ms */
 	int ret;
 
+	write(RF_MASK_V_SET(1 << 6), MOON2_7); // SEC_CLKEN -> 1
 	t0 = get_timer(0);
 
 	/* initial buffers */
@@ -191,6 +197,7 @@ static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const arg
 	ret = memcmp(dst, src, HASH_SZ);
 
 	t1 = get_timer(t0);
+	write(RF_MASK_V_CLR(1 << 6), MOON2_7); // SEC_CLKEN -> 0
 
 	//prn_dump("decrypted hash", dst, HASH_SZ);
 	//prn_dump("hash", src, HASH_SZ);
