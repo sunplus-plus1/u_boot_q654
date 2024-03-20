@@ -96,7 +96,6 @@ static int ohci_sunplus_remove(struct udevice *dev)
 	return ret;
 }
 
-
 static const struct udevice_id ohci_sunplus_ids[] = {
 	{ .compatible = "sunplus,sp7350-usb-ohci" },
 	{ }

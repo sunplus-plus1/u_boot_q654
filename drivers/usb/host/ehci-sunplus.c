@@ -49,7 +49,6 @@ static void uphy_init(int port_num)
 		/* G149.28 uphy0_gctr0 */
 		UPHY0_RN_REG->gctrl[0] = 0x08888102;
 
-#if 1
 		/* PLL power off/on twice */
 		/* G149.30 uphy0_gctrl2 */
 		UPHY0_RN_REG->gctrl[2] = 0x88;
@@ -69,7 +68,6 @@ static void uphy_init(int port_num)
 		mdelay(1);
 		MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 15);
 		mdelay(1);
-#endif
 
 		/* fix rx-active question */
 		/* G149.19 */
@@ -164,6 +162,7 @@ static int ehci_sunplus_probe(struct udevice *dev)
 static int ehci_usb_remove(struct udevice *dev)
 {
 	struct sunplus_ehci_priv *priv = dev_get_priv(dev);
+	struct ehci_hcor *hcor;
 	int ret;
 
 	usb_power_init(0, dev->seq_);
@@ -178,6 +177,10 @@ static int ehci_usb_remove(struct udevice *dev)
 	}
 
 	clk_usbc0_cnt--;
+
+	/* route all ports to OHCI */
+	hcor = (struct ehci_hcor *)((uint64_t)&priv->ehci->ehci_usbcmd);
+	ehci_writel(&hcor->or_configflag, 0x0);
 
 	return ret;
 }
