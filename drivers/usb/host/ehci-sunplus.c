@@ -29,9 +29,6 @@ static void uphy_init(int port_num)
 	unsigned int val, set;
 
 	if (0 == port_num) {
-		/* enable clock for UPHY */
-		MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 12); // UPHY0_CLKEN=1
-
 		/* disable reset for OTP */
 		MOON0_REG->reset[0] = RF_MASK_V_CLR(1 << 9);  // RBUS_BLOCKB_RESET=0
 		mdelay(1);
@@ -148,8 +145,13 @@ static int ehci_sunplus_probe(struct udevice *dev)
 		return err;
 	}
 
-	if (clk_usbc0_cnt == 0)
+	if (clk_usbc0_cnt == 0) {
+		/* enable clock for USBC0 */
 		clk_enable(&priv->ehci_clk);
+
+		/* enable clock for UPHY0 */
+		MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 12);
+	}
 
 	clk_usbc0_cnt++;
 

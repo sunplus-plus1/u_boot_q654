@@ -50,20 +50,21 @@ static int ohci_sunplus_probe(struct udevice *dev)
 
 	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
 
-	/* enable clock for USBC0 */
 	err = clk_get_by_index(dev, 0, &priv->ohci_clk);
 	if (err < 0) {
 		pr_err("not found clk source\n");
 		return err;
 	}
 
-	if (clk_usbc0_cnt == 0)
+	if (clk_usbc0_cnt == 0) {
+		/* enable clock for USBC0 */
 		clk_enable(&priv->ohci_clk);
 
-	clk_usbc0_cnt++;
+		/* enable clock for UPHY0 */
+		MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 12);
+	}
 
-	/* enable clock for UPHY0 */
-	MOON2_REG->sft_cfg[6] = RF_MASK_V_SET(1 << 12);
+	clk_usbc0_cnt++;
 
 #ifndef CONFIG_USB_EHCI_SUNPLUS
 	usb_power_init(1, dev->seq_);
