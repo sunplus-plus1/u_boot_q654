@@ -53,7 +53,7 @@ struct udevice;
  * The size of a MAC address in string form, each digit requires two chars
  * and five separator characters to form '00:00:00:00:00:00'.
  */
-#define ARP_HLEN_ASCII (ARP_HLEN * 2) + (ARP_HLEN - 1)
+#define ARP_HLEN_ASCII ((ARP_HLEN * 2) + (ARP_HLEN - 1))
 
 /* IPv4 addresses are always 32 bits in size */
 struct in_addr {
@@ -369,6 +369,7 @@ struct vlan_ethernet_hdr {
 #define PROT_NCSI	0x88f8		/* NC-SI control packets        */
 
 #define IPPROTO_ICMP	 1	/* Internet Control Message Protocol	*/
+#define IPPROTO_TCP	6	/* Transmission Control Protocol	*/
 #define IPPROTO_UDP	17	/* User Datagram Protocol		*/
 
 /*
@@ -560,7 +561,7 @@ extern int		net_restart_wrap;	/* Tried all network devices */
 
 enum proto_t {
 	BOOTP, RARP, ARP, TFTPGET, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP,
-	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, UDP
+	TFTPSRV, TFTPPUT, LINKLOCAL, FASTBOOT, WOL, UDP, WGET
 };
 
 extern char	net_boot_file_name[1024];/* Boot File name */
@@ -681,7 +682,7 @@ static inline void net_set_state(enum net_loop_state state)
  *
  * returns - ptr to packet buffer
  */
-uchar * net_get_async_tx_pkt_buf(void);
+uchar *net_get_async_tx_pkt_buf(void);
 
 /* Transmit a packet */
 static inline void net_send_packet(uchar *pkt, int len)
@@ -703,6 +704,19 @@ static inline void net_send_packet(uchar *pkt, int len)
 int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 		       int payload_len, int proto, u8 action, u32 tcp_seq_num,
 		       u32 tcp_ack_num);
+/**
+ * net_send_tcp_packet() - Transmit TCP packet.
+ * @payload_len: length of payload
+ * @dport: Destination TCP port
+ * @sport: Source TCP port
+ * @action: TCP action to be performed
+ * @tcp_seq_num: TCP sequence number of this transmission
+ * @tcp_ack_num: TCP stream acknolegement number
+ *
+ * Return: 0 on success, other value on failure
+ */
+int net_send_tcp_packet(int payload_len, int dport, int sport, u8 action,
+			u32 tcp_seq_num, u32 tcp_ack_num);
 int net_send_udp_packet(uchar *ether, struct in_addr dest, int dport,
 			int sport, int payload_len);
 

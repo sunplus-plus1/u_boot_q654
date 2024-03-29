@@ -103,6 +103,8 @@
 #endif
 #include <watchdog.h>
 #include <linux/compiler.h>
+#include <net/tcp.h>
+#include <net/wget.h>
 #include "arp.h"
 #include "bootp.h"
 #include "cdp.h"
@@ -386,6 +388,8 @@ int net_init(void)
 
 		/* Only need to setup buffer pointers once. */
 		first_call = 0;
+		if (IS_ENABLED(CONFIG_PROT_TCP))
+			tcp_set_tcp_state(TCP_CLOSED);
 	}
 
 	return net_init_loop();
@@ -500,6 +504,11 @@ restart:
 #if defined(CONFIG_CMD_NFS) && !defined(CONFIG_SPL_BUILD)
 		case NFS:
 			nfs_start();
+			break;
+#endif
+#if defined(CONFIG_CMD_WGET)
+		case WGET:
+			wget_start();
 			break;
 #endif
 #if defined(CONFIG_CMD_CDP)
@@ -632,7 +641,7 @@ restart:
 		case NETLOOP_SUCCESS:
 			net_cleanup_loop();
 			if (net_boot_file_size > 0) {
-				printf("Bytes transferred = %d (%x hex)\n",
+				printf("Bytes transferred = %u (%x hex)\n",
 				       net_boot_file_size, net_boot_file_size);
 				env_set_hex("filesize", net_boot_file_size);
 				env_set_hex("fileaddr", image_load_addr);
@@ -816,6 +825,16 @@ int net_send_udp_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 				  IPPROTO_UDP, 0, 0, 0);
 }
 
+#if defined(CONFIG_PROT_TCP)
+int net_send_tcp_packet(int payload_len, int dport, int sport, u8 action,
+			u32 tcp_seq_num, u32 tcp_ack_num)
+{
+	return net_send_ip_packet(net_server_ethaddr, net_server_ip, dport,
+				  sport, payload_len, IPPROTO_TCP, action,
+				  tcp_seq_num, tcp_ack_num);
+}
+#endif
+
 int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 		       int payload_len, int proto, u8 action, u32 tcp_seq_num,
 		       u32 tcp_ack_num)
@@ -847,6 +866,14 @@ int net_send_ip_packet(uchar *ether, struct in_addr dest, int dport, int sport,
 				   payload_len);
 		pkt_hdr_size = eth_hdr_size + IP_UDP_HDR_SIZE;
 		break;
+#if defined(CONFIG_PROT_TCP)
+	case IPPROTO_TCP:
+		pkt_hdr_size = eth_hdr_size
+			+ tcp_set_tcp_header(pkt + eth_hdr_size, dport, sport,
+					     payload_len, action, tcp_seq_num,
+					     tcp_ack_num);
+		break;
+#endif
 	default:
 		return -EINVAL;
 	}
@@ -1188,9 +1215,9 @@ void net_process_received_packet(uchar *in_packet, int len)
 	case PROT_IP:
 		debug_cond(DEBUG_NET_PKT, "Got IP\n");
 		/* Before we start poking the header, make sure it is there */
-		if (len < IP_UDP_HDR_SIZE) {
+		if (len < IP_HDR_SIZE) {
 			debug("len bad %d < %lu\n", len,
-			      (ulong)IP_UDP_HDR_SIZE);
+			      (ulong)IP_HDR_SIZE);
 			return;
 		}
 		/* Check the packet length */
@@ -1199,6 +1226,10 @@ void net_process_received_packet(uchar *in_packet, int len)
 			return;
 		}
 		len = ntohs(ip->ip_len);
+		if (len < IP_HDR_SIZE) {
+			debug("bad ip->ip_len %d < %d\n", len, (int)IP_HDR_SIZE);
+			return;
+		}
 		debug_cond(DEBUG_NET_PKT, "len=%d, v=%02x\n",
 			   len, ip->ip_hl_v & 0xff);
 
@@ -1206,7 +1237,7 @@ void net_process_received_packet(uchar *in_packet, int len)
 		if ((ip->ip_hl_v & 0xf0) != 0x40)
 			return;
 		/* Can't deal with IP options (headers != 20 bytes) */
-		if ((ip->ip_hl_v & 0x0f) > 0x05)
+		if ((ip->ip_hl_v & 0x0f) != 0x05)
 			return;
 		/* Check the Checksum of the header */
 		if (!ip_checksum_ok((uchar *)ip, IP_HDR_SIZE)) {
@@ -1253,11 +1284,19 @@ void net_process_received_packet(uchar *in_packet, int len)
 		if (ip->ip_p == IPPROTO_ICMP) {
 			receive_icmp(ip, len, src_ip, et);
 			return;
+#if defined(CONFIG_PROT_TCP)
+		} else if (ip->ip_p == IPPROTO_TCP) {
+			debug_cond(DEBUG_DEV_PKT,
+				   "TCP PH (to=%pI4, from=%pI4, len=%d)\n",
+				   &dst_ip, &src_ip, len);
+			rxhand_tcp_f((union tcp_build_pkt *)ip, len);
+			return;
+#endif
 		} else if (ip->ip_p != IPPROTO_UDP) {	/* Only UDP packets */
 			return;
 		}
 
-		if (ntohs(ip->udp_len) < UDP_HDR_SIZE || ntohs(ip->udp_len) > ntohs(ip->ip_len))
+		if (ntohs(ip->udp_len) < UDP_HDR_SIZE || ntohs(ip->udp_len) > len - IP_HDR_SIZE)
 			return;
 
 		debug_cond(DEBUG_DEV_PKT,
@@ -1355,6 +1394,9 @@ static int net_check_prereq(enum proto_t protocol)
 
 #if defined(CONFIG_CMD_NFS)
 	case NFS:
+#endif
+#if defined(CONFIG_CMD_WGET)
+	case WGET:
 #endif
 		/* Fall through */
 	case TFTPGET:

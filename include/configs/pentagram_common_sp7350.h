@@ -75,6 +75,8 @@
 #define CONFIG_ARCH_MISC_INIT
 #define CONFIG_SYS_HZ			1000
 
+#define CONFIG_SYS_RX_ETH_BUFFER	64
+
 #include <asm/arch/sp_bootmode_bitmap_sp7350.h>
 
 #undef DBG_SCR
@@ -442,6 +444,31 @@
 	"dhcp ${addr_temp_kernel} ${serverip}:uImage" __stringify(USER_NAME) "; " \
 	"if test $? != 0; then " \
 		"echo Error occurred while getting images from tftp server!; " \
+		"exit; " \
+	"fi; " \
+	"verify ${addr_temp_kernel} ${do_secure}; "\
+	"setexpr addr_temp_kernel ${addr_temp_kernel} + 0x40; " \
+	"setexpr addr_dst_kernel ${addr_dst_kernel} + 0x40; " \
+	"echo unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
+	"unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
+	"echo booti ${addr_dst_kernel} - ${addr_dst_dtb}; " \
+	"booti ${addr_dst_kernel} - ${addr_dst_dtb}; " \
+	"\0" \
+"wget_boot=setenv ethaddr ${macaddr}; " \
+	"setenv filesize 0; " \
+	"setenv autoload 0; " \
+	"if test -z \"${httpdstp}\"; then " \
+		"setenv httpdstp 80; " \
+	"fi; " \
+	"setenv wget_dtb wget ${addr_dst_dtb} ${serverip}:/dtb" __stringify(USER_NAME) "; " \
+	"setenv wget_kernel wget ${addr_temp_kernel} ${serverip}:/uImage" __stringify(USER_NAME) "; " \
+	"printenv ethaddr serverip httpdstp wget_dtb wget_kernel; " \
+	"dhcp && " \
+	"${wget_dtb} && " \
+	"${wget_kernel} && " \
+	"iminfo ${addr_temp_kernel}; " \
+	"if test $? != 0; then " \
+		"echo Error occurred while getting images from http server!; " \
 		"exit; " \
 	"fi; " \
 	"verify ${addr_temp_kernel} ${do_secure}; "\
