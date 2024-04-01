@@ -12,6 +12,18 @@
 #include <asm/gpio.h>
 #define SP_MIPITX_LP_MODE	0
 #define SP_MIPITX_HS_MODE	1
+
+/*
+ * only for AC timing measurement
+ */
+//#define SP7350_MIPI_DSI_1500M_TEST
+//#define SP7350_MIPI_DSI_1200M_TEST
+/*
+ * use fine tune timing settings
+ * and set it before MIPITX module enable
+ */
+//#define SP7350_MIPI_DSI_TIMING_NEW
+
 /**************************************************************************
  *             F U N C T I O N    I M P L E M E N T A T I O N S           *
  **************************************************************************/
@@ -41,21 +53,25 @@ void DRV_mipitx_pllclk_init(void)
 	DISP_MOON3_REG->sft_cfg[15] = 0xffff40be; //PLLH BNKSEL = 0x2 (2000~2500MHz)
 	DISP_MOON3_REG->sft_cfg[16] = 0xffff0009; //PLLH
 	/*
-	 * PLLH Fvco = 2150MHz (fixed)
-	 *                             2150
-	 * MIPITX pixel CLK = ----------------------- = 59.72MHz
-	 *                     PST_DIV * MIPITX_SEL
+	 * PRESCALE = 1, FBKDIV = 86
+	 * PREDIV = 1, POSTDIV = 9, MIPITX_SEL=4
+	 * PLLH Fvco = 2150MHz (fixed) = 25M * PRESCALE * FBKDIV / PREDIV
+	 *
+	 *                     25M * PRESCALE * FBKDIV        2150
+	 * MIPITX pixel CLK = ---------------------------- = ------ = 59.72MHz
+	 *                    PREDIV * POSTDIV * MIPITX_SEL  9 * 4
 	 */
-	DISP_MOON3_REG->sft_cfg[14] = 0xffff0b50; //PLLH PST_DIV = div9 (default)
+	DISP_MOON3_REG->sft_cfg[14] = 0xffff0b50; //PLLH POSTDIV = div9 (default)
 	DISP_MOON3_REG->sft_cfg[25] = 0x07800180; //PLLH MIPITX_SEL = div4
 
 	//init TXPLL setting
 	G205_MIPITX_REG1->sft_cfg[10] = 0x00000003; //TXPLL enable and reset
 	/*
-	 * PRESCAL = 1, FBKDIV = 48, PRE_DIV = 1, EN_DIV5 = 0, PRE_DIV = 2, POST_DIV = 1
-	 *                    25 * PRESCAL * FBKDIV            25 * 48
-	 * MIPITX bit CLK = ------------------------------ = ----------- = 600MHz
-	 *                   PRE_DIV * POST_DIV * 5^EN_DIV5       2
+	 * PRESCALE = 1, FBKDIV = 48, PREDIV = 2, POSTDIV = 1, EN_DIV5 = 0
+	 * TXPLL Fvco = 600MHz = 25M * PRESCALE * FBKDIV / PREDIV
+	 *                    25M * PRESCALE * FBKDIV        25M * 1 * 48
+	 * MIPITX bit CLK = ----------------------------- = ----------- = 600MHz
+	 *                   PREDIV * POSTDIV * 5^EN_DIV5    2 * 1 * 1
 	 */
 	G205_MIPITX_REG1->sft_cfg[11] = 0x00003001; //TXPLL MIPITX CLK = 600MHz
 	G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 0x0 (320~640MHz)
@@ -142,16 +158,33 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 		#endif
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00012400; //TXPLL MIPITX CLK = 450MHz
 		} else if ((width == 1920) && (height == 1080)) {
-		#if 1 //fine tune PLLH clk to fit 148.5MHz
-			DISP_MOON3_REG->sft_cfg[14] = 0x00780038; //PLLH
-			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x13 << 7)); //PLLH
-			DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 148MHz (just test)
+
+		#if defined(SP7350_MIPI_DSI_1500M_TEST) //case in TXPLL = 1500M, then PLLH will be 250MHz
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780048; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x10 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 250MHz (just test)
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00001e10; //TXPLL MIPITX CLK = 1500MHz
+
+		#elif defined(SP7350_MIPI_DSI_1200M_TEST) //case in TXPLL = 1200M, then PLLH will be 200MHz
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780058; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x10 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 200MHz (just test)
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00003000; //TXPLL MIPITX CLK = 1200MHz
 		#else
-			DISP_MOON3_REG->sft_cfg[14] = 0x00780040; //PLLH
-			DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 143MHz (use this)
+			#if 1 //fine tune PLLH clk to fit 148.5MHz
+				DISP_MOON3_REG->sft_cfg[14] = 0x00780038; //PLLH
+				DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x13 << 7)); //PLLH
+				DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 148MHz (just test)
+				G205_MIPITX_REG1->sft_cfg[11] = 0x00002400; //TXPLL MIPITX CLK = 900MHz
+				//G205_MIPITX_REG1->sft_cfg[11] = 0x00002500; //TXPLL MIPITX CLK = 925MHz
+			#else
+				DISP_MOON3_REG->sft_cfg[14] = 0x00780040; //PLLH
+				DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 143MHz (use this)
+				G205_MIPITX_REG1->sft_cfg[11] = 0x00002400; //TXPLL MIPITX CLK = 900MHz
+				//G205_MIPITX_REG1->sft_cfg[11] = 0x00002500; //TXPLL MIPITX CLK = 925MHz
+			#endif
 		#endif
-			G205_MIPITX_REG1->sft_cfg[11] = 0x00002400; //TXPLL MIPITX CLK = 900MHz
-			//G205_MIPITX_REG1->sft_cfg[11] = 0x00002500; //TXPLL MIPITX CLK = 925MHz
+
 		} else if ((width == 3840) && (height == 2880)) { // 3840x2880
 			DISP_MOON3_REG->sft_cfg[14] = 0x007800420; //PLLH
 			DISP_MOON3_REG->sft_cfg[25] = 0x07800000; //PLLH MIPITX CLK = 430MHz max
@@ -180,6 +213,17 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 		lane = 4;
 
 	G205_MIPITX_REG1->sft_cfg[6] = 0x00101334; //PHY Reset(under reset) & falling edge
+
+#ifdef SP7350_MIPI_DSI_TIMING_NEW
+	// MIPITX  LANE CLOCK DATA Timing
+	G204_MIPITX_REG0->sft_cfg[5] = 0x00100010; //fix-modify
+	G204_MIPITX_REG0->sft_cfg[6] = 0x00100010; //fix
+	G204_MIPITX_REG0->sft_cfg[7] = 0x0a120020; //fix
+	G204_MIPITX_REG0->sft_cfg[8] = 0x1e080015; //fix-modify
+
+	// MIPITX Blanking Mode
+	G204_MIPITX_REG0->sft_cfg[13] = 0x00001100; //fix
+#endif
 
 	if (lane == 1)
 		G204_MIPITX_REG0->sft_cfg[15] = 0x11000001; //lane num = 1 and DSI_EN and ANALOG_EN
@@ -241,7 +285,7 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 #endif
 	} else if ((width == 480) && (height == 1280)) { // 480x1280
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080004; //fix
-		G204_MIPITX_REG0->sft_cfg[1] = 0x00011010; //VSA=0x01 VFP=0x10 VBP=0x10
+		G204_MIPITX_REG0->sft_cfg[1] = 0x00011110; //VSA=0x01 VFP=0x11 VBP=0x10
 		//G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
 	} else if ((width == 240) && (height == 320)) { // 240x320
@@ -275,6 +319,7 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 	// MIPITX  Video Mode WordCount Setting
 	G204_MIPITX_REG0->sft_cfg[19] |= (width << 16 | (width * 24 / 8)) ;
 
+#ifndef SP7350_MIPI_DSI_TIMING_NEW
 	// MIPITX  LANE CLOCK DATA Timing
 	G204_MIPITX_REG0->sft_cfg[5] = 0x00100008; //fix
 	G204_MIPITX_REG0->sft_cfg[6] = 0x00100010; //fix
@@ -283,7 +328,7 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 
 	// MIPITX Blanking Mode
 	G204_MIPITX_REG0->sft_cfg[13] = 0x00001100; //fix
-
+#endif
 	// MIPITX CLOCK CONTROL
 	G204_MIPITX_REG0->sft_cfg[30] = 0x00000001; //fix
 
@@ -300,6 +345,17 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 void DRV_mipitx_Init_1(int is_mipi_dsi_tx, int width, int height)
 {
 	G205_MIPITX_REG1->sft_cfg[6] = 0x00101330; //PHY Reset(under reset)
+
+#ifdef SP7350_MIPI_DSI_TIMING_NEW
+	// MIPITX  LANE CLOCK DATA Timing
+	G204_MIPITX_REG0->sft_cfg[5] = 0x00100010; //fix-modify
+	G204_MIPITX_REG0->sft_cfg[6] = 0x00100010; //fix
+	G204_MIPITX_REG0->sft_cfg[7] = 0x0a120020; //fix
+	G204_MIPITX_REG0->sft_cfg[8] = 0x1e080015; //fix-modify
+
+	// MIPITX Blanking Mode
+	G204_MIPITX_REG0->sft_cfg[13] = 0x00001100; //fix
+#endif
 
 	//G204_MIPITX_REG0->sft_cfg[15] = 0x11000001; //lane num = 1 and DSI_EN and ANALOG_EN
 	//G204_MIPITX_REG0->sft_cfg[15] = 0x11000011; //lane num = 2 and DSI_EN and ANALOG_EN
@@ -334,19 +390,21 @@ void DRV_mipitx_Init_1(int is_mipi_dsi_tx, int width, int height)
 	// MIPITX  Video Mode WordCount Setting
 	G204_MIPITX_REG0->sft_cfg[19] |= (width << 16 | (width * 24 / 8)) ;
 
-	// MIPITX  LANE CLOCK DATA Timing 
+#ifndef SP7350_MIPI_DSI_TIMING_NEW
+	// MIPITX  LANE CLOCK DATA Timing
 	G204_MIPITX_REG0->sft_cfg[5] = 0x00100008; //fix
 	G204_MIPITX_REG0->sft_cfg[6] = 0x00100010; //fix
 	G204_MIPITX_REG0->sft_cfg[7] = 0x0a120020; //fix
 	G204_MIPITX_REG0->sft_cfg[8] = 0x0a050010; //fix
 
-	// MIPITX Blanking Mode 
+	// MIPITX Blanking Mode
 	G204_MIPITX_REG0->sft_cfg[13] = 0x00001100; //fix
+#endif
 
-	// MIPITX CLOCK CONTROL 
+	// MIPITX CLOCK CONTROL
 	G204_MIPITX_REG0->sft_cfg[30] = 0x00000001; //fix
 
-	// MIPITX SWITCH to Video Mode 
+	// MIPITX SWITCH to Video Mode
 	G204_MIPITX_REG0->sft_cfg[15] = 0x11000031; //video mode
 }
 
@@ -467,12 +525,16 @@ void sp7350_dcs_write_buf(const void *data, size_t len)
 		for (i = 0; i < data_cnt; i++) {
 			check_data_fifo_full();
 			value = 0x00000000;
-			if (i * 4 + 0 >= len) data1[i * 4 + 0] = 0x00;
-			if (i * 4 + 1 >= len) data1[i * 4 + 1] = 0x00;
-			if (i * 4 + 2 >= len) data1[i * 4 + 2] = 0x00;
-			if (i * 4 + 3 >= len) data1[i * 4 + 3] = 0x00;
-			value |= (((u32)data1[i * 4 + 3] << 24) | ((u32)data1[i * 4 + 2] << 16) |
-				 ((u32)data1[i * 4 + 1] << 8) | ((u32)data1[i * 4 + 0] << 0));
+			//if (i * 4 + 0 >= len) data1[i * 4 + 0] = 0x00;
+			//if (i * 4 + 1 >= len) data1[i * 4 + 1] = 0x00;
+			//if (i * 4 + 2 >= len) data1[i * 4 + 2] = 0x00;
+			//if (i * 4 + 3 >= len) data1[i * 4 + 3] = 0x00;
+			//value |= (((u32)data1[i * 4 + 3] << 24) | ((u32)data1[i * 4 + 2] << 16) |
+			//	 ((u32)data1[i * 4 + 1] << 8) | ((u32)data1[i * 4 + 0] << 0));
+			if (i * 4 + 0 < len) value |= (data1[i * 4 + 0] << 0);
+			if (i * 4 + 1 < len) value |= (data1[i * 4 + 1] << 8);
+			if (i * 4 + 2 < len) value |= (data1[i * 4 + 2] << 16);
+			if (i * 4 + 3 < len) value |= (data1[i * 4 + 3] << 24);
 			G204_MIPITX_REG0->sft_cfg[11] = value; //G204.11
 		}
 
