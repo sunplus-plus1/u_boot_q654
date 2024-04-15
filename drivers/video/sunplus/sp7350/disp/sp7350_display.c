@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * SUNPLUS SP7350 MIPI CSI/DSI TX display driver
+ * MIPI CSI/DSI TX display driver
  *
- * (C) Copyright 2022 hammer.hsieh <hammer.hsieh@sunplus.com>
+ * hammer.hsieh <hammer.hsieh@sunplus.com>
  */
 
 #include <common.h>

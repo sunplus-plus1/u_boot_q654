@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2022 Sunplus, Inc.
  *
  * DWC3 controller driver
  *

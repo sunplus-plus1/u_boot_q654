@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/*
- * Copyright (C) Sunplus Technology Co., Ltd.
- *       All rights reserved.
- */
+
 #include <asm/arch/clk-sunplus.h>
 #include <dt-bindings/clock/sp7350.h>
 

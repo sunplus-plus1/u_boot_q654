@@ -1,14 +1,4 @@
 /********************************************************
- * Copyright (c) 2022 by Sunplus Technology Co., Ltd.
- *    ____               __
- *   / __/_ _____  ___  / /_ _____
- *  _\ \/ // / _ \/ _ \/ / // (_-<
- * /___/\_,_/_//_/ .__/_/\_,_/___/
- *              /_/
- * Sunplus Technology Co., Ltd.19, Innovation First Road,
- * Science-Based Industrial Park, Hsin-Chu, Taiwan, R.O.C.
- * ------------------------------------------------------
- *
  * Description :  dispplay register header for sp7350
  * ------------------------------------------------------
  * Rev  Date          Author(s)      Status & Comments

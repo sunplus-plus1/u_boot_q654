@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2022 Sunplus - All Rights Reserved
- *
  * Author(s): Hammer Hsieh <hammer.hsieh@sunplus.com>
  */
 

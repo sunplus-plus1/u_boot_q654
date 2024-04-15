@@ -1,9 +1,5 @@
- /*
-  * (C) Copyright 2015
-  * Sunplus Technology. <http://www.sunplus.com/>
-  *
-  * SPDX-License-Identifier:     GPL-2.0+
-  */
+// SPDX-License-Identifier:     GPL-2.0+
+ 
 #include <common.h>
 #include <command.h>
 #include <linux/compiler.h>

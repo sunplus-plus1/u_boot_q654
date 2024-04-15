@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright 2022 Sunplus, Inc.
  *
  * DWC3 Phy driver
  *
- * Author:ChingChouHuang<chingchou.huang@sunplus.com>
  */
 
 #include <dm.h>

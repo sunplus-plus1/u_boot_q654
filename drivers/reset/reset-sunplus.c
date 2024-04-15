@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Sunplus Reset Controller driver
+ * Reset Controller driver
  *
- * Copyright (C) 2020 Sunplus Inc.
  * Author: qinjian <qinjian@sunmedia.com.cn>
  */
 
