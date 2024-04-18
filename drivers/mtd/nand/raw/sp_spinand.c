@@ -1475,7 +1475,7 @@ static int sp_spinand_init(struct sp_spinand_info *info)
 	info->nand.ecc.layout = &info->ecc_layout;
 	info->nand.ecc.mode = NAND_ECC_HW;
 
-#if 0 // We can't find this register on Q645
+#if 0 // We can't find this register on SP7350
 	SPINAND_SET_CLKSRC(CONFIG_SPINAND_CLK_SRC);
 #endif
 	info->spi_clk_div = CONFIG_SPINAND_CLK_DIV;
@@ -1649,7 +1649,6 @@ static int sp_spinand_probe(struct udevice *dev)
 }
 
 static const struct udevice_id sunplus_spinand[] = {
-	{ .compatible = "sunplus,q645-spi-nand"},
 	{ .compatible = "sunplus,sp7350-spi-nand"},
 	{}
 };
@@ -2581,9 +2580,7 @@ static int sp_spinand_test_driving(int argc, char * const argv[])
 
 		printk("reg base: 0x%p, val: %d\n", addr, val);
 
-		/* For Q645, SPI-NAND(X1) use 6 pins, G_MX16~21.
-		 * For Q654, SPI-NAND(X1) use 6 pins, G_MX30~35.
-		 */
+		/* For SP7350, SPI-NAND(X1) use 6 pins, G_MX30~35. */
 		for (i = 0; i < 6; i++) {
 			set_pad_driving_strength(addr, START_PIN_NUM+i, val);
 		}
