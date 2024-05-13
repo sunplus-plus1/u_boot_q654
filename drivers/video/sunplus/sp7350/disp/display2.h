@@ -50,6 +50,7 @@ typedef char                SINT8;
 struct sp7350_disp_priv {
 	struct udevice *chip1;
 	struct udevice *chip2;
+	struct udevice *chip3;
 	void __iomem *regs;
 	//struct display_timing timing;
 	struct gpio_desc reset;

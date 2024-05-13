@@ -11,6 +11,7 @@
 
 #define LT8912B_I2C_ADDR_MAIN 0x48
 #define LT8912B_I2C_ADDR_CEC_DSI 0x49
+#define LT8912B_I2C_ADDR_HDMITX_DSI 0x4a
 
 /*
  * lt8912_input_timing[x][y]
@@ -19,10 +20,10 @@
  */
 static const u32 lt8912_input_timing[11][10] = {
 	/* (w   h)   HSA   HFP   HBP   HACT  VSA  VFP  VBP   VACT */
-	{ 720,  480, 0x3e, 0x3c, 0x10,  720, 0x6, 0x9, 0x1E,  480}, /* 480P */
+	{ 720,  480, 0x3e, 0x10, 0x3c,  720, 0x6, 0x9, 0x1E,  480}, /* 480P */
 	{ 720,  576, 0x80, 0x28, 0x58,  720, 0x4, 0x1, 0x17,  576}, /* 576P */
-	{1280,  720, 0x28, 0xdc, 0x6e, 1280, 0x5, 0x5, 0x14,  720}, /* 720P */
-	{1920, 1080, 0x2c, 0x94, 0x58, 1920, 0x5, 0x4, 0x24, 1080}, /* 1080P */
+	{1280,  720, 0x28, 0x6e, 0xdc, 1280, 0x5, 0x5, 0x14,  720}, /* 720P */
+	{1920, 1080, 0x2c, 0x58, 0x94, 1920, 0x5, 0x4, 0x24, 1080}, /* 1080P */
 	{  64,   64, 0x14, 0x28, 0x58,   64, 0x5, 0x5, 0x24,   64}, /* 64x64 */
 	{ 128,  128, 0x14, 0x28, 0x58,  128, 0x5, 0x5, 0x24,  128}, /* 128x128 */
 	{  64, 2880, 0x14, 0x28, 0x58,   64, 0x5, 0x5, 0x24, 2880}, /* 64x2880 */
@@ -285,6 +286,132 @@ void lt8912_write_test_pattern(struct udevice *p2)
 
 	dm_i2c_reg_write(p2, 0x51, 0x80); //pattern_en
 	#endif
+}
+
+void lt8912_hdmi_mode_setup(struct udevice *p1, int hdmi_dvi_sel)
+{
+	if (hdmi_dvi_sel) {
+		//printf("Disp: set lt8912b hdmi mode\n");
+		dm_i2c_reg_write(p1, 0xb2, 0x01); //HDMI Mode
+	} else {
+		//printf("Disp: set lt8912b dvi mode\n");
+		dm_i2c_reg_write(p1, 0xb2, 0x00); //DVI Mode (default)
+	}
+}
+
+void lt8912_audio_setup(struct udevice *p1, struct udevice *p3, int w, int h)
+{
+	u8 avi_pb0, avi_pb1, avi_pb2, avi_pb4, chksum;
+	u8 avi_pb6, avi_pb7, avi_pb8, avi_pb9;
+	u8 avi_pb10, avi_pb11, avi_pb12, avi_pb13;
+
+	dm_i2c_reg_write(p3, 0x06, 0x08);
+	dm_i2c_reg_write(p3, 0x07, 0xf0);
+	dm_i2c_reg_write(p3, 0x09, 0x00);
+	#if 1 //audio 48k
+	dm_i2c_reg_write(p3, 0x0f, 0x2b); //set 48kHz
+	dm_i2c_reg_write(p3, 0x37, 0x00);
+	dm_i2c_reg_write(p3, 0x36, 0x18);
+	dm_i2c_reg_write(p3, 0x35, 0x00); //N = 6144(0x1800)
+	#else //audio 44.1k
+	dm_i2c_reg_write(p3, 0x0f, 0x0b); //set 44.1kHz
+	dm_i2c_reg_write(p3, 0x37, 0x00);
+	dm_i2c_reg_write(p3, 0x36, 0x18);
+	dm_i2c_reg_write(p3, 0x35, 0x80); //N = 6272(0x1880)
+	#endif
+
+	dm_i2c_reg_write(p3, 0x34, 0xe2);
+
+	dm_i2c_reg_write(p3, 0x3c, 0x41);
+	dm_i2c_reg_write(p3, 0x3e, 0x0a);
+
+	if ((w == 720) && (h == 480)) {
+		dm_i2c_reg_write(p1, 0xab, 0x0c);
+
+		avi_pb1 = 0x1C;
+		avi_pb2 = 0x58;
+		avi_pb4 = 0x02; //VIC_CODE = 2
+
+		avi_pb6 = 0x24; //36
+		avi_pb7 = 0x00;
+		avi_pb8 = 0x04; //516
+		avi_pb9 = 0x02;
+		avi_pb10 = 0x7a; //122
+		avi_pb11 = 0x00;
+		avi_pb12 = 0x4a; //842
+		avi_pb13 = 0x03;
+
+	} else if ((w == 1280) && (h == 720)) {
+		dm_i2c_reg_write(p1, 0xab, 0x03);
+
+		avi_pb1 = 0x1C;
+		avi_pb2 = 0xa8;
+		avi_pb4 = 0x04; //VIC_CODE = 4
+
+		avi_pb6 = 0x19; //25
+		avi_pb7 = 0x00;
+		avi_pb8 = 0xe9; //745
+		avi_pb9 = 0x02;
+		avi_pb10 = 0x04; //260
+		avi_pb11 = 0x01;
+		avi_pb12 = 0x04; //1540
+		avi_pb13 = 0x06;
+
+	} else if ((w == 1920) && (h == 1080)) {
+		dm_i2c_reg_write(p1, 0xab, 0x03);
+
+		avi_pb1 = 0x1C;
+		avi_pb2 = 0xa8;
+		avi_pb4 = 0x10; //VIC_CODE = 16
+
+		avi_pb6 = 0x29; //41
+		avi_pb7 = 0x00;
+		avi_pb8 = 0x61; //1121
+		avi_pb9 = 0x04;
+		avi_pb10 = 0xc0; //192
+		avi_pb11 = 0x00;
+		avi_pb12 = 0x40; //2112
+		avi_pb13 = 0x08;
+
+	} else { //1080P
+		dm_i2c_reg_write(p1, 0xab, 0x03);
+
+		avi_pb1 = 0x1C;
+		avi_pb2 = 0xa8;
+		avi_pb4 = 0x10; //VIC_CODE = 16
+
+		avi_pb6 = 0x29; //41
+		avi_pb7 = 0x00;
+		avi_pb8 = 0x61; //1121
+		avi_pb9 = 0x04;
+		avi_pb10 = 0xc0; //192
+		avi_pb11 = 0x00;
+		avi_pb12 = 0x40; //2112
+		avi_pb13 = 0x08;
+	}
+
+	chksum = 0x82 + 0x02 + 0x0d + avi_pb1 + avi_pb2 + avi_pb4;
+	chksum += (avi_pb6 + avi_pb7 +avi_pb8 + avi_pb9);
+	chksum += (avi_pb10 + avi_pb11 +avi_pb12 + avi_pb13);
+	avi_pb0 = 0x100 - chksum;
+
+	dm_i2c_reg_write(p3, 0x43, avi_pb0);
+
+	dm_i2c_reg_write(p3, 0x44, avi_pb1);
+	dm_i2c_reg_write(p3, 0x45, avi_pb2);
+	//dm_i2c_reg_write(p3, 0x46, 0x00);
+	dm_i2c_reg_write(p3, 0x47, avi_pb4);
+	//dm_i2c_reg_write(p3, 0x48, 0x00);
+
+	dm_i2c_reg_write(p3, 0x49, avi_pb6);
+	dm_i2c_reg_write(p3, 0x4a, avi_pb7);
+	dm_i2c_reg_write(p3, 0x4b, avi_pb8);
+	dm_i2c_reg_write(p3, 0x4c, avi_pb9);
+	dm_i2c_reg_write(p3, 0x4d, avi_pb10);
+	dm_i2c_reg_write(p3, 0x4e, avi_pb11);
+	dm_i2c_reg_write(p3, 0x4f, avi_pb12);
+	dm_i2c_reg_write(p3, 0x50, avi_pb13);
+
 }
 
 #endif	//__DISP_I2C_LT8912B_H__

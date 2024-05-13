@@ -45,6 +45,8 @@ extern void lt8912_write_param_by_resolution(struct udevice *p2, int w, int h);
 extern void lt8912_write_dds_config(struct udevice *p2);
 extern void lt8912_write_rxlogicres_config(struct udevice *p1);
 extern void lt8912_write_lvds_config(struct udevice *p2);
+extern void lt8912_hdmi_mode_setup(struct udevice *p1, int hdmi_dvi_sel);
+extern void lt8912_audio_setup(struct udevice *p1, struct udevice *p3, int w, int h);
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -60,6 +62,7 @@ static int sp7350_display_probe(struct udevice *dev)
 	u32 osd_base_addr;
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
 	int i;
+	unsigned int lt8912b_hdmi_dvi_sel = 0;
 #elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 	int i;
 #endif
@@ -107,6 +110,8 @@ static int sp7350_display_probe(struct udevice *dev)
 	DRV_OSD_Init(width, height);
 
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
+	lt8912b_hdmi_dvi_sel = dev_read_u32_default(dev,"sp7350,lt8912b_hdmi_mode", 0);
+	//printf("Disp: sp7350,lt8912b_hdmi_mode %d \n", lt8912b_hdmi_dvi_sel);
 #elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 #else
 	if (is_mipi_dsi_tx) {
@@ -213,8 +218,9 @@ skip_attiny88:
 			if (i == 7) {
 				printf("Disp: lt8912b bridge not found\n");
 				goto skip_lt8912b;
-			} else
+			} else {
 				continue;
+			}
 		}
 
 		ret = i2c_get_chip_for_busnum(i, LT8912B_I2C_ADDR_CEC_DSI, 1, &priv->chip2);
@@ -222,15 +228,28 @@ skip_attiny88:
 			//printf("i2c bus%d chip2 scan ret %d\n", i, ret);
 			return ret;
 		} else {
+			;//break;
+		}
+
+		ret = i2c_get_chip_for_busnum(i, LT8912B_I2C_ADDR_HDMITX_DSI, 1, &priv->chip3);
+		if (ret) {
+			//printf("i2c bus%d chip3 scan ret %d\n", i, ret);
+			return ret;
+		} else {
 			break;
 		}
 	}
-	printf("Disp: init lt8912b bridge ic\n");
 
 	if ((CONFIG_VIDEO_SP7350_MAX_XRES == 480) && (CONFIG_VIDEO_SP7350_MAX_YRES == 272)){
+		lt8912b_hdmi_dvi_sel = 0; //dvi mode only
 		width = 720;
 		height = 480;
 	}
+
+	if (lt8912b_hdmi_dvi_sel)
+		printf("Disp:: init lt8912b bridge ic\n");
+	else
+		printf("Disp: init lt8912b bridge ic\n");
 
 	lt8912_write_init_config(priv->chip1);
 
@@ -243,6 +262,13 @@ skip_attiny88:
 	lt8912_write_rxlogicres_config(priv->chip1);
 
 	lt8912_write_lvds_config(priv->chip2);
+
+	if (lt8912b_hdmi_dvi_sel)
+		lt8912_hdmi_mode_setup(priv->chip1, 1); //0: DVI Mode, (1: HDMI Mode)
+	else
+		lt8912_hdmi_mode_setup(priv->chip1, 0); //(0: DVI Mode), 1: HDMI Mode
+
+	lt8912_audio_setup(priv->chip1, priv->chip3, width, height);
 
 skip_lt8912b:
 
