@@ -714,7 +714,7 @@ int designware_eth_read_rom_hwaddr(struct udevice *dev)
 
 	if (otp_mac_addr < 128) {
 		for (i = 0; i < ARP_HLEN; i++) {
-			read_otp_data(HB_GP_REG, SP_OTPRX_REG, otp_mac_addr+i, (char*)&otp_mac[i]);
+			read_otp_data(HB_GP_REG, SP_OTPRX_REG, otp_mac_addr+i, (char*)&otp_mac[ARP_HLEN - 1 - i]);
 		}
 
 		//printf("mac address = %pM\n", otp_mac);
