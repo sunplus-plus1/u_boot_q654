@@ -315,10 +315,16 @@
 #endif
 #endif
 
+#if (OVERLAYFS == 1)
+#define ROOTFS_TYPE " rootfstype=squashfs\0"
+#else
+#define ROOTFS_TYPE "\0"
+#endif
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 "sz_sign="                       __stringify(SIGN_SIZE) "\0" \
 "b_c=console=ttyS0,115200 earlycon\0" \
-"emmc_root=root=/dev/mmcblk0p8 rw rootwait\0" \
+"emmc_root=root=/dev/mmcblk0p8 rw rootwait" ROOTFS_TYPE \
 "stdin=" STDIN_CFG "\0" \
 "stdout=" STDOUT_CFG "\0" \
 "stderr=" STDOUT_CFG "\0" \
