@@ -60,6 +60,7 @@ struct gpio_desc *gpiodir;
 struct udevice *phydev;
 
 #define UPHY0_U3_REG ((volatile struct uphy_u3_regs *)RF_AMBA(189, 0))
+#define UPHY0_ECO_REG ((volatile struct uphy_u3_regs *)RF_GRP(149, 0))
 #endif
 
 static void uphy_init(void)
@@ -68,6 +69,8 @@ static void uphy_init(void)
 #ifndef CONFIG_BOOT_ON_ZEBU
 	volatile struct uphy_u3_regs *dwc3phy_reg;
 	u32 result, i = 0;
+
+	UPHY0_ECO_REG->cfg[29] |= (0x1 << 30); // for usb3 vbus eco setting
 #endif
 #if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	MOON2_REG->clken[5] = RF_MASK_V_SET(1 << 14); // U3PHY0_CLKEN=1
