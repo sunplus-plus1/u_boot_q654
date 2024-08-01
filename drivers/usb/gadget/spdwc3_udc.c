@@ -56,6 +56,7 @@ struct uphy_u3_regs {
 };
 
 #define UPHY0_U3_REG ((volatile struct uphy_u3_regs *)SP7350_RF_AMBA(189, 0))
+#define UPHY0_ECO_REG ((volatile struct uphy_u3_regs *)SP7350_RF_GRP(149, 0))
 
 static struct dwc3_device dwc3_device_data = {
 	.maximum_speed = USB_SPEED_SUPER,
@@ -70,6 +71,8 @@ void uphy_init(void)
 {
 	volatile struct uphy_u3_regs *dwc3phy_reg;
 	u32 result, i = 0;
+
+	UPHY0_ECO_REG->cfg[29] &= ~(0x1 << 30); // for usb3 vbus eco setting
 
 	SP7350_MOON2_REG_AO->clken[5] = SP7350_RF_MASK_V_SET(1 << 14);
 	SP7350_MOON2_REG_AO->clken[5] = SP7350_RF_MASK_V_SET(1 << 13);
