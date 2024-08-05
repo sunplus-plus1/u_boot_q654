@@ -34,6 +34,20 @@ void DRV_TCON_Init(int width, int height)
 	}
 	else if ((width == 800) && (height == 480)) {
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
+		#if 1 //update for sync drm setting
+		G199_TCON0_REG0->sft_cfg[12] = 0x0000038d;
+		G199_TCON0_REG0->sft_cfg[13] = 0x00000391;
+		G199_TCON0_REG0->sft_cfg[20] = 0x000001fd;
+		G199_TCON0_REG0->sft_cfg[21] = 0x00000000;
+
+		G199_TCON0_REG0->sft_cfg[23] = 0x0000038d;
+		G199_TCON0_REG0->sft_cfg[24] = 0x00000391;
+
+		G199_TCON0_REG0->sft_cfg[25] = 0x00000000;
+		G199_TCON0_REG0->sft_cfg[26] = 0x0000031f;
+		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
+		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
+		#else
 		G199_TCON0_REG0->sft_cfg[12] = 0x00000361;
 		G199_TCON0_REG0->sft_cfg[13] = 0x00000365;
 		G199_TCON0_REG0->sft_cfg[20] = 0x000001fd;
@@ -46,6 +60,7 @@ void DRV_TCON_Init(int width, int height)
 		G199_TCON0_REG0->sft_cfg[26] = 0x0000031f;
 		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
+		#endif
 #else
 	;//TBD
 #endif
@@ -64,6 +79,20 @@ void DRV_TCON_Init(int width, int height)
 		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
 	} else if ((width == 480) && (height == 1280)) {
+		#if 1 //update for sync drm setting
+		G199_TCON0_REG0->sft_cfg[12] = 0x0000029e;//0x00000269;
+		G199_TCON0_REG0->sft_cfg[13] = 0x000002a2;//0x00000269;
+		G199_TCON0_REG0->sft_cfg[20] = 0x0000051f;//0x0000052d;
+		G199_TCON0_REG0->sft_cfg[21] = 0x00000000;
+
+		G199_TCON0_REG0->sft_cfg[23] = 0x0000029e;//0x00000269;
+		G199_TCON0_REG0->sft_cfg[24] = 0x000002a2;//0x0000026d;
+
+		G199_TCON0_REG0->sft_cfg[25] = 0x00000000;
+		G199_TCON0_REG0->sft_cfg[26] = 0x000001df;
+		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
+		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
+		#else
 		G199_TCON0_REG0->sft_cfg[12] = 0x00000264;//0x00000269;
 		G199_TCON0_REG0->sft_cfg[13] = 0x00000268;//0x00000269;
 		G199_TCON0_REG0->sft_cfg[20] = 0x00000521;//0x0000052d;
@@ -76,6 +105,7 @@ void DRV_TCON_Init(int width, int height)
 		G199_TCON0_REG0->sft_cfg[26] = 0x000001df;
 		//G199_TCON0_REG0->sft_cfg[27] = 0x00000028;
 		//G199_TCON0_REG0->sft_cfg[28] = 0x00000b69;
+		#endif
 	} else if ((width == 240) && (height == 320)) {
 		#if 1 //fine tune for screen flicker
 		G199_TCON0_REG0->sft_cfg[12] = 0x000002A3;

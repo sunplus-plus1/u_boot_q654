@@ -32,11 +32,19 @@ void DRV_TGEN_Init(int width, int height)
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 
+		#if 1 //update for sync drm setting
+		G197_TGEN_REG->sft_cfg[8] = 0x00000395;
+		G197_TGEN_REG->sft_cfg[9] = 0x00000320;
+		G197_TGEN_REG->sft_cfg[10] = 0x000001fe;
+		G197_TGEN_REG->sft_cfg[11] = 0x000001f8;
+		G197_TGEN_REG->sft_cfg[12] = 0x00000017;
+		#else
 		G197_TGEN_REG->sft_cfg[8] = 0x00000369;
 		G197_TGEN_REG->sft_cfg[9] = 0x00000320;
 		G197_TGEN_REG->sft_cfg[10] = 0x000001fe;
 		G197_TGEN_REG->sft_cfg[11] = 0x000001f8;
 		G197_TGEN_REG->sft_cfg[12] = 0x00000017;
+		#endif
 #else
 	;//TBD
 #endif
@@ -51,11 +59,19 @@ void DRV_TGEN_Init(int width, int height)
 	} else if ( (width == 480) && (height == 1280) ) {
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 
+		#if 1 //update for sync drm setting
+		G197_TGEN_REG->sft_cfg[8] = 0x000002a6;
+		G197_TGEN_REG->sft_cfg[9] = 0x000001e0;
+		G197_TGEN_REG->sft_cfg[10] = 0x00000520;
+		G197_TGEN_REG->sft_cfg[11] = 0x00000511;
+		G197_TGEN_REG->sft_cfg[12] = 0x00000010;
+		#else
 		G197_TGEN_REG->sft_cfg[8] = 0x0000026c;
 		G197_TGEN_REG->sft_cfg[9] = 0x000001e0;
 		G197_TGEN_REG->sft_cfg[10] = 0x00000522;
 		G197_TGEN_REG->sft_cfg[11] = 0x00000512;
 		G197_TGEN_REG->sft_cfg[12] = 0x00000011;
+		#endif
 	} else if ( (width == 240) && (height == 320) ) {
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 

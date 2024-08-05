@@ -99,15 +99,24 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 		} else if ((width == 800) && (height == 480)) {
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 			#if 1//fine tune PLLH clk to fit 26.563MHz
+				#if 1 //update for sync drm setting
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780078; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x31 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = xxxMHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00001b00; //TXPLL MIPITX CLK = xxxMHz
+				#else
 			DISP_MOON3_REG->sft_cfg[14] = 0x00780058; //PLLH
 			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x15 << 7)); //PLLH
 			DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 26.563MHz
+			//G205_MIPITX_REG1->sft_cfg[11] = 0x00021E00; //TXPLL MIPITX CLK = 175MHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00000d10; //TXPLL MIPITX CLK = 650MHz
+				#endif
 			#else
 			//DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH
 			//DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 30MHz
-			#endif
 			//G205_MIPITX_REG1->sft_cfg[11] = 0x00021E00; //TXPLL MIPITX CLK = 175MHz
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00000d10; //TXPLL MIPITX CLK = 650MHz
+			#endif
 #else
 			;//TBD
 #endif
@@ -117,19 +126,35 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 			//DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 54MHz
 			//G205_MIPITX_REG1->sft_cfg[11] = 0x00023100; //TXPLL MIPITX CLK = 306.25MHz
 		} else if ((width == 480) && (height == 1280)) {
+			#if 1 //update for sync drm setting
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780000; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x16 << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800780; //PLLH MIPITX CLK = xxxMHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00023400; //TXPLL MIPITX CLK = xxxMHz
+			//G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			#else
 			DISP_MOON3_REG->sft_cfg[14] = 0x00780028; //PLLH
 			DISP_MOON3_REG->sft_cfg[25] = 0x07800380; //PLLH MIPITX CLK = 49MHz	
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00000c00; //TXPLL MIPITX CLK = 300MHz
 			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			#endif
 		} else if ((width == 240) && (height == 320)) {
 			#if 1 //fine tune for screen flicker
+			//#if 1 //update for sync drm setting
 			DISP_MOON3_REG->sft_cfg[14] = 0x80000000; //PLLH pre_scal = div1
 			DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH post_div = x101-0xxx
 			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x14 << 7)); //PLLH
 			DISP_MOON3_REG->sft_cfg[25] = 0x07800780; //PLLH MIPITX CLK = 14.583MHz
-			G205_MIPITX_REG1->sft_cfg[11] = 0x00000E00; //TXPLL MIPITX CLK = 350MHz
-			//G205_MIPITX_REG1->sft_cfg[11] = 0x00000F00; //TXPLL MIPITX CLK = 375MHz
-			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00023800; //TXPLL MIPITX CLK = xxxMHz
+			//#else
+			//DISP_MOON3_REG->sft_cfg[14] = 0x80000000; //PLLH pre_scal = div1
+			//DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH post_div = x101-0xxx
+			//DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x14 << 7)); //PLLH
+			//DISP_MOON3_REG->sft_cfg[25] = 0x07800780; //PLLH MIPITX CLK = 14.583MHz
+			//G205_MIPITX_REG1->sft_cfg[11] = 0x00000E00; //TXPLL MIPITX CLK = 350MHz
+			////G205_MIPITX_REG1->sft_cfg[11] = 0x00000F00; //TXPLL MIPITX CLK = 375MHz
+			//G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
+			//#endif
 			#else
 			DISP_MOON3_REG->sft_cfg[14] = 0x80000000; //PLLH pre_scal = div1
 			DISP_MOON3_REG->sft_cfg[14] = 0x00780050; //PLLH post_div = x101-0xxx
@@ -175,11 +200,13 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 				DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 148MHz (just test)
 				G205_MIPITX_REG1->sft_cfg[11] = 0x00002400; //TXPLL MIPITX CLK = 900MHz
 				//G205_MIPITX_REG1->sft_cfg[11] = 0x00002500; //TXPLL MIPITX CLK = 925MHz
+				G205_MIPITX_REG1->sft_cfg[12] = 0x00000141; //TXPLL BNKSEL = 640MHz -- 1000MHz
 			#else
 				DISP_MOON3_REG->sft_cfg[14] = 0x00780040; //PLLH
 				DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 143MHz (use this)
 				G205_MIPITX_REG1->sft_cfg[11] = 0x00002400; //TXPLL MIPITX CLK = 900MHz
 				//G205_MIPITX_REG1->sft_cfg[11] = 0x00002500; //TXPLL MIPITX CLK = 925MHz
+				G205_MIPITX_REG1->sft_cfg[12] = 0x00000141; //TXPLL BNKSEL = 640MHz -- 1000MHz
 			#endif
 		#endif
 
@@ -282,10 +309,15 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
 #endif
 	} else if ((width == 480) && (height == 1280)) { // 480x1280
+		#if 1 //update for sync drm setting
+		G204_MIPITX_REG0->sft_cfg[0] = 0x0408000c; //fix
+		G204_MIPITX_REG0->sft_cfg[1] = 0x0004100c; //VSA=0x01 VFP=0x11 VBP=0x10
+		#else
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080004; //fix
 		G204_MIPITX_REG0->sft_cfg[1] = 0x00011110; //VSA=0x01 VFP=0x11 VBP=0x10
 		//G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
+		#endif
 	} else if ((width == 240) && (height == 320)) { // 240x320
 		#if 1 //fine tune for screen flicker
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
