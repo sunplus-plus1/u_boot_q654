@@ -84,8 +84,8 @@ void raspberrypi_post_init(struct udevice *p1)
 	 * add delay for reserving response time between dm_i2c_reg_write()
 	 */
 	udelay(15);
-	//dm_i2c_reg_write(p1, REG_PORTA, BIT(2));
-	dm_i2c_reg_write(p1, REG_PORTA, BIT(3));
+	dm_i2c_reg_write(p1, REG_PORTA, BIT(2));
+	//dm_i2c_reg_write(p1, REG_PORTA, BIT(3));
 
 }
 
