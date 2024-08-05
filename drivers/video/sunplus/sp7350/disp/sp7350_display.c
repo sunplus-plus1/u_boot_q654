@@ -295,6 +295,7 @@ static const struct video_ops sp7350_display_ops = {
 
 static const struct udevice_id sp7350_display_ids[] = {
 	{ .compatible = "sunplus,sp7350-display" },
+	{ .compatible = "sunplus,sp7350-display-subsystem" },
 	{ }
 };
 

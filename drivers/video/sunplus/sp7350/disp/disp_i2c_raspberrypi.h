@@ -80,8 +80,13 @@ void raspberrypi_post_init(struct udevice *p1)
 	dm_i2c_reg_write(p1, REG_PWM, 255);
 
 	/* BIT(2) for horizontal flip, BIT(3) for vertical flip */
+	/*
+	 * add delay for reserving response time between dm_i2c_reg_write()
+	 */
+	udelay(15);
 	//dm_i2c_reg_write(p1, REG_PORTA, BIT(2));
 	dm_i2c_reg_write(p1, REG_PORTA, BIT(3));
+
 }
 
 #endif	//__DISP_I2C_RASPBERRYPI_H__
