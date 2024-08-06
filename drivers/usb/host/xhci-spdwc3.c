@@ -80,6 +80,7 @@ static void uphy_init(void)
 	mdelay(1);
 	MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 14); // U3PHY0_RESET=0
 	MOON0_REG->reset[5] = RF_MASK_V_CLR(1 << 13); // USB30C0_RESET=0
+	mdelay(1);
 #endif
 
 #ifndef CONFIG_BOOT_ON_ZEBU
@@ -92,7 +93,7 @@ static void uphy_init(void)
 			break;
 
 		if (i++ > 10) {
-			debug("PHY0_TIMEOUT_ERR0 ");
+			debug("PHY0_TIMEOUT_ERR0 \n");
 			i = 0;
 			break;
 		}
@@ -112,7 +113,7 @@ static void uphy_init(void)
 			break;
 
 		if (i++ > 10) {
-			debug("PHY0_TIMEOUT_ERR1 ");
+			debug("PHY0_TIMEOUT_ERR1 \n");
 			i = 0;
 			break;
 		}

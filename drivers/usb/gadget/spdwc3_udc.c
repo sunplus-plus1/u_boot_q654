@@ -82,6 +82,7 @@ void uphy_init(void)
 	mdelay(1);
 	SP7350_MOON0_REG_AO->reset[5] = SP7350_RF_MASK_V_CLR(1 << 14);
 	SP7350_MOON0_REG_AO->reset[5] = SP7350_RF_MASK_V_CLR(1 << 13);
+	mdelay(1);
 
 	dwc3phy_reg = (volatile struct uphy_u3_regs *) UPHY0_U3_REG;
 	dwc3phy_reg->cfg[1] |= 0x03;
@@ -92,7 +93,7 @@ void uphy_init(void)
 			break;
 
 		if (i++ > 10) {
-			debug("PHY0_TIMEOUT_ERR0 ");
+			debug("PHY0_TIMEOUT_ERR0 \n");
 			i = 0;
 			break;
 		}
@@ -111,7 +112,7 @@ void uphy_init(void)
 			break;
 
 		if (i++ > 10) {
-			debug("PHY0_TIMEOUT_ERR1 ");
+			debug("PHY0_TIMEOUT_ERR1 \n");
 			i = 0;
 			break;
 		}
