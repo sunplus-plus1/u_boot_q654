@@ -110,8 +110,8 @@ static int sp7350_display_probe(struct udevice *dev)
 	DRV_OSD_Init(width, height);
 
 #if CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_LT8912B_BRIDGE)
-	lt8912b_hdmi_dvi_sel = dev_read_u32_default(dev,"sp7350,lt8912b_hdmi_mode", 0);
-	//printf("Disp: sp7350,lt8912b_hdmi_mode %d \n", lt8912b_hdmi_dvi_sel);
+	lt8912b_hdmi_dvi_sel = dev_read_u32_default(dev,"sunplus,lt8912b_hdmi_mode", 0);
+	//printf("Disp: sunplus,lt8912b_hdmi_mode %d \n", lt8912b_hdmi_dvi_sel);
 #elif CONFIG_IS_ENABLED(DM_I2C) && defined(CONFIG_SP7350_RASPBERRYPI_DSI_PANEL)
 #else
 	if (is_mipi_dsi_tx) {
