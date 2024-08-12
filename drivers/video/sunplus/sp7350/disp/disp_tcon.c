@@ -195,29 +195,39 @@ void DRV_TCON_Init(int width, int height)
 	if ((width == 720) && (height == 480)) {
 		//TBD
 	} else if ((width == 800) && (height == 480)) {
-		//TBD
+		//G200_TCON0_REG1->sft_cfg[6] = 0x00000001; //Internal , H color bar
+		G200_TCON0_REG1->sft_cfg[7] = 0x00000394; //HTT
+		G200_TCON0_REG1->sft_cfg[8] = 0x000041fd; //HSTEP=0x4 VTT
+		G200_TCON0_REG1->sft_cfg[9] = 0x0000031f; //V_ACT
+		G200_TCON0_REG1->sft_cfg[10] = 0x000041df; //VSTEP=0x4 V_ACT
+		G200_TCON0_REG1->sft_cfg[21] = 0x00000016; //sync with G204.01 VBP
 	} else if ((width == 1024) && (height == 600)) {
 		//TBD
 	} else if ((width == 480) && (height == 1280)) {
 		//G200_TCON0_REG1->sft_cfg[6] = 0x00000001; //Internal , H color bar
-		G200_TCON0_REG1->sft_cfg[7] = 0x0000026b; //HTT 0x26c -1
-		G200_TCON0_REG1->sft_cfg[8] = 0x00004521; //HSTEP=0x4 VTT 0x522 -1
+		G200_TCON0_REG1->sft_cfg[7] = 0x000002a5; //HTT 0x26c -1
+		G200_TCON0_REG1->sft_cfg[8] = 0x0000451f; //HSTEP=0x4 VTT
 		G200_TCON0_REG1->sft_cfg[9] = 0x000001df; //V_ACT=0x1e0-1
 		G200_TCON0_REG1->sft_cfg[10] = 0x000044ff; //VSTEP=0x4 V_ACT=0x500-1
-		G200_TCON0_REG1->sft_cfg[21] = 0x00000011; //sync with G204.01 VBP
+		G200_TCON0_REG1->sft_cfg[21] = 0x00000016; //sync with G204.01 VBP
 	} else if ((width == 240) && (height == 320)) {
 		//G200_TCON0_REG1->sft_cfg[6] = 0x00000001; //Internal , H color bar
 		G200_TCON0_REG1->sft_cfg[7] = 0x000002aa; //HTT 0x2ab -1
-		G200_TCON0_REG1->sft_cfg[8] = 0x0000416B; //HSTEP=0x4 VTT 0x16c -1
+		G200_TCON0_REG1->sft_cfg[8] = 0x00004161; //HSTEP=0x4 VTT 0x16c -1
 		G200_TCON0_REG1->sft_cfg[9] = 0x000000EF; //V_ACT=0xf0-1
 		G200_TCON0_REG1->sft_cfg[10] = 0x0000413F; //VSTEP=0x4 V_ACT=0x140-1
-		G200_TCON0_REG1->sft_cfg[21] = 0x00000024; //sync with G204.01 VBP
+		G200_TCON0_REG1->sft_cfg[21] = 0x00000019; //sync with G204.01 VBP
 	} else if ((width == 1280) && (height == 480)) {
 		//TBD
 	} else if ((width == 1280) && (height == 720)) {
 		//TBD
 	} else if ((width == 1920) && (height == 1080)) {
-		//TBD
+		//G200_TCON0_REG1->sft_cfg[6] = 0x00000001; //Internal , H color bar
+		G200_TCON0_REG1->sft_cfg[7] = 0x00000897; //HTT
+		G200_TCON0_REG1->sft_cfg[8] = 0x00004464; //HSTEP=0x4 VTT
+		G200_TCON0_REG1->sft_cfg[9] = 0x0000077f; //V_ACT
+		G200_TCON0_REG1->sft_cfg[10] = 0x00004437; //VSTEP=0x4 V_ACT
+		G200_TCON0_REG1->sft_cfg[21] = 0x00000028; //sync with G204.01 VBP
 	} else if ((width == 3840) && (height == 2880)) {
 		//TBD
 	}
