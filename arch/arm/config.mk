@@ -15,6 +15,8 @@ CFLAGS_NON_EFI := -fno-pic -ffixed-r9 -ffunction-sections -fdata-sections
 CFLAGS_EFI := -fpic -fshort-wchar
 
 LDFLAGS_FINAL += --gc-sections
+LDFLAGS_FINAL += --no-warn-rwx-segments
+
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections \
 		     -fno-common -ffixed-r9
 PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
