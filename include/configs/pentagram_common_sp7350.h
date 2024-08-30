@@ -132,7 +132,7 @@
 #endif
 
 #ifdef CONFIG_BOOTARGS_WITH_MEM
-#define DEFAULT_BOOTARGS		"console=ttyS0,115200 root=/dev/ram rw loglevel=8 user_debug=255 earlyprintk"
+#define DEFAULT_BOOTARGS		"console=ttyS0,115200 root=/dev/ram rw loglevel=8 earlyprintk"
 #endif
 
 #define RASPBIAN_CMD                    // Enable Raspbian command
@@ -295,7 +295,7 @@
 	"setexpr sz_kernel ${sz_kernel} + 0xffff; " \
 	"setexpr sz_kernel ${sz_kernel} / 0x10000; " \
 	"setexpr sz_kernel ${sz_kernel} * 0x10000; " \
-	"setenv bootargs ${b_c} root=/dev/mtdblock6 rw rootfstype=jffs2 user_debug=255 rootwait " \
+	"setenv bootargs ${b_c} root=/dev/mtdblock6 rw rootfstype=jffs2 rootwait " \
 	"mtdparts=f8000b00.spinor:96k@0(iboot)ro,192k(xboot)ro,128k(dtb)ro,768k(uboot)ro,864k(fip)ro,0x${sz_kernel}(kernel),-(rootfs); "
 #else
 #if 1 // using direct addressing
@@ -408,7 +408,7 @@
 	"setexpr sz_kernel ${sz_kernel} + ${sz_sign}; " \
 	dbg_scr("echo from kernel partition to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"nand read ${addr_temp_kernel} kernel ${sz_kernel}; " \
-	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} user_debug=255 rootwait; " \
+	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} rootwait; " \
 	"run boot_kernel \0" \
 "pnand_boot=nand read ${addr_tmp_header} kernel 0x40; " \
 	"setenv tmpval 0; setexpr tmpaddr ${addr_tmp_header} + 0x0c; run be2le; " \
@@ -417,7 +417,7 @@
 	"setexpr sz_kernel ${sz_kernel} + ${sz_sign}; " \
 	dbg_scr("echo from kernel partition to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"nand read ${addr_temp_kernel} kernel ${sz_kernel}; " \
-	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} user_debug=255 rootwait; " \
+	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} rootwait; " \
 	"run boot_kernel \0" \
 "boot_kernel="\
 	"if itest ${if_use_nfs_rootfs} == 1; then " \
