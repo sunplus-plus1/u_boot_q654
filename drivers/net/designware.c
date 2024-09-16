@@ -720,7 +720,7 @@ int designware_eth_read_rom_hwaddr(struct udevice *dev)
 
 		//printf("mac address = %pM\n", otp_mac);
 
-		if (fdtdec_get_bool(gd->fdt_blob, offset, "sunplus,byte-swap")) {
+		if (fdt_node_offset_by_compatible(gd->fdt_blob, offset, "mac-base")) {
 			for (i = 0; i < (ARP_HLEN >> 1); i++) {
 				otp_mac[i] ^= otp_mac[ARP_HLEN - 1 - i];
 				otp_mac[ARP_HLEN - 1 - i] ^= otp_mac[i];
