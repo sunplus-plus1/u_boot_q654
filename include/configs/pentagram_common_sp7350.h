@@ -28,17 +28,18 @@
 #define CFG_SYS_INIT_RAM_ADDR     CONFIG_SYS_SDRAM_BASE
 #define CFG_SYS_INIT_RAM_SIZE     CONFIG_SYS_SDRAM_SIZE
 
-#ifndef CONFIG_SYS_TEXT_BASE		/* where U-Boot is loaded by xBoot */
+#ifndef CONFIG_TEXT_BASE		/* where U-Boot is loaded by xBoot */
 /* It is defined in arch/arm/mach-pentagram/Kconfig */
-//#error "CONFIG_SYS_TEXT_BASE not defined"
+#error "CONFIG_TEXT_BASE not defined"
 #else
-#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_TEXT_BASE
+#undef CONFIG_SYS_MONITOR_LEN
 #define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 #endif /* CONFIG_SYS_TEXT_BASE */
 
 #ifdef CONFIG_SPL_BUILD
 #ifndef CONFIG_SYS_UBOOT_START		/* default entry point */
-#define CONFIG_SYS_UBOOT_START		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_UBOOT_START		CONFIG_TEXT_BASE
 #endif
 #endif
 
