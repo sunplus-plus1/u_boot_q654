@@ -23,12 +23,14 @@
 #else /* normal SP7350 evb environment can have larger DRAM size */
 #define CONFIG_SYS_SDRAM_SIZE           (1024 << 20)
 #endif
-#define CONFIG_SYS_MALLOC_LEN           (6 << 20)
-#define CONFIG_SYS_BOOTM_LEN            (64 << 20)
+
+
+#define CFG_SYS_INIT_RAM_ADDR     CONFIG_SYS_SDRAM_BASE
+#define CFG_SYS_INIT_RAM_SIZE     CONFIG_SYS_SDRAM_SIZE
 
 #ifndef CONFIG_SYS_TEXT_BASE		/* where U-Boot is loaded by xBoot */
 /* It is defined in arch/arm/mach-pentagram/Kconfig */
-#error "CONFIG_SYS_TEXT_BASE not defined"
+//#error "CONFIG_SYS_TEXT_BASE not defined"
 #else
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(512 << 10)
@@ -41,7 +43,6 @@
 #endif
 
 #define CONFIG_SYS_INIT_SP_ADDR		(1 << 20)	/* set it in DRAM area (not SRAM) because DRAM is ready before U-Boot executed */
-#define CONFIG_SYS_LOAD_ADDR		(4 << 20)	/* kernel loaded address */
 
 #ifndef CONFIG_BAUDRATE
 #define CONFIG_BAUDRATE			115200		/* the value doesn't matter, it's not change in U-Boot */
@@ -67,15 +68,10 @@
 
 #define COUNTER_FREQUENCY		(25*1000*1000)
 
-#define CONFIG_SYS_MAXARGS		32
-#define CONFIG_SYS_CBSIZE		(2 << 10)
-#define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 
 #define CONFIG_ARCH_MISC_INIT
 #define CONFIG_SYS_HZ			1000
 
-#define CONFIG_SYS_RX_ETH_BUFFER	64
 
 #include <asm/arch/sp_bootmode_bitmap_sp7350.h>
 
@@ -132,7 +128,7 @@
 #endif
 
 #ifdef CONFIG_BOOTARGS_WITH_MEM
-#define DEFAULT_BOOTARGS		"console=ttyS0,115200 root=/dev/ram rw loglevel=8 earlyprintk"
+#define DEFAULT_BOOTARGS		"console=ttyS0,115200 root=/dev/ram rw loglevel=8 user_debug=255 earlyprintk"
 #endif
 
 #define RASPBIAN_CMD                    // Enable Raspbian command
@@ -295,7 +291,7 @@
 	"setexpr sz_kernel ${sz_kernel} + 0xffff; " \
 	"setexpr sz_kernel ${sz_kernel} / 0x10000; " \
 	"setexpr sz_kernel ${sz_kernel} * 0x10000; " \
-	"setenv bootargs ${b_c} root=/dev/mtdblock6 rw rootfstype=jffs2 rootwait " \
+	"setenv bootargs ${b_c} root=/dev/mtdblock6 rw rootfstype=jffs2 user_debug=255 rootwait " \
 	"mtdparts=f8000b00.spinor:96k@0(iboot)ro,192k(xboot)ro,128k(dtb)ro,768k(uboot)ro,864k(fip)ro,0x${sz_kernel}(kernel),-(rootfs); "
 #else
 #if 1 // using direct addressing
@@ -321,7 +317,7 @@
 #define ROOTFS_TYPE "\0"
 #endif
 
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define CFG_EXTRA_ENV_SETTINGS \
 "sz_sign="                       __stringify(SIGN_SIZE) "\0" \
 "b_c=console=ttyS0,115200 earlycon\0" \
 "emmc_root=root=/dev/mmcblk0p8 rw rootwait" ROOTFS_TYPE \
@@ -408,7 +404,7 @@
 	"setexpr sz_kernel ${sz_kernel} + ${sz_sign}; " \
 	dbg_scr("echo from kernel partition to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"nand read ${addr_temp_kernel} kernel ${sz_kernel}; " \
-	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} rootwait; " \
+	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} user_debug=255 rootwait; " \
 	"run boot_kernel \0" \
 "pnand_boot=nand read ${addr_tmp_header} kernel 0x40; " \
 	"setenv tmpval 0; setexpr tmpaddr ${addr_tmp_header} + 0x0c; run be2le; " \
@@ -417,7 +413,7 @@
 	"setexpr sz_kernel ${sz_kernel} + ${sz_sign}; " \
 	dbg_scr("echo from kernel partition to ${addr_temp_kernel} sz ${sz_kernel}; ") \
 	"nand read ${addr_temp_kernel} kernel ${sz_kernel}; " \
-	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} rootwait; " \
+	"setenv bootargs ${b_c} root=ubi0:rootfs rw ubi.mtd=9 rootflags=sync rootfstype=ubifs mtdparts=${mtdparts} user_debug=255 rootwait; " \
 	"run boot_kernel \0" \
 "boot_kernel="\
 	"if itest ${if_use_nfs_rootfs} == 1; then " \

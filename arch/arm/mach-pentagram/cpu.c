@@ -34,7 +34,7 @@ void s_init(void)
 
 }
 
-void reset_cpu(ulong ignored)
+void reset_cpu()
 {
 	volatile unsigned int *ptr;
 

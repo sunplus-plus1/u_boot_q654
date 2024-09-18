@@ -21,9 +21,9 @@ OUTPUT_ARCH(aarch64)
 ENTRY(_start)
 SECTIONS
 {
+	__image_copy_start = ADDR(.text);
 	.text : {
 		. = ALIGN(8);
-		*(.__image_copy_start)
 		CPUDIR/start.o (.text*)
 		*(.text*)
 	} >.sram
@@ -46,15 +46,13 @@ SECTIONS
 	} >.sram
 #endif
 
-	.u_boot_list : {
+	__u_boot_list : {
 		. = ALIGN(8);
-		KEEP(*(SORT(.u_boot_list*)));
+		KEEP(*(SORT(__u_boot_list*)));
 	} >.sram
 
-	.image_copy_end : {
-		. = ALIGN(8);
-		*(.__image_copy_end)
-	} >.sram
+	. = ALIGN(8);
+	__image_copy_end = .;
 
 	.end : {
 		. = ALIGN(8);
@@ -63,24 +61,25 @@ SECTIONS
 
 	_image_binary_end = .;
 
-	.bss_start (NOLOAD) : {
-		. = ALIGN(8);
-		KEEP(*(.__bss_start));
-	} >.sdram
-
-	.bss (NOLOAD) : {
+	.bss : {
+		__bss_start = .;
 		*(.bss*)
-		 . = ALIGN(8);
+		. = ALIGN(8);
+		__bss_end = .;
 	} >.sdram
 
-	.bss_end (NOLOAD) : {
-		KEEP(*(.__bss_end));
-	} >.sdram
-
+	/DISCARD/ : { *(.rela*) }
 	/DISCARD/ : { *(.dynsym) }
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
 	/DISCARD/ : { *(.plt*) }
 	/DISCARD/ : { *(.interp*) }
 	/DISCARD/ : { *(.gnu*) }
+
+#ifdef CONFIG_LINUX_KERNEL_IMAGE_HEADER
+#include "linux-kernel-image-header-vars.h"
+#endif
 }
+
+ASSERT(ADDR(.bss) % 8 == 0, \
+       ".bss must be 8-byte aligned");

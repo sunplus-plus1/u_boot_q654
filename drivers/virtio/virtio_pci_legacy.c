@@ -107,7 +107,7 @@ static int virtio_pci_get_config(struct udevice *udev, unsigned int offset,
 	int i;
 
 	for (i = 0; i < len; i++)
-		ptr[i] = ioread8(ioaddr + i);
+		ptr[i] = ioread8(ioaddr + offset + i);
 
 	return 0;
 }
@@ -121,7 +121,7 @@ static int virtio_pci_set_config(struct udevice *udev, unsigned int offset,
 	int i;
 
 	for (i = 0; i < len; i++)
-		iowrite8(ptr[i], ioaddr + i);
+		iowrite8(ptr[i], ioaddr + offset + i);
 
 	return 0;
 }
@@ -319,7 +319,8 @@ static int virtio_pci_probe(struct udevice *udev)
 	uc_priv->device = subdevice;
 	uc_priv->vendor = subvendor;
 
-	priv->ioaddr = dm_pci_map_bar(udev, PCI_BASE_ADDRESS_0, PCI_REGION_IO);
+	priv->ioaddr = dm_pci_map_bar(udev, PCI_BASE_ADDRESS_0, 0, 0,
+				      PCI_REGION_TYPE, PCI_REGION_IO);
 	if (!priv->ioaddr)
 		return -ENXIO;
 	debug("(%s): virtio legacy device reg base %04lx\n",

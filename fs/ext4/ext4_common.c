@@ -427,14 +427,14 @@ uint16_t ext4fs_checksum_update(uint32_t i)
 	if (le32_to_cpu(fs->sb->feature_ro_compat) & EXT4_FEATURE_RO_COMPAT_GDT_CSUM) {
 		int offset = offsetof(struct ext2_block_group, bg_checksum);
 
-		crc = ext2fs_crc16(~0, fs->sb->unique_id,
+		crc = crc16(~0, (__u8 *)fs->sb->unique_id,
 				   sizeof(fs->sb->unique_id));
-		crc = ext2fs_crc16(crc, &le32_i, sizeof(le32_i));
-		crc = ext2fs_crc16(crc, desc, offset);
+		crc = crc16(crc, (__u8 *)&le32_i, sizeof(le32_i));
+		crc = crc16(crc, (__u8 *)desc, offset);
 		offset += sizeof(desc->bg_checksum);	/* skip checksum */
 		assert(offset == sizeof(*desc));
 		if (offset < fs->gdsize) {
-			crc = ext2fs_crc16(crc, (__u8 *)desc + offset,
+			crc = crc16(crc, (__u8 *)desc + offset,
 					   fs->gdsize - offset);
 		}
 	}
@@ -765,11 +765,6 @@ int ext4fs_get_parent_inode_num(const char *dirname, char *dname, int flags)
 	struct ext2_inode *first_inode = NULL;
 	struct ext2_inode temp_inode;
 
-	if (*dirname != '/') {
-		printf("Please supply Absolute path\n");
-		return -1;
-	}
-
 	/* TODO: input validation make equivalent to linux */
 	depth_dirname = zalloc(strlen(dirname) + 1);
 	if (!depth_dirname)
@@ -850,15 +845,20 @@ end:
 
 fail:
 	free(depth_dirname);
-	free(parse_dirname);
-	for (i = 0; i < depth; i++) {
-		if (!ptr[i])
-			break;
-		free(ptr[i]);
+	if (parse_dirname)
+		free(parse_dirname);
+	if (ptr) {
+		for (i = 0; i < depth; i++) {
+			if (!ptr[i])
+				break;
+			free(ptr[i]);
+		}
+		free(ptr);
 	}
-	free(ptr);
-	free(parent_inode);
-	free(first_inode);
+	if (parent_inode)
+		free(parent_inode);
+	if (first_inode)
+		free(first_inode);
 
 	return result_inode_no;
 }
@@ -2209,9 +2209,8 @@ static char *ext4fs_read_symlink(struct ext2fs_node *node)
 	return symlink;
 }
 
-static int ext4fs_find_file1(const char *currpath,
-			     struct ext2fs_node *currroot,
-			     struct ext2fs_node **currfound, int *foundtype)
+int ext4fs_find_file1(const char *currpath, struct ext2fs_node *currroot,
+		      struct ext2fs_node **currfound, int *foundtype)
 {
 	char fpath[strlen(currpath) + 1];
 	char *name = fpath;
@@ -2363,7 +2362,7 @@ fail:
 	return -1;
 }
 
-int ext4fs_mount(unsigned part_length)
+int ext4fs_mount(void)
 {
 	struct ext2_data *data;
 	int status;
@@ -2415,7 +2414,7 @@ int ext4fs_mount(unsigned part_length)
 
 	return 1;
 fail:
-	printf("Failed to mount ext2 filesystem...\n");
+	log_debug("Failed to mount ext2 filesystem...\n");
 fail_noerr:
 	free(data);
 	ext4fs_root = NULL;

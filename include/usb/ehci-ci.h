@@ -23,6 +23,7 @@
 #define PORT_PTS_ULPI		(2 << 30)
 #define PORT_PTS_SERIAL		(3 << 30)
 #define PORT_PTS_PTW		(1 << 28)
+#define PORT_PTS_HSIC		(1 << 25)
 #define PORT_PFSC		(1 << 24) /* Defined on Page 39-44 of the mpc5151 ERM */
 #define PORT_PTS_PHCD		(1 << 23)
 #define PORT_PP			(1 << 12)
@@ -145,21 +146,6 @@
 #define MPC83XX_SCCR_USB_DRCM_01	0x00100000
 #define MPC83XX_SCCR_USB_DRCM_10	0x00200000
 
-#if defined(CONFIG_MPC83xx)
-#define CONFIG_SYS_FSL_USB1_ADDR CONFIG_SYS_MPC83xx_USB1_ADDR
-#if defined(CONFIG_ARCH_MPC834X)
-#define CONFIG_SYS_FSL_USB2_ADDR CONFIG_SYS_MPC83xx_USB2_ADDR
-#else
-#define CONFIG_SYS_FSL_USB2_ADDR	0
-#endif
-#elif defined(CONFIG_MPC85xx)
-#define CONFIG_SYS_FSL_USB1_ADDR CONFIG_SYS_MPC85xx_USB1_ADDR
-#define CONFIG_SYS_FSL_USB2_ADDR CONFIG_SYS_MPC85xx_USB2_ADDR
-#elif defined(CONFIG_ARCH_LS1021A) || defined(CONFIG_ARCH_LS1012A)
-#define CONFIG_SYS_FSL_USB1_ADDR CONFIG_SYS_EHCI_USB1_ADDR
-#define CONFIG_SYS_FSL_USB2_ADDR        0
-#endif
-
 /*
  * Increasing TX FIFO threshold value from 2 to 4 decreases
  * data burst rate with which data packets are posted from the TX
@@ -170,7 +156,6 @@
 /*
  * USB Registers
  */
-#if 0
 struct usb_ehci {
 	u32	id;		/* 0x000 - Identification register */
 	u32	hwgeneral;	/* 0x004 - General hardware parameters */
@@ -245,48 +230,10 @@ struct usb_ehci {
 	u32	control;	/* 0x500 - Control */
 	u8	res14[0xafc];
 };
-#else
-struct usb_ehci {
-	unsigned int ehci_len_rev;
-	unsigned int ehci_sparams;
-	unsigned int ehci_cparams;
-	unsigned int ehci_portroute;
-	unsigned int g143_reserved_0[4];
-	unsigned int ehci_usbcmd;
-	unsigned int ehci_usbsts;
-	unsigned int ehci_usbintr;
-	unsigned int ehci_frameidx;
-	unsigned int ehci_ctrl_ds_segment;
-	unsigned int ehci_prd_listbase;
-	unsigned int ehci_async_listaddr;
-	unsigned int g143_reserved_1[9];
-	unsigned int ehci_config;
-	unsigned int ehci_portsc;
-	/*
-	unsigned int g143_reserved_2[1];
-	unsigned int ehci_version_ctrl;
-	unsigned int ehci_general_ctrl;
-	unsigned int ehci_usb_debug;
-	unsigned int ehci_sys_debug;
-	unsigned int ehci_sleep_cnt;
-	*/
-};
-#endif
 
 /*
  * For MXC SOCs
  */
-
-/* values for portsc field */
-#define MXC_EHCI_PHY_LOW_POWER_SUSPEND	(1 << 23)
-#define MXC_EHCI_FORCE_FS		(1 << 24)
-#define MXC_EHCI_UTMI_8BIT		(0 << 28)
-#define MXC_EHCI_UTMI_16BIT		(1 << 28)
-#define MXC_EHCI_SERIAL			(1 << 29)
-#define MXC_EHCI_MODE_UTMI		(0 << 30)
-#define MXC_EHCI_MODE_PHILIPS		(1 << 30)
-#define MXC_EHCI_MODE_ULPI		(2 << 30)
-#define MXC_EHCI_MODE_SERIAL		(3 << 30)
 
 /* values for flags field */
 #define MXC_EHCI_INTERFACE_DIFF_UNI	(0 << 0)

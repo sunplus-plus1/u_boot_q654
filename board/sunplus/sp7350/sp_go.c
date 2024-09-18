@@ -4,7 +4,6 @@
 #include <mapmem.h>
 #include <cpu_func.h>
 
-
 static uint32_t sum32(uint32_t sum, uint8_t *data, uint32_t len)
 {
 	uint32_t val = 0, pos = 0;
@@ -22,13 +21,12 @@ static uint32_t sum32(uint32_t sum, uint8_t *data, uint32_t len)
 
 	return sum;
 }
-
 /* Similar with original u-boot flow but use different crc calculation */
-int sp_image_check_hcrc(const image_header_t *hdr)
+int sp_image_check_hcrc(const struct legacy_img_hdr *hdr)
 {
 	ulong hcrc;
 	ulong len = image_get_header_size();
-	image_header_t header;
+	struct legacy_img_hdr header;
 
 	/* Copy header so we can blank CRC field for re-calculation */
 	memmove(&header, (char *)hdr, image_get_header_size());
@@ -40,7 +38,7 @@ int sp_image_check_hcrc(const image_header_t *hdr)
 }
 
 /* Similar with original u-boot flow but use different crc calculation */
-int sp_image_check_dcrc(const image_header_t *hdr)
+int sp_image_check_dcrc(const struct legacy_img_hdr *hdr)
 {
 	ulong data = image_get_data(hdr);
 	ulong len = image_get_data_size(hdr);
@@ -55,7 +53,7 @@ int sp_image_check_dcrc(const image_header_t *hdr)
  */
 int sp_qk_uimage_verify(ulong img_addr, int verify)
 {
-	image_header_t *hdr = (image_header_t *)img_addr;
+	struct legacy_img_hdr *hdr = (struct legacy_img_hdr *)img_addr;
 
 	/* original uImage header's magic */
 	if (!image_check_magic(hdr)) {

@@ -38,7 +38,6 @@ static u32 tcp_seq_init;
 static u32 tcp_ack_edge;
 
 static int tcp_activity_count;
-static int tcp_pipe_count;
 
 /*
  * Search for TCP_SACK and review the comments before the code section
@@ -70,15 +69,6 @@ static enum tcp_state current_tcp_state;
 
 /* Current TCP RX packet handler */
 static rxhand_tcp *tcp_packet_handler;
-
-static int tcp_our_port;
-static int tcp_server_port;
-
-void tcp_set_tcp_port(int src, int dst)
-{
-	tcp_our_port = src;
-	tcp_server_port = dst;
-}
 
 /**
  * tcp_get_tcp_state() - get current TCP state
@@ -270,7 +260,6 @@ int tcp_set_tcp_header(uchar *pkt, int dport, int sport, int payload_len,
 			   &net_server_ip, &net_ip,
 			   tcp_seq_num, tcp_ack_num);
 		tcp_activity_count = 0;
-		tcp_pipe_count = 0;
 		net_set_syn_options(b);
 		tcp_seq_num = 0;
 		tcp_ack_num = 0;
@@ -351,7 +340,7 @@ int tcp_set_tcp_header(uchar *pkt, int dport, int sport, int payload_len,
 	 * it is, then the u-boot tftp or nfs kernel netboot should be
 	 * considered.
 	 */
-	b->ip.hdr.tcp_win = htons((PKTBUFSRX >> 1) * TCP_MSS >> TCP_SCALE);
+	b->ip.hdr.tcp_win = htons(PKTBUFSRX * TCP_MSS >> TCP_SCALE);
 
 	b->ip.hdr.tcp_xsum = 0;
 	b->ip.hdr.tcp_ugr = 0;
@@ -580,7 +569,7 @@ static u8 tcp_state_machine(u8 tcp_flags, u32 tcp_seq_num, int payload_len)
 		debug_cond(DEBUG_INT_STATE, "TCP_ESTABLISHED %x\n", tcp_flags);
 		if (payload_len > 0) {
 			tcp_hole(tcp_seq_num, payload_len);
-			//tcp_fin = TCP_DATA;  /* cause standalone FIN */
+			tcp_fin = TCP_DATA;  /* cause standalone FIN */
 		}
 
 		if ((tcp_fin) &&
@@ -669,10 +658,6 @@ void rxhand_tcp_f(union tcp_build_pkt *b, unsigned int pkt_len)
 		return;
 	}
 
-	if (ntohs(b->ip.hdr.tcp_dst) != tcp_our_port ||
-	    ntohs(b->ip.hdr.tcp_src) != tcp_server_port)
-		return;
-
 	/* Build pseudo header and verify TCP header */
 	tcp_rx_xsum = b->ip.hdr.tcp_xsum;
 	b->ip.hdr.tcp_xsum = 0;
@@ -704,11 +689,8 @@ void rxhand_tcp_f(union tcp_build_pkt *b, unsigned int pkt_len)
 
 	tcp_activity_count++;
 	if (tcp_activity_count > TCP_ACTIVITY) {
+		puts("| ");
 		tcp_activity_count = 0;
-		if (tcp_pipe_count++ & 0x3F)
-			puts("|");
-		else
-			puts("\n\t|");
 	}
 
 	if ((tcp_action & TCP_PUSH) || payload_len > 0) {

@@ -1,5 +1,0 @@
-#
-# Sunplus Video configuration
-#
-
-source "drivers/video/sunplus/sp7350/disp/Kconfig"

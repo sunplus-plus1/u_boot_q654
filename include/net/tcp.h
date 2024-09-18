@@ -235,7 +235,7 @@ struct pseudo_hdr {
 	u16     len;
 } __packed;
 
-#define PSEUDO_HDR_SIZE	((sizeof(struct pseudo_hdr)) - PSEUDO_PAD_SIZE)
+#define PSEUDO_HDR_SIZE	(sizeof(struct pseudo_hdr)) - PSEUDO_PAD_SIZE
 
 /**
  * union tcp_build_pkt - union for building TCP/IP packet.
@@ -303,5 +303,3 @@ void rxhand_tcp_f(union tcp_build_pkt *b, unsigned int len);
 
 u16 tcp_set_pseudo_header(uchar *pkt, struct in_addr src, struct in_addr dest,
 			  int tcp_len, int pkt_len);
-
-void tcp_set_tcp_port(int src, int dst);

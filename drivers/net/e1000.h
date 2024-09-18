@@ -21,10 +21,6 @@
 #include <linux/list.h>
 #include <malloc.h>
 #include <net.h>
-/* Avoids a compile error since struct eth_device is not defined */
-#ifndef CONFIG_DM_ETH
-#include <netdev.h>
-#endif
 #include <asm/io.h>
 #include <pci.h>
 
@@ -216,6 +212,7 @@ typedef enum {
 	e1000_phy_igp_3,
 	e1000_phy_ife,
 	e1000_phy_igb,
+	e1000_phy_igc,
 	e1000_phy_bm,
 	e1000_phy_undefined = 0xFF
 } e1000_phy_type;
@@ -249,7 +246,7 @@ struct e1000_phy_stats {
 #define E1000_ERR_MASTER_REQUESTS_PENDING	10
 #define E1000_ERR_HOST_INTERFACE_COMMAND	11
 #define E1000_BLK_PHY_RESET			12
-#define E1000_ERR_SWFW_SYNC 			13
+#define E1000_ERR_SWFW_SYNC			13
 
 /* PCI Device IDs */
 #define E1000_DEV_ID_82542	    0x1000
@@ -1077,19 +1074,12 @@ typedef enum {
 struct e1000_hw {
 	const char *name;
 	struct list_head list_node;
-#ifndef CONFIG_DM_ETH
-	struct eth_device *nic;
-#endif
 #ifdef CONFIG_E1000_SPI
 	struct spi_slave spi;
 #endif
 	unsigned int cardnum;
 
-#ifdef CONFIG_DM_ETH
 	struct udevice *pdev;
-#else
-	pci_dev_t pdev;
-#endif
 	uint8_t *hw_addr;
 	e1000_mac_type mac_type;
 	e1000_phy_type phy_type;
@@ -1245,6 +1235,7 @@ struct e1000_hw {
 #define E1000_EECD_FLUPD     0x00080000 /* Update FLASH */
 #define E1000_EECD_FLUPD_I210       0x00800000 /* Update FLASH */
 #define E1000_EECD_FLUDONE_I210     0x04000000 /* Update FLASH done*/
+#define E1000_EECD_FLASH_DETECTED_I210	0x00080000 /* FLASH detected */
 #define E1000_FLUDONE_ATTEMPTS      20000
 #define E1000_EECD_AUPDEN    0x00100000 /* Enable Autonomous FLASH update */
 #define E1000_EECD_SHADV     0x00200000 /* Shadow RAM Data Valid */
@@ -2430,6 +2421,7 @@ struct e1000_hw {
 #define BME1000_E_PHY_ID     0x01410CB0
 
 #define I210_I_PHY_ID		0x01410C00
+#define I225_I_PHY_ID		0x67C9DCC0
 
 /* Miscellaneous PHY bit definitions. */
 #define PHY_PREAMBLE			0xFFFFFFFF

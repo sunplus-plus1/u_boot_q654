@@ -4,7 +4,6 @@
  */
 
 #include <common.h>
-#include <cpu_func.h>
 #include <bmp_layout.h>
 #include <dm.h>
 #include <log.h>
@@ -14,74 +13,119 @@
 #include <watchdog.h>
 #include <asm/unaligned.h>
 
-//#define debug printf
-
-#define DISP_SWAP16(x)		((((x) & 0x00ff) << 8) | \
-				  ((x) >> 8) \
-				)
-#define DISP_SWAP32(x)		((((x) & 0x000000ff) << 24) | \
-				 (((x) & 0x0000ff00) <<  8) | \
-				 (((x) & 0x00ff0000) >>  8) | \
-				 (((x) & 0xff000000) >> 24)   \
-				)
-
-#define VIDEO_CMAP_OFFSET 16
-
-#ifdef CONFIG_VIDEO_BMP_RLE8
 #define BMP_RLE8_ESCAPE		0
 #define BMP_RLE8_EOL		0
 #define BMP_RLE8_EOBMP		1
 #define BMP_RLE8_DELTA		2
 
-#if defined(CONFIG_VIDEO_SP7350)
-static void draw_unencoded_bitmap(uchar **fbp, uchar *bmap, u32 *cmap,
-#else
-static void draw_unencoded_bitmap(ushort **fbp, uchar *bmap, ushort *cmap,
-#endif
-				  int cnt)
+/**
+ * get_bmp_col_16bpp() - Convert a colour-table entry into a 16bpp pixel value
+ *
+ * Return: value to write to the 16bpp frame buffer for this palette entry
+ */
+static uint get_bmp_col_16bpp(struct bmp_color_table_entry cte)
 {
-	while (cnt > 0) {
-		#if defined(CONFIG_VIDEO_SP7350)
-		//*(*fbp)++ = *bmap++;
-		*(*fbp) = (*bmap) + VIDEO_CMAP_OFFSET;
-		(*fbp)++;
-		bmap++;	
-		#else
-		*(*fbp)++ = cmap[*bmap++];
-		#endif
-		cnt--;
+	return ((cte.red   << 8) & 0xf800) |
+		((cte.green << 3) & 0x07e0) |
+		((cte.blue  >> 3) & 0x001f);
+}
+
+/**
+ * get_bmp_col_x2r10g10b10() - Convert a colour-table entry into a x2r10g10b10  pixel value
+ *
+ * Return: value to write to the x2r10g10b10 frame buffer for this palette entry
+ */
+static u32 get_bmp_col_x2r10g10b10(struct bmp_color_table_entry *cte)
+{
+	return ((cte->red << 22U) |
+		(cte->green << 12U) |
+		(cte->blue << 2U));
+}
+
+/**
+ * get_bmp_col_rgba8888() - Convert a colour-table entry into a rgba8888 pixel value
+ *
+ * Return: value to write to the rgba8888 frame buffer for this palette entry
+ */
+static u32 get_bmp_col_rgba8888(struct bmp_color_table_entry *cte)
+{
+	return ((cte->red) |
+		(cte->green << 8U) |
+		(cte->blue << 16U) | 0xff << 24U);
+}
+
+/**
+ * write_pix8() - Write a pixel from a BMP image into the framebuffer
+ *
+ * This handles frame buffers with 8, 16, 24 or 32 bits per pixel
+ *
+ * @fb: Place in frame buffer to update
+ * @bpix: Frame buffer bits-per-pixel, which controls how many bytes are written
+ * @palette: BMP palette table
+ * @bmap: Pointer to BMP bitmap position to write. This contains a single byte
+ *	which is either written directly (bpix == 8) or used to look up the
+ *	palette to get a colour to write
+ */
+static void write_pix8(u8 *fb, uint bpix, enum video_format eformat,
+		       struct bmp_color_table_entry *palette, u8 *bmap)
+{
+	if (bpix == 8) {
+		*fb++ = *bmap;
+	} else if (bpix == 16) {
+		*(u16 *)fb = get_bmp_col_16bpp(palette[*bmap]);
+	} else {
+		/* Only support big endian */
+		struct bmp_color_table_entry *cte = &palette[*bmap];
+
+		if (bpix == 24) {
+			*fb++ = cte->red;
+			*fb++ = cte->green;
+			*fb++ = cte->blue;
+		} else if (eformat == VIDEO_X2R10G10B10) {
+			*(u32 *)fb = get_bmp_col_x2r10g10b10(cte);
+		} else if (eformat == VIDEO_RGBA8888) {
+			*(u32 *)fb = get_bmp_col_rgba8888(cte);
+		} else {
+			*fb++ = cte->blue;
+			*fb++ = cte->green;
+			*fb++ = cte->red;
+			*fb++ = 0;
+		}
 	}
 }
 
-#if defined(CONFIG_VIDEO_SP7350)
-static void draw_encoded_bitmap(uchar **fbp, uchar col, int cnt)
-#else
-static void draw_encoded_bitmap(ushort **fbp, ushort col, int cnt)
-#endif
+static void draw_unencoded_bitmap(u8 **fbp, uint bpix,
+				  enum video_format eformat, uchar *bmap,
+				  struct bmp_color_table_entry *palette,
+				  int cnt)
 {
-#if defined(CONFIG_VIDEO_SP7350)
-	uchar *fb = *fbp;
-#else	
-	ushort *fb = *fbp;
-#endif
+	u8 *fb = *fbp;
 
 	while (cnt > 0) {
-		#if defined(CONFIG_VIDEO_SP7350)
-		*fb++ = col + VIDEO_CMAP_OFFSET;
-		#else
-		*fb++ = col;
-		#endif
+		write_pix8(fb, bpix, eformat, palette, bmap++);
+		fb += bpix / 8;
+		cnt--;
+	}
+	*fbp = fb;
+}
+
+static void draw_encoded_bitmap(u8 **fbp, uint bpix, enum video_format eformat,
+				struct bmp_color_table_entry *palette, u8 *bmap,
+				int cnt)
+{
+	u8 *fb = *fbp;
+
+	while (cnt > 0) {
+		write_pix8(fb, bpix, eformat, palette, bmap);
+		fb += bpix / 8;
 		cnt--;
 	}
 	*fbp = fb;
 }
 
 static void video_display_rle8_bitmap(struct udevice *dev,
-	#if defined(CONFIG_VIDEO_SP7350)
-				      struct bmp_image *bmp, u32 *cmap,
-	#else	
-				      struct bmp_image *bmp, ushort *cmap,
-	#endif
+				      struct bmp_image *bmp, uint bpix,
+				      struct bmp_color_table_entry *palette,
 				      uchar *fb, int x_off, int y_off,
 				      ulong width, ulong height)
 {
@@ -90,6 +134,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 	ulong cnt, runlen;
 	int x, y;
 	int decode = 1;
+	uint bytes_per_pixel = bpix / 8;
+	enum video_format eformat = priv->format;
 
 	debug("%s\n", __func__);
 	bmap = (uchar *)bmp + get_unaligned_le32(&bmp->header.data_offset);
@@ -105,13 +151,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 				bmap += 2;
 				x = 0;
 				y--;
-		#if defined(CONFIG_VIDEO_SP7350)
-				/* 8bpix, 1-byte per pixel, width should *1 */
-				fb -= (width * 1 + priv->line_length);	
-		#else
-				/* 16bpix, 2-byte per pixel, width should *2 */
-				fb -= (width * 2 + priv->line_length);
-		#endif
+				fb -= width * bytes_per_pixel +
+					priv->line_length;
 				break;
 			case BMP_RLE8_EOBMP:
 				/* end of bitmap */
@@ -121,15 +162,9 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 				/* delta run */
 				x += bmap[2];
 				y -= bmap[3];
-		#if defined(CONFIG_VIDEO_SP7350)
-				/* 8bpix, 1-byte per pixel, x should *1 */
-				fb = (uchar *)(priv->fb + (y + y_off - 1)
-					* priv->line_length + (x + x_off) * 1);
-		#else
-				/* 16bpix, 2-byte per pixel, x should *2 */
-				fb = (uchar *)(priv->fb + (y + y_off - 1)
-					* priv->line_length + (x + x_off) * 2);
-		#endif
+				fb = (uchar *)(priv->fb +
+					(y + y_off - 1) * priv->line_length +
+					(x + x_off) * bytes_per_pixel);
 				bmap += 4;
 				break;
 			default:
@@ -143,12 +178,8 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 						else
 							cnt = runlen;
 						draw_unencoded_bitmap(
-			#if defined(CONFIG_VIDEO_SP7350)
-							(uchar **)&fb,
-			#else
-							(ushort **)&fb,
-			#endif
-							bmap, cmap, cnt);
+							&fb, bpix, eformat,
+							bmap, palette, cnt);
 					}
 					x += runlen;
 				}
@@ -172,12 +203,9 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 						cnt = width - x;
 					else
 						cnt = runlen;
-			#if defined(CONFIG_VIDEO_SP7350)
-					draw_encoded_bitmap((uchar **)&fb,
-			#else
-					draw_encoded_bitmap((ushort **)&fb,
-			#endif
-						cmap[bmap[1]], cnt);
+					draw_encoded_bitmap(&fb, bpix, eformat,
+							    palette, &bmap[1],
+							    cnt);
 				}
 				x += runlen;
 			}
@@ -185,26 +213,6 @@ static void video_display_rle8_bitmap(struct udevice *dev,
 		}
 	}
 }
-#endif
-
-__weak void fb_put_byte(uchar **fb, uchar **from)
-{
-#if defined(CONFIG_VIDEO_SP7350)
-	*(*fb) = *(*from) + VIDEO_CMAP_OFFSET;
-	(*fb)++;
-	(*from)++;
-#else
-	*(*fb)++ = *(*from)++;
-#endif
-}
-
-#if defined(CONFIG_BMP_16BPP)
-__weak void fb_put_word(uchar **fb, uchar **from)
-{
-	*(*fb)++ = *(*from)++;
-	*(*fb)++ = *(*from)++;
-}
-#endif /* CONFIG_BMP_16BPP */
 
 /**
  * video_splash_align_axis() - Align a single coordinate
@@ -235,98 +243,20 @@ static void video_splash_align_axis(int *axis, unsigned long panel_size,
 	*axis = max(0, (int)axis_alignment);
 }
 
-static void video_set_cmap(struct udevice *dev,
-#if defined(CONFIG_VIDEO_SP7350)
-			   struct bmp_color_table_entry *cte, unsigned colours, int color_used, int pal_sel)
-#else
-			   struct bmp_color_table_entry *cte, unsigned colours)
-#endif
+void video_bmp_get_info(void *bmp_image, ulong *widthp, ulong *heightp,
+			uint *bpixp)
 {
-	struct video_priv *priv = dev_get_uclass_priv(dev);
-	int i;
-#if defined(CONFIG_VIDEO_SP7350)
-	u32 *cmap = priv->cmap;
-#else
-	ushort *cmap = priv->cmap;
-#endif
+	struct bmp_image *bmp = bmp_image;
 
-#if defined(CONFIG_VIDEO_SP7350)
-	debug("%s: colours=%d, color_used=%d\n", __func__, colours, color_used);
-	
-	if (pal_sel) {
-		debug("set grey scale palette! \n");
-	}
-	else {
-		debug("load bmp palette! \n");
-	}
-#else
-	debug("%s: colours=%d\n", __func__, colours);
-#endif
-
-#if defined(CONFIG_VIDEO_SP7350)
-	cmap += VIDEO_CMAP_OFFSET;
-	for (i = VIDEO_CMAP_OFFSET; i < colours; ++i) {
-		if (pal_sel) {
-			//Palette is ARGB8888 with 256 grey scale
-			if (i < VIDEO_CMAP_OFFSET) {
-				;//*cmap = 0x000000ff;
-				//*cmap = 0x00000032; alpha value modify
-			} else if (i > 235) {
-				*cmap = 0xffffffff;
-				//*cmap = 0xffffff32; alpha value modify
-			} else {
-				//*cmap = (((u32)(0x32) << 0) | alpha value modify
-				*cmap = (((u32)(0xff) << 0) |
-						((u32)((u8)(1164*(i-16)/1000)) << 8) |
-						((u32)((u8)(1164*(i-16)/1000)) << 16) |
-						((u32)((u8)(1164*(i-16)/1000)) << 24));
-			}
-		}
-		else {
-			//Palette is ARGB8888 with 256 color 
-			if (i >= (VIDEO_CMAP_OFFSET + color_used))
-				//*cmap = 0x00000032; alpha value modify
-				*cmap = 0x000000ff;
-			else
-				//*cmap = (((u32)(0x32) << 0) | alpha value modify
-				*cmap = (((u32)(0xff) << 0) |
-						((u32)(cte->red) << 8) |
-						((u32)(cte->green) << 16) |
-						((u32)(cte->blue) << 24));
-		}
-		cmap++;
-		cte++;
-	}
-	flush_cache((ulong)priv->cmap, 1024);
-
-	#if 0 //dump palette for debug
-	cmap = priv->cmap;
-	debug("dump palette! \n");
-	for (i = 0; i < colours; ++i) {
-		debug("%d : 0x%08x \n", i, *cmap);
-		cmap++;
-	}
-	#endif
-#else
-	for (i = 0; i < colours; ++i) {
-		*cmap = ((cte->red   << 8) & 0xf800) |
-			((cte->green << 3) & 0x07e0) |
-			((cte->blue  >> 3) & 0x001f);
-		cmap++;
-		cte++;
-	}
-#endif
+	*widthp = get_unaligned_le32(&bmp->header.width);
+	*heightp = get_unaligned_le32(&bmp->header.height);
+	*bpixp = get_unaligned_le16(&bmp->header.bit_count);
 }
 
 int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		      bool align)
 {
 	struct video_priv *priv = dev_get_uclass_priv(dev);
-#if defined(CONFIG_VIDEO_SP7350)
-	u32 *cmap_base = NULL;
-#else
-	ushort *cmap_base = NULL;
-#endif
 	int i, j;
 	uchar *start, *fb;
 	struct bmp_image *bmp = map_sysmem(bmp_image, 0);
@@ -335,12 +265,9 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 	unsigned long width, height, byte_width;
 	unsigned long pwidth = priv->xsize;
 	unsigned colours, bpix, bmp_bpix;
+	enum video_format eformat;
 	struct bmp_color_table_entry *palette;
-#if defined(CONFIG_VIDEO_SP7350)
-	int hdr_size, color_used, data_offset;
-#else
 	int hdr_size;
-#endif
 	int ret;
 
 	if (!bmp || !(bmp->header.signature[0] == 'B' &&
@@ -350,56 +277,23 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 		return -EINVAL;
 	}
 
-	width = get_unaligned_le32(&bmp->header.width);
-	height = get_unaligned_le32(&bmp->header.height);
-	bmp_bpix = get_unaligned_le16(&bmp->header.bit_count);
+	video_bmp_get_info(bmp, &width, &height, &bmp_bpix);
 	hdr_size = get_unaligned_le16(&bmp->header.size);
-#if defined(CONFIG_VIDEO_SP7350)
-	data_offset = get_unaligned_le16(&bmp->header.data_offset);
-	color_used = get_unaligned_le16(&bmp->header.colors_used);
-	if( (bmp_bpix == 8) && (color_used == 0) && (data_offset > 54) )
-		color_used = 0x100 ;//(data_offset - 54) / 4;
-	debug("data_offset=%d, hdr_size=%d, bmp_bpix=%d, color_used=%d\n", data_offset, hdr_size, bmp_bpix, color_used);
-#else
 	debug("hdr_size=%d, bmp_bpix=%d\n", hdr_size, bmp_bpix);
-#endif
 	palette = (void *)bmp + 14 + hdr_size;
 
 	colours = 1 << bmp_bpix;
 
 	bpix = VNBITS(priv->bpix);
+	eformat = priv->format;
 
-#if defined(CONFIG_VIDEO_SP7350)
-	debug("bmp_bpix: %d , bpix %d \n",bmp_bpix, bpix);
-#endif
-
-#if defined(CONFIG_VIDEO_SP7350)
-	if (bpix != 8 && bpix != 16 && bpix != 32) {
-#else
 	if (bpix != 1 && bpix != 8 && bpix != 16 && bpix != 32) {
-#endif
 		printf("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
 		       bpix, bmp_bpix);
 
 		return -EINVAL;
 	}
 
-
-#if defined(CONFIG_VIDEO_SP7350)
-	/*
-	 * We support displaying 8bpp/24bpp/32bpp BMPs transfer to SP7350 display engine
-	 * and SP7350 display engine can select 8bpp(palette=ARGB),RGB565,ARGB8888
-	 */
-	if (bpix != bmp_bpix &&
-			!(bmp_bpix == 8 && bpix == 16) &&
-			!(bmp_bpix == 8 && bpix == 32) &&
-			!(bmp_bpix == 24 && bpix == 8) &&
-			!(bmp_bpix == 24 && bpix == 16) &&
-			!(bmp_bpix == 24 && bpix == 32) &&
-			!(bmp_bpix == 32 && bpix == 8) &&
-			!(bmp_bpix == 32 && bpix == 16) &&
-			!(bmp_bpix == 32 && bpix == 32)) {
-#else
 	/*
 	 * We support displaying 8bpp and 24bpp BMPs on 16bpp LCDs
 	 * and displaying 24bpp BMPs on 32bpp LCDs
@@ -410,27 +304,13 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 	    !(bmp_bpix == 8 && bpix == 32) &&
 	    !(bmp_bpix == 24 && bpix == 16) &&
 	    !(bmp_bpix == 24 && bpix == 32)) {
-#endif 
 		printf("Error: %d bit/pixel mode, but BMP has %d bit/pixel\n",
-		       bpix, get_unaligned_le16(&bmp->header.bit_count));
+		       bpix, colours);
 		return -EPERM;
 	}
 
 	debug("Display-bmp: %d x %d  with %d colours, display %d\n",
 	      (int)width, (int)height, (int)colours, 1 << bpix);
-
-#if defined(CONFIG_VIDEO_SP7350)
-	if (bmp_bpix == 8)
-		video_set_cmap(dev, palette, colours, color_used, 0);
-
-	if (((bmp_bpix == 32) || (bmp_bpix == 24)) && (bpix == 8)) {
-		colours = 0x100;
-		video_set_cmap(dev, palette, colours, color_used, 1);
-	}
-#else
-	if (bmp_bpix == 8)
-		video_set_cmap(dev, palette, colours);
-#endif
 
 	padded_width = (width & 0x3 ? (width & ~0x3) + 4 : width);
 
@@ -452,245 +332,130 @@ int video_bmp_display(struct udevice *dev, ulong bmp_image, int x, int y,
 	fb = start - priv->line_length;
 
 	switch (bmp_bpix) {
-#if defined(CONFIG_VIDEO_SP7350)
-#else
 	case 1:
-#endif
-	case 8: {
-#if defined(CONFIG_VIDEO_SP7350)
-#else
-		struct bmp_color_table_entry *cte;
-#endif
-		cmap_base = priv->cmap;
-#ifdef CONFIG_VIDEO_BMP_RLE8
-		u32 compression = get_unaligned_le32(&bmp->header.compression);
-		debug("compressed %d %d\n", compression, BMP_BI_RLE8);
-		if (compression == BMP_BI_RLE8) {
-			#if defined(CONFIG_VIDEO_SP7350)
-			if (bpix != 8) {
-				printf("Error: only support 8 bpix");
-			#else
-			if (bpix != 16) {
-				/* TODO implement render code for bpix != 16 */
-				printf("Error: only support 16 bpix");
-			#endif
-				return -EPROTONOSUPPORT;
+	case 8:
+		if (CONFIG_IS_ENABLED(VIDEO_BMP_RLE8)) {
+			u32 compression = get_unaligned_le32(
+				&bmp->header.compression);
+			debug("compressed %d %d\n", compression, BMP_BI_RLE8);
+			if (compression == BMP_BI_RLE8) {
+				video_display_rle8_bitmap(dev, bmp, bpix, palette, fb,
+							  x, y, width, height);
+				break;
 			}
-			video_display_rle8_bitmap(dev, bmp, cmap_base, fb, x,
-						  y, width, height);
-			break;
 		}
-#endif
 
-#if defined(CONFIG_VIDEO_SP7350)
-		if (bpix == 8)
-			byte_width = width;
-		else if (bpix == 16)
-			byte_width = width * 2;
-		else if (bpix == 24)
-			;//SP7350 didn't support this setting
-		else if (bpix == 32)
-			byte_width = width * 4;
-
-		for (i = 0; i < height; ++i) {
-			WATCHDOG_RESET();
-			for (j = 0; j < width; j++) {
-				if (bpix == 8) {
-					//fmt is 8bpp(palette=ARGB)
-					fb_put_byte(&fb, &bmap);
-				} else if (bpix == 16) {
-					//fmt is RGB565
-					*(uint16_t *)fb = ((uint16_t)((cmap_base[*bmap+VIDEO_CMAP_OFFSET] & 0x0000f800) >> 0 |
-                                    (cmap_base[*bmap+VIDEO_CMAP_OFFSET] & 0x00fc0000) >> 13 |
-                                    (cmap_base[*bmap+VIDEO_CMAP_OFFSET] & 0xf8000000) >> 27));
-					bmap++;
-					fb += sizeof(uint16_t) / sizeof(*fb);
-				} else if (bpix == 24) {
-					;//SP7350 didn't support this setting
-				} else if (bpix == 32) {
-					//fmt is ARGB8888
-					*(uint32_t *)fb = DISP_SWAP32((uint32_t)cmap_base[*bmap+VIDEO_CMAP_OFFSET]);
-					bmap++;
-					fb += sizeof(uint32_t) / sizeof(*fb);
-				}
-
-			}
-			bmap += (padded_width - width);
-			fb -= byte_width + priv->line_length;
-		}			
-#else
+		/* Not compressed */
 		byte_width = width * (bpix / 8);
 		if (!byte_width)
 			byte_width = width;
 
 		for (i = 0; i < height; ++i) {
-			WATCHDOG_RESET();
+			schedule();
 			for (j = 0; j < width; j++) {
-				if (bpix == 8) {
-					fb_put_byte(&fb, &bmap);
-				} else if (bpix == 16) {
-					*(uint16_t *)fb = cmap_base[*bmap];
-					bmap++;
-					fb += sizeof(uint16_t) / sizeof(*fb);
-				} else {
-					/* Only support big endian */
-					cte = &palette[*bmap];
-					bmap++;
-					if (bpix == 24) {
-						*(fb++) = cte->red;
-						*(fb++) = cte->green;
-						*(fb++) = cte->blue;
-					} else {
-						*(fb++) = cte->blue;
-						*(fb++) = cte->green;
-						*(fb++) = cte->red;
-						*(fb++) = 0;
-					}
-				}
+				write_pix8(fb, bpix, eformat, palette, bmap);
+				bmap++;
+				fb += bpix / 8;
 			}
 			bmap += (padded_width - width);
 			fb -= byte_width + priv->line_length;
 		}
-#endif
 		break;
-	}
-#if defined(CONFIG_BMP_16BPP)
 	case 16:
-		for (i = 0; i < height; ++i) {
-			WATCHDOG_RESET();
-			for (j = 0; j < width; j++)
-				fb_put_word(&fb, &bmap);
-
-			bmap += (padded_width - width) * 2;
-			fb -= width * 2 + priv->line_length;
+		if (CONFIG_IS_ENABLED(BMP_16BPP)) {
+			for (i = 0; i < height; ++i) {
+				schedule();
+				for (j = 0; j < width; j++) {
+					*fb++ = *bmap++;
+					*fb++ = *bmap++;
+				}
+				bmap += (padded_width - width);
+				fb -= width * 2 + priv->line_length;
+			}
 		}
 		break;
-#endif /* CONFIG_BMP_16BPP */
-#if defined(CONFIG_BMP_24BPP)
 	case 24:
-#if defined(CONFIG_VIDEO_SP7350)
-		if (bpix == 8) {
-			debug("BMP RGB888 to OSD 8bpp \n");
-		} else if (bpix == 16) {
-			debug("BMP RGB888 to OSD 16bpp \n");
-		} else if (bpix == 24) {
-			debug("BMP RGB888 to OSD 24bpp \n");
-			debug("SP7350 not support! \n");
-		} else { //bpix == 32
-			debug("BMP RGB888 to OSD 32bpp \n");
-		}
+		if (CONFIG_IS_ENABLED(BMP_24BPP)) {
+			for (i = 0; i < height; ++i) {
+				for (j = 0; j < width; j++) {
+					if (bpix == 16) {
+						/* 16bit 565RGB format */
+						*(u16 *)fb = ((bmap[2] >> 3)
+							<< 11) |
+							((bmap[1] >> 2) << 5) |
+							(bmap[0] >> 3);
+						bmap += 3;
+						fb += 2;
+					} else if (eformat == VIDEO_X2R10G10B10) {
+						u32 pix;
 
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < width; j++) {
-				if (bpix == 8) {
-					/* 8bpp (palette=ARGB) format */
-					#if 1
-					unsigned int tmp_val24;
-					tmp_val24 = ((299 * bmap[2] + 587 * bmap[1] + 114 * bmap[0])/1000);
-					if (tmp_val24 < VIDEO_CMAP_OFFSET)
-						*(uchar *)fb = (uchar)VIDEO_CMAP_OFFSET;
-					else if (tmp_val24 > 0xff)
-						*(uchar *)fb = (uchar)0xff;
-					else 
-						*(uchar *)fb = (uchar)tmp_val24;
-					#else
-					*(uchar *)fb = (uchar)((299 * bmap[2] + 587 * bmap[1] + 114 * bmap[0])/1000);
-					#endif
-					bmap += 3;
-					fb ++;
-				} else if (bpix == 16) {
-					/* 16bit 565RGB format */
-					*(u16 *)fb = ((bmap[2] >> 3) << 11) |
-						((bmap[1] >> 2) << 5) |
-						(bmap[0] >> 3);
-					bmap += 3;
-					fb += 2;
-				} else if (bpix == 24) {
-					;//SP7350 didn't support
-				} else { //bpix == 32
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = 0xff;
+						pix = *bmap++ << 2U;
+						pix |= *bmap++ << 12U;
+						pix |= *bmap++ << 22U;
+						*fb++ = pix & 0xff;
+						*fb++ = (pix >> 8) & 0xff;
+						*fb++ = (pix >> 16) & 0xff;
+						*fb++ = pix >> 24;
+					} else if (eformat == VIDEO_RGBA8888) {
+						u32 pix;
+
+						pix = *bmap++ << 8U; /* blue */
+						pix |= *bmap++ << 16U; /* green */
+						pix |= *bmap++ << 24U; /* red */
+
+						*fb++ = (pix >> 24) & 0xff;
+						*fb++ = (pix >> 16) & 0xff;
+						*fb++ = (pix >> 8) & 0xff;
+						*fb++ = 0xff;
+					} else {
+						*fb++ = *bmap++;
+						*fb++ = *bmap++;
+						*fb++ = *bmap++;
+						*fb++ = 0;
+					}
 				}
+				fb -= priv->line_length + width * (bpix / 8);
+				bmap += (padded_width - width);
 			}
-			fb -= priv->line_length + width * (bpix / 8);
-			bmap += (padded_width - width) * 3;
 		}
-#else
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < width; j++) {
-				if (bpix == 16) {
-					/* 16bit 555RGB format */
-					*(u16 *)fb = ((bmap[2] >> 3) << 10) |
-						((bmap[1] >> 3) << 5) |
-						(bmap[0] >> 3);
-					bmap += 3;
-					fb += 2;
-				} else {
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = 0;
-				}
-			}
-			fb -= priv->line_length + width * (bpix / 8);
-			bmap += (padded_width - width) * 3;
-		}
-#endif
 		break;
-#endif /* CONFIG_BMP_24BPP */
-#if defined(CONFIG_BMP_32BPP)
 	case 32:
-#if defined(CONFIG_VIDEO_SP7350)
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < width; j++) {
-				if (bpix == 8) {
-					#if 1 //deal with upper/lower limit
-					unsigned int tmp_val32;
-					tmp_val32 = ((299 * bmap[2] + 587 * bmap[1] + 114 * bmap[0])/1000);
-					if (tmp_val32 < VIDEO_CMAP_OFFSET)
-						*(uchar *)fb = (uchar)VIDEO_CMAP_OFFSET;
-					else if (tmp_val32 > 0xff)
-						*(uchar *)fb = (uchar)0xff;
-					else 
-						*(uchar *)fb = (uchar)tmp_val32;
-					#else 
-					*(uchar *)fb = (uchar)((299 * bmap[2] + 587 * bmap[1] + 114 * bmap[0])/1000);
-					#endif
-					bmap += 4;
-					fb ++;
-				} else if (bpix == 16) {
-					*(u16 *)fb = ((bmap[2] >> 3) << 11) |
-						((bmap[1] >> 2) << 5) |
-						(bmap[0] >> 3);
-					bmap += 4;
-					fb += 2;
-				} else if (bpix == 24) {
-					;//SP7350 didn't support
-				} else { //bpix == 32
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
-					*(fb++) = *(bmap++);
+		if (CONFIG_IS_ENABLED(BMP_32BPP)) {
+			for (i = 0; i < height; ++i) {
+				for (j = 0; j < width; j++) {
+					if (eformat == VIDEO_X2R10G10B10) {
+						u32 pix;
+
+						pix = *bmap++ << 2U;
+						pix |= *bmap++ << 12U;
+						pix |= *bmap++ << 22U;
+						pix |= (*bmap++ >> 6) << 30U;
+						*fb++ = pix & 0xff;
+						*fb++ = (pix >> 8) & 0xff;
+						*fb++ = (pix >> 16) & 0xff;
+						*fb++ = pix >> 24;
+					} else if (eformat == VIDEO_RGBA8888) {
+						u32 pix;
+
+						pix = *bmap++ << 8U; /* blue */
+						pix |= *bmap++ << 16U; /* green */
+						pix |= *bmap++ << 24U; /* red */
+						bmap++;
+						*fb++ = (pix >> 24) & 0xff;
+						*fb++ = (pix >> 16) & 0xff;
+						*fb++ = (pix >> 8) & 0xff;
+						*fb++ = 0xff; /* opacity */
+					} else {
+						*fb++ = *bmap++;
+						*fb++ = *bmap++;
+						*fb++ = *bmap++;
+						*fb++ = *bmap++;
+					}
 				}
+				fb -= priv->line_length + width * (bpix / 8);
 			}
-			fb -= priv->line_length + width * (bpix / 8);
-			bmap += (padded_width - width) * 4;
-		}		
-#else
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < width; j++) {
-				*(fb++) = *(bmap++);
-				*(fb++) = *(bmap++);
-				*(fb++) = *(bmap++);
-				*(fb++) = *(bmap++);
-			}
-			fb -= priv->line_length + width * (bpix / 8);
 		}
-#endif
 		break;
-#endif /* CONFIG_BMP_32BPP */
 	default:
 		break;
 	};

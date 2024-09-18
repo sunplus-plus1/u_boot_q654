@@ -4,15 +4,20 @@
  * Copyright Duncan Hare <dh@synoia.com> 2017
  */
 
+#include <asm/global_data.h>
 #include <command.h>
 #include <common.h>
 #include <display_options.h>
 #include <env.h>
 #include <image.h>
+#include <lmb.h>
 #include <mapmem.h>
 #include <net.h>
 #include <net/tcp.h>
 #include <net/wget.h>
+#include <stdlib.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 /* The default, change with environment variable 'httpdstp' */
 #define SERVER_PORT		80
@@ -21,12 +26,10 @@ static const char bootfile1[] = "GET ";
 static const char bootfile3[] = " HTTP/1.0\r\n\r\n";
 static const char http_eom[] = "\r\n\r\n";
 static const char http_ok[] = "200";
-static const char http_partial_content[] = "206";
 static const char content_len[] = "Content-Length";
 static const char linefeed[] = "\r\n";
 static struct in_addr web_server_ip;
 static int our_port;
-static int server_port;
 static int wget_timeout_count;
 
 struct pkt_qd {
@@ -47,6 +50,7 @@ static unsigned long content_length;
 static unsigned int packets;
 
 static unsigned int initial_data_seq_num;
+static unsigned int next_data_seq_num;
 
 static enum  wget_state current_wget_state;
 
@@ -61,20 +65,28 @@ static unsigned int retry_tcp_ack_num;	/* TCP retry acknowledge number*/
 static unsigned int retry_tcp_seq_num;	/* TCP retry sequence number */
 static int retry_len;			/* TCP retry length */
 
-struct retry_data_segment {
-	unsigned int valid;
-	unsigned int length;
-	unsigned int left;
-	unsigned int right;
-};
+static ulong wget_load_size;
 
-#define RETRY_DATA_NUM_MAX 64
-static struct retry_data_segment retry_data[RETRY_DATA_NUM_MAX];
-static ulong time_start;
-static int wget_partial;
-static int retry_data_num;
+/**
+ * wget_init_max_size() - initialize maximum load size
+ *
+ * Return:	0 if success, -1 if fails
+ */
+static int wget_init_load_size(void)
+{
+	struct lmb lmb;
+	phys_size_t max_size;
 
-static void wget_restart(void);
+	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+
+	max_size = lmb_get_free_size(&lmb, image_load_addr);
+	if (!max_size)
+		return -1;
+
+	wget_load_size = max_size;
+
+	return 0;
+}
 
 /**
  * store_block() - store block in memory
@@ -84,17 +96,25 @@ static void wget_restart(void);
  */
 static inline int store_block(uchar *src, unsigned int offset, unsigned int len)
 {
+	ulong store_addr = image_load_addr + offset;
 	ulong newsize = offset + len;
 	uchar *ptr;
 
-	if (wget_partial && retry_data_num && len &&
-	    retry_data[retry_data_num - 1].valid) {
-		offset += retry_data[retry_data_num - 1].left;
-		if (offset + len - 1 >= retry_data[retry_data_num - 1].right)
-			retry_data[retry_data_num - 1].valid = 0;
+	if (IS_ENABLED(CONFIG_LMB)) {
+		ulong end_addr = image_load_addr + wget_load_size;
+
+		if (!end_addr)
+			end_addr = ULONG_MAX;
+
+		if (store_addr < image_load_addr ||
+		    store_addr + len > end_addr) {
+			printf("\nwget error: ");
+			printf("trying to overwrite reserved memory...\n");
+			return -1;
+		}
 	}
 
-	ptr = map_sysmem(image_load_addr + offset, len);
+	ptr = map_sysmem(store_addr, len);
 	memcpy(ptr, src, len);
 	unmap_sysmem(ptr);
 
@@ -118,7 +138,10 @@ static void wget_send_stored(void)
 	int len = retry_len;
 	unsigned int tcp_ack_num = retry_tcp_seq_num + (len == 0 ? 1 : len);
 	unsigned int tcp_seq_num = retry_tcp_ack_num;
+	unsigned int server_port;
 	uchar *ptr, *offset;
+
+	server_port = env_get_ulong("httpdstp", 10, SERVER_PORT) & 0xffff;
 
 	switch (current_wget_state) {
 	case WGET_CLOSED:
@@ -145,19 +168,6 @@ static void wget_send_stored(void)
 
 		memcpy(offset, &bootfile3, strlen(bootfile3));
 		offset += strlen(bootfile3);
-
-		if (wget_partial && retry_data_num) {
-			offset -= 2;
-			memcpy(offset, "Range: bytes=", 13);
-			offset += 13;
-			sprintf((char *)offset, "%u-%u\r\n",
-				retry_data[retry_data_num - 1].left,
-				retry_data[retry_data_num - 1].right);
-			offset += strlen((char *)offset);
-			*offset++ = '\r';
-			*offset++ = '\n';
-		}
-
 		net_send_tcp_packet((offset - ptr), server_port, our_port,
 				    TCP_PUSH, tcp_seq_num, tcp_ack_num);
 		current_wget_state = WGET_CONNECTED;
@@ -188,7 +198,6 @@ void wget_fail(char *error_message, unsigned int tcp_seq_num,
 	printf("wget: Transfer Fail - %s\n", error_message);
 	net_set_timeout_handler(0, NULL);
 	wget_send(action, tcp_seq_num, tcp_ack_num, 0);
-	net_set_state(NETLOOP_FAIL);
 }
 
 void wget_success(u8 action, unsigned int tcp_seq_num,
@@ -226,7 +235,6 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 	char *pos;
 	int hlen, i;
 	uchar *ptr1;
-	char *endp;
 
 	pkt[len] = '\0';
 	pos = strstr((char *)pkt, http_eom);
@@ -265,54 +273,39 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 
 		current_wget_state = WGET_TRANSFERRING;
 
-		if (strstr((char *)pkt, http_ok) == 0 &&
-		    strstr((char *)pkt, http_partial_content) == 0) {
+		initial_data_seq_num = tcp_seq_num + hlen;
+		next_data_seq_num    = tcp_seq_num + len;
+
+		if (strstr((char *)pkt, http_ok) == 0) {
 			debug_cond(DEBUG_WGET,
 				   "wget: Connected Bad Xfer\n");
-			initial_data_seq_num = tcp_seq_num + hlen;
 			wget_loop_state = NETLOOP_FAIL;
 			wget_send(action, tcp_seq_num, tcp_ack_num, len);
 		} else {
 			debug_cond(DEBUG_WGET,
 				   "wget: Connctd pkt %p  hlen %x\n",
 				   pkt, hlen);
-			initial_data_seq_num = tcp_seq_num + hlen;
 
 			pos = strstr((char *)pkt, content_len);
 			if (!pos) {
 				content_length = -1;
 			} else {
-				pos += strlen(content_len) + 2;
-				content_length = ustrtoul(pos, &endp, 10);
+				pos += sizeof(content_len) + 2;
+				strict_strtoul(pos, 10, &content_length);
 				debug_cond(DEBUG_WGET,
 					   "wget: Connected Len %lu\n",
 					   content_length);
 			}
 
-			if (wget_partial && retry_data_num) {
-				pos = endp + 2;
-				if (!memcmp(pos, "Content-Range: bytes", 20)) {
-					unsigned int seg_left;
-					unsigned int seg_right;
-
-					pos += 21;
-					seg_left = ustrtoul(pos, &endp, 10);
-					pos = endp + 1;
-					seg_right = ustrtoul(pos, &endp, 10);
-					pos = endp + 1;
-					content_length = ustrtoul(pos, &endp, 10);
-					debug_cond(DEBUG_WGET,
-						   "\nwget: Content range %u - %u/%lu\n",
-						   seg_left, seg_right, content_length);
-				}
-			}
-
 			net_boot_file_size = 0;
 
 			if (len > hlen) {
-				store_block(pkt + hlen, 0, len - hlen);
-				if (!wget_partial)
-					retry_data[retry_data_num].left = 0;
+				if (store_block(pkt + hlen, 0, len - hlen) != 0) {
+					wget_loop_state = NETLOOP_FAIL;
+					wget_fail("wget: store error\n", tcp_seq_num, tcp_ack_num, action);
+					net_set_state(NETLOOP_FAIL);
+					return;
+				}
 			}
 
 			debug_cond(DEBUG_WGET,
@@ -320,20 +313,25 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 				   pkt, hlen);
 
 			for (i = 0; i < pkt_q_idx; i++) {
-				ptr1 = map_sysmem((phys_addr_t)(pkt_q[i].pkt),
-						  pkt_q[i].len);
-				store_block(ptr1,
-					    pkt_q[i].tcp_seq_num -
-					    initial_data_seq_num,
-					    pkt_q[i].len);
+				int err;
+
+				ptr1 = map_sysmem(
+					(phys_addr_t)(pkt_q[i].pkt),
+					pkt_q[i].len);
+				err = store_block(ptr1,
+					  pkt_q[i].tcp_seq_num -
+					  initial_data_seq_num,
+					  pkt_q[i].len);
 				unmap_sysmem(ptr1);
 				debug_cond(DEBUG_WGET,
 					   "wget: Connctd pkt Q %p len %x\n",
 					   pkt_q[i].pkt, pkt_q[i].len);
-				if (wget_partial)
-					retry_data[retry_data_num].left =
-						pkt_q[i].tcp_seq_num -
-						initial_data_seq_num;
+				if (err) {
+					wget_loop_state = NETLOOP_FAIL;
+					wget_fail("wget: store error\n", tcp_seq_num, tcp_ack_num, action);
+					net_set_state(NETLOOP_FAIL);
+					return;
+				}
 			}
 		}
 	}
@@ -360,8 +358,6 @@ static void wget_handler(uchar *pkt, u16 dport,
 			 u8 action, unsigned int len)
 {
 	enum tcp_state wget_tcp_state = tcp_get_tcp_state();
-	u64 data_tcp_seq_num;
-	u32 data_offset;
 
 	net_set_timeout_handler(wget_timeout, wget_timeout_handler);
 	packets++;
@@ -402,43 +398,17 @@ static void wget_handler(uchar *pkt, u16 dport,
 			   "wget: Transferring, seq=%x, ack=%x,len=%x\n",
 			   tcp_seq_num, tcp_ack_num, len);
 
-		data_tcp_seq_num = tcp_seq_num;
-		if ((int)retry_tcp_seq_num - (int)tcp_seq_num < 0)
-			data_tcp_seq_num += (u64)0x100000000;
-
-		data_offset = data_tcp_seq_num - initial_data_seq_num;
-		if (data_tcp_seq_num >= initial_data_seq_num &&
-		    store_block(pkt, data_offset, len) != 0) {
-			wget_fail("wget: store error\n",
-				  tcp_seq_num, tcp_ack_num, action);
+		if (next_data_seq_num != tcp_seq_num) {
+			debug_cond(DEBUG_WGET, "wget: seq=%x packet was lost\n", next_data_seq_num);
 			return;
 		}
+		next_data_seq_num = tcp_seq_num + len;
 
-		if (data_offset > retry_data[retry_data_num].left &&
-		    retry_data_num < RETRY_DATA_NUM_MAX &&
-		    !wget_partial) {
-			struct retry_data_segment *seg;
-			struct retry_data_segment *seg_prev;
-
-			seg = &retry_data[retry_data_num];
-			seg_prev = retry_data_num > 1 ? seg - 1 : NULL;
-			if (tcp_seq_num == retry_tcp_seq_num + retry_len) {
-				seg->left = data_offset;
-			} else {
-				seg->valid = 1;
-				seg->right = data_offset - 1;
-				seg->length = seg->right - seg->left + 1;
-				if (seg_prev && seg->left - seg_prev->right <= 16384) {
-					seg_prev->length = data_offset - seg_prev->left;
-					seg_prev->right = seg->right;
-					seg->left = data_offset;
-					seg->length = 0;
-					seg->valid = 0;
-				} else  if (++retry_data_num < RETRY_DATA_NUM_MAX) {
-					seg = &retry_data[retry_data_num];
-					seg->left = data_offset;
-				}
-			}
+		if (store_block(pkt, tcp_seq_num - initial_data_seq_num, len) != 0) {
+			wget_fail("wget: store error\n",
+				  tcp_seq_num, tcp_ack_num, action);
+			net_set_state(NETLOOP_FAIL);
+			return;
 		}
 
 		switch (wget_tcp_state) {
@@ -458,9 +428,6 @@ static void wget_handler(uchar *pkt, u16 dport,
 			wget_loop_state = NETLOOP_SUCCESS;
 			break;
 		case TCP_CLOSE_WAIT:     /* End of transfer */
-			if (len != 0)
-				tcp_seq_num++;
-
 			current_wget_state = WGET_TRANSFERRED;
 			wget_send(action | TCP_ACK | TCP_FIN,
 				  tcp_seq_num, tcp_ack_num, len);
@@ -468,43 +435,7 @@ static void wget_handler(uchar *pkt, u16 dport,
 		}
 		break;
 	case WGET_TRANSFERRED:
-		if (wget_loop_state != NETLOOP_SUCCESS) {
-			net_set_state(wget_loop_state);
-			break;
-		}
-		if (!wget_partial && !retry_data_num) {
-			if (net_boot_file_size != content_length) {
-				net_set_state(NETLOOP_FAIL);
-				break;
-			}
-		}
-		if (!wget_partial && retry_data_num) {
-			if (retry_data_num > RETRY_DATA_NUM_MAX)
-				printf("retry data num: %u\n", retry_data_num);
-			net_set_state(NETLOOP_CONTINUE);
-			wget_restart();
-			break;
-		}
-		if (wget_partial) {
-			retry_data_num--;
-			if (net_boot_file_size != retry_data[retry_data_num].length) {
-				net_set_state(NETLOOP_FAIL);
-				break;
-			}
-			if (retry_data_num) {
-				wget_restart();
-				net_set_state(NETLOOP_CONTINUE);
-				break;
-			}
-		}
-		net_boot_file_size = content_length;
-		time_start = get_timer(time_start);
-		if (time_start > 0) {
-			puts("\t");
-			print_size(net_boot_file_size /
-				time_start * 1000, "/s");
-		}
-		puts("\ndone\n");
+		printf("Packets received %d, Transfer Successful\n", packets);
 		net_set_state(wget_loop_state);
 		break;
 	}
@@ -523,12 +454,12 @@ static void wget_handler(uchar *pkt, u16 dport,
  */
 static unsigned int random_port(void)
 {
-	return RANDOM_PORT_START + (get_ticks() % RANDOM_PORT_RANGE);
+	return RANDOM_PORT_START + (get_timer(0) % RANDOM_PORT_RANGE);
 }
 
 #define BLOCKSIZE 512
 
-void do_wget_start(void)
+void wget_start(void)
 {
 	image_url = strchr(net_boot_file_name, ':');
 	if (image_url > 0) {
@@ -538,12 +469,6 @@ void do_wget_start(void)
 	} else {
 		web_server_ip = net_server_ip;
 		image_url = net_boot_file_name;
-	}
-
-	if (image_url[0] == '\0') {
-		net_set_state(NETLOOP_FAIL);
-		printf("Usage: wget [loadAddress] [[hostIPaddr:]path and image name]\n");
-		return;
 	}
 
 	debug_cond(DEBUG_WGET,
@@ -573,6 +498,15 @@ void do_wget_start(void)
 	debug_cond(DEBUG_WGET,
 		   "\nwget:Load address: 0x%lx\nLoading: *\b", image_load_addr);
 
+	if (IS_ENABLED(CONFIG_LMB)) {
+		if (wget_init_load_size()) {
+			printf("\nwget error: ");
+			printf("trying to overwrite reserved memory...\n");
+			net_set_state(NETLOOP_FAIL);
+			return;
+		}
+	}
+
 	net_set_timeout_handler(wget_timeout, wget_timeout_handler);
 	tcp_set_tcp_handler(wget_handler);
 
@@ -580,8 +514,6 @@ void do_wget_start(void)
 	current_wget_state = WGET_CLOSED;
 
 	our_port = random_port();
-	server_port = env_get_ulong("httpdstp", 10, SERVER_PORT) & 0xffff;
-	tcp_set_tcp_port(our_port, server_port);
 
 	/*
 	 * Zero out server ether to force arp resolution in case
@@ -594,17 +526,126 @@ void do_wget_start(void)
 	wget_send(TCP_SYN, 0, 0, 0);
 }
 
-static void wget_restart(void)
+#if (IS_ENABLED(CONFIG_CMD_DNS))
+int wget_with_dns(ulong dst_addr, char *uri)
 {
-	wget_partial = 1;
-	do_wget_start();
-}
+	int ret;
+	char *s, *host_name, *file_name, *str_copy;
 
-void wget_start(void)
+	/*
+	 * Download file using wget.
+	 *
+	 * U-Boot wget takes the target uri in this format.
+	 *  "<http server ip>:<file path>"  e.g.) 192.168.1.1:/sample/test.iso
+	 * Need to resolve the http server ip address before starting wget.
+	 */
+	str_copy = strdup(uri);
+	if (!str_copy)
+		return -ENOMEM;
+
+	s = str_copy + strlen("http://");
+	host_name = strsep(&s, "/");
+	if (!s) {
+		log_err("Error: invalied uri, no file path\n");
+		ret = -EINVAL;
+		goto out;
+	}
+	file_name = s;
+
+	/* TODO: If the given uri has ip address for the http server, skip dns */
+	net_dns_resolve = host_name;
+	net_dns_env_var = "httpserverip";
+	if (net_loop(DNS) < 0) {
+		log_err("Error: dns lookup of %s failed, check setup\n", net_dns_resolve);
+		ret = -EINVAL;
+		goto out;
+	}
+	s = env_get("httpserverip");
+	if (!s) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	strlcpy(net_boot_file_name, s, sizeof(net_boot_file_name));
+	strlcat(net_boot_file_name, ":/", sizeof(net_boot_file_name)); /* append '/' which is removed by strsep() */
+	strlcat(net_boot_file_name, file_name, sizeof(net_boot_file_name));
+	image_load_addr = dst_addr;
+	ret = net_loop(WGET);
+
+out:
+	free(str_copy);
+
+	return ret;
+}
+#endif
+
+/**
+ * wget_validate_uri() - validate the uri for wget
+ *
+ * @uri:	uri string
+ *
+ * This function follows the current U-Boot wget implementation.
+ * scheme: only "http:" is supported
+ * authority:
+ *   - user information: not supported
+ *   - host: supported
+ *   - port: not supported(always use the default port)
+ *
+ * Uri is expected to be correctly percent encoded.
+ * This is the minimum check, control codes(0x1-0x19, 0x7F, except '\0')
+ * and space character(0x20) are not allowed.
+ *
+ * TODO: stricter uri conformance check
+ *
+ * Return:	true on success, false on failure
+ */
+bool wget_validate_uri(char *uri)
 {
-	wget_partial = 0;
-	retry_data_num = 0;
-	memset(retry_data, 0, sizeof(retry_data));
-	time_start = get_timer(0);
-	do_wget_start();
+	char c;
+	bool ret = true;
+	char *str_copy, *s, *authority;
+
+	for (c = 0x1; c < 0x21; c++) {
+		if (strchr(uri, c)) {
+			log_err("invalid character is used\n");
+			return false;
+		}
+	}
+	if (strchr(uri, 0x7f)) {
+		log_err("invalid character is used\n");
+		return false;
+	}
+
+	if (strncmp(uri, "http://", 7)) {
+		log_err("only http:// is supported\n");
+		return false;
+	}
+	str_copy = strdup(uri);
+	if (!str_copy)
+		return false;
+
+	s = str_copy + strlen("http://");
+	authority = strsep(&s, "/");
+	if (!s) {
+		log_err("invalid uri, no file path\n");
+		ret = false;
+		goto out;
+	}
+	s = strchr(authority, '@');
+	if (s) {
+		log_err("user information is not supported\n");
+		ret = false;
+		goto out;
+	}
+	s = strchr(authority, ':');
+	if (s) {
+		log_err("user defined port is not supported\n");
+		ret = false;
+		goto out;
+	}
+
+out:
+	free(str_copy);
+
+	return ret;
 }

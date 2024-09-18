@@ -76,7 +76,8 @@ static int sunplus_clk_probe(struct udevice *dev)
 	}
 	clk_request(extclk_dev, &extclk);
 	extclk_rate = clk_get_rate(&extclk);
-	clk_free(&extclk);
+
+
 
 	priv->base = (void *)devfdt_get_addr(dev);
 	clkc_dev = dev;

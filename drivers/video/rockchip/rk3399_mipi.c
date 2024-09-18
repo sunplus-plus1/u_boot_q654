@@ -14,7 +14,6 @@
 #include "rk_mipi.h"
 #include <syscon.h>
 #include <asm/gpio.h>
-#include <asm/io.h>
 #include <dm/uclass-internal.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
@@ -165,6 +164,7 @@ static const struct dm_display_ops rk_mipi_dsi_ops = {
 };
 
 static const struct udevice_id rk_mipi_dsi_ids[] = {
+	{ .compatible = "rockchip,rk3399-mipi-dsi" },
 	{ .compatible = "rockchip,rk3399_mipi_dsi" },
 	{ }
 };

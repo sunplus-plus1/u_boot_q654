@@ -148,7 +148,6 @@ static inline void _debug_uart_putc(int ch)
 void _debug_uart_init(void)
 {
 	/* Baudrate has been setup in IBoot/XBoot, don't change it here. */
-
 #if defined(DEBUG)
 	_debug_uart_putc('_');
 	_debug_uart_putc('d');

@@ -2,7 +2,7 @@
 /*
  * dwc3-of-simple.c - OF glue layer for simple integrations
  *
- * Copyright (c) 2015 Texas Instruments Incorporated - http://www.ti.com
+ * Copyright (c) 2015 Texas Instruments Incorporated - https://www.ti.com
  *
  * Author: Felipe Balbi <balbi@ti.com>
  *
@@ -90,7 +90,6 @@ static int dwc3_of_simple_remove(struct udevice *dev)
 }
 
 static const struct udevice_id dwc3_of_simple_ids[] = {
-	{ .compatible = "sunplus,dwcusb3" },
 	{ .compatible = "amlogic,meson-gxl-dwc3" },
 	{ .compatible = "rockchip,rk3399-dwc3" },
 	{ .compatible = "ti,dwc3" },

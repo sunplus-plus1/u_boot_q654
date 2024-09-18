@@ -8,8 +8,6 @@
 #include <init.h>
 #include <syscon.h>
 #include <asm/armv8/mmu.h>
-#include <asm/global_data.h>
-#include <asm/io.h>
 #include <asm/arch-rockchip/bootrom.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/cru_rk3368.h>
@@ -17,8 +15,6 @@
 #include <asm/arch-rockchip/hardware.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 #define IMEM_BASE                  0xFF8C0000
 
@@ -58,8 +54,9 @@ static struct mm_region rk3368_mem_map[] = {
 struct mm_region *mem_map = rk3368_mem_map;
 
 const char * const boot_devices[BROM_LAST_BOOTSOURCE + 1] = {
-	[BROM_BOOTSOURCE_EMMC] = "/dwmmc@ff0f0000",
-	[BROM_BOOTSOURCE_SD] = "/dwmmc@ff0c0000",
+	[BROM_BOOTSOURCE_EMMC] = "/mmc@ff0f0000",
+	[BROM_BOOTSOURCE_SPINOR] = "/spi@ff120000/flash@0",
+	[BROM_BOOTSOURCE_SD] = "/mmc@ff0c0000",
 };
 
 #ifdef CONFIG_ARCH_EARLY_INIT_R

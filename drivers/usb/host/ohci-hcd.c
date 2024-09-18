@@ -35,13 +35,6 @@
 #include <asm/cache.h>
 #include <linux/delay.h>
 
-#if defined(CONFIG_PCI_OHCI)
-# include <pci.h>
-#if !defined(CONFIG_PCI_OHCI_DEVNO)
-#define CONFIG_PCI_OHCI_DEVNO	0
-#endif
-#endif
-
 #include <malloc.h>
 #include <memalign.h>
 #include <usb.h>
@@ -53,8 +46,7 @@
 #endif
 
 #if defined(CONFIG_CPU_ARM920T) || \
-	defined(CONFIG_PCI_OHCI) || \
-	defined(CONFIG_DM_PCI) || \
+	defined(CONFIG_PCI) || \
 	defined(CONFIG_SYS_OHCI_USE_NPS)
 # define OHCI_USE_NPS		/* force NoPowerSwitching mode */
 #endif
@@ -65,33 +57,8 @@
 #undef OHCI_FILL_TRACE
 
 /* For initializing controller (mask in an HCFS mode too) */
-#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
-#define OHCI_CONTROL_INIT \
-	(OHCI_CTRL_CBSR & 0x3) | OHCI_CTRL_IE
-#else
 #define OHCI_CONTROL_INIT \
 	(OHCI_CTRL_CBSR & 0x3) | OHCI_CTRL_IE | OHCI_CTRL_PLE
-#endif
-
-#if !CONFIG_IS_ENABLED(DM_USB)
-#ifdef CONFIG_PCI_OHCI
-static struct pci_device_id ohci_pci_ids[] = {
-	{0x10b9, 0x5237},	/* ULI1575 PCI OHCI module ids */
-	{0x1033, 0x0035},	/* NEC PCI OHCI module ids */
-	{0x1131, 0x1561},	/* Philips 1561 PCI OHCI module ids */
-	/* Please add supported PCI OHCI controller ids here */
-	{0, 0}
-};
-#endif
-#endif
-
-#ifdef CONFIG_PCI_EHCI_DEVNO
-static struct pci_device_id ehci_pci_ids[] = {
-	{0x1131, 0x1562},	/* Philips 1562 PCI EHCI module ids */
-	/* Please add supported PCI EHCI controller ids here */
-	{0, 0}
-};
-#endif
 
 #ifdef DEBUG
 #define dbg(format, arg...) printf("DEBUG: " format "\n", ## arg)
@@ -169,7 +136,6 @@ static int cc_to_error[16] = {
 	/* Not Access */	       -1
 };
 
-#ifndef CONFIG_TARGET_PENTAGRAM_SP7350
 static const char *cc_to_string[16] = {
 	"No Error",
 	"CRC: Last data packet from endpoint contained a CRC error.",
@@ -204,7 +170,6 @@ static const char *cc_to_string[16] = {
 	"NOT ACCESSED: This code is set by software before the TD is placed" \
 		     "on a list to be processed by the HC.(2)",
 };
-#endif
 
 static inline u32 roothub_a(struct ohci *hc)
 	{ return ohci_readl(&hc->regs->roothub.a); }
@@ -1040,15 +1005,6 @@ static void td_submit_job(ohci_t *ohci, struct usb_device *dev,
 			TD_CC | TD_DP_OUT | toggle:
 			TD_CC | TD_R | TD_DP_IN | toggle;
 		td_fill(ohci, info, data, data_len, dev, cnt++, urb);
-
-#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
-		/* start periodic */
-		if (!(ohci_readl(&ohci->regs->control) & OHCI_CTRL_PLE)) {
-			ohci->hc_control |= OHCI_CTRL_PLE;
-			ohci_writel(ohci->hc_control, &ohci->regs->control);
-		}
-#endif
-
 		break;
 	}
 	if (urb->length != cnt)
@@ -1090,9 +1046,7 @@ static void check_status(td_t *td_list)
 
 	cc = TD_CC_GET(m32_swap(td_list->hwINFO));
 	if (cc) {
-#ifndef CONFIG_TARGET_PENTAGRAM_SP7350
 		err(" USB-error: %s (%x)", cc_to_string[cc], cc);
-#endif
 
 		invalidate_dcache_ed(td_list->ed);
 		if (*phwHeadP & m32_swap(0x1)) {
@@ -1175,10 +1129,7 @@ static int takeback_td(ohci_t *ohci, td_t *td_list)
 	/* error code of transfer */
 	cc = TD_CC_GET(tdINFO);
 	if (cc) {
-#ifndef CONFIG_TARGET_PENTAGRAM_SP7350
 		err("USB-error: %s (%x)", cc_to_string[cc], cc);
-#endif
-
 		stat = cc_to_error[cc];
 	}
 
@@ -2028,21 +1979,6 @@ static char ohci_inited = 0;
 
 int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 {
-#ifdef CONFIG_PCI_OHCI
-	pci_dev_t pdev;
-#endif
-
-#ifdef CONFIG_SYS_USB_OHCI_CPU_INIT
-	/* cpu dependant init */
-	if (usb_cpu_init())
-		return -1;
-#endif
-
-#ifdef CONFIG_SYS_USB_OHCI_BOARD_INIT
-	/*  board dependant init */
-	if (board_usb_init(index, USB_INIT_HOST))
-		return -1;
-#endif
 	memset(&gohci, 0, sizeof(ohci_t));
 
 	/* align the storage */
@@ -2057,28 +1993,7 @@ int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 	gohci.disabled = 1;
 	gohci.sleeping = 0;
 	gohci.irq = -1;
-#ifdef CONFIG_PCI_OHCI
-	pdev = pci_find_devices(ohci_pci_ids, CONFIG_PCI_OHCI_DEVNO);
-
-	if (pdev != -1) {
-		u16 vid, did;
-		u32 base;
-		pci_read_config_word(pdev, PCI_VENDOR_ID, &vid);
-		pci_read_config_word(pdev, PCI_DEVICE_ID, &did);
-		printf("OHCI pci controller (%04x, %04x) found @(%d:%d:%d)\n",
-				vid, did, (pdev >> 16) & 0xff,
-				(pdev >> 11) & 0x1f, (pdev >> 8) & 0x7);
-		pci_read_config_dword(pdev, PCI_BASE_ADDRESS_0, &base);
-		printf("OHCI regs address 0x%08x\n", base);
-		gohci.regs = (struct ohci_regs *)base;
-	} else {
-		printf("%s: OHCI devnr: %d not found\n", __func__,
-		       CONFIG_PCI_OHCI_DEVNO);
-		return -1;
-	}
-#else
-	gohci.regs = (struct ohci_regs *)CONFIG_SYS_USB_OHCI_REGS_BASE;
-#endif
+	gohci.regs = (struct ohci_regs *)CFG_SYS_USB_OHCI_REGS_BASE;
 
 	gohci.flags = 0;
 	gohci.slot_name = CONFIG_SYS_USB_OHCI_SLOT_NAME;
@@ -2086,15 +2001,6 @@ int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 	if (hc_reset (&gohci) < 0) {
 		hc_release_ohci (&gohci);
 		err ("can't reset usb-%s", gohci.slot_name);
-#ifdef CONFIG_SYS_USB_OHCI_BOARD_INIT
-		/* board dependant cleanup */
-		board_usb_cleanup(index, USB_INIT_HOST);
-#endif
-
-#ifdef CONFIG_SYS_USB_OHCI_CPU_INIT
-		/* cpu dependant cleanup */
-		usb_cpu_init_fail();
-#endif
 		return -1;
 	}
 
@@ -2102,15 +2008,6 @@ int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 		err("can't start usb-%s", gohci.slot_name);
 		hc_release_ohci(&gohci);
 		/* Initialization failed */
-#ifdef CONFIG_SYS_USB_OHCI_BOARD_INIT
-		/* board dependant cleanup */
-		usb_board_stop();
-#endif
-
-#ifdef CONFIG_SYS_USB_OHCI_CPU_INIT
-		/* cpu dependant cleanup */
-		usb_cpu_stop();
-#endif
 		return -1;
 	}
 
@@ -2133,17 +2030,6 @@ int usb_lowlevel_stop(int index)
 	/* call hc_release_ohci() here ? */
 	hc_reset(&gohci);
 
-#ifdef CONFIG_SYS_USB_OHCI_BOARD_INIT
-	/* board dependant cleanup */
-	if (usb_board_stop())
-		return -1;
-#endif
-
-#ifdef CONFIG_SYS_USB_OHCI_CPU_INIT
-	/* cpu dependant cleanup */
-	if (usb_cpu_stop())
-		return -1;
-#endif
 	/* This driver is no longer initialised. It needs a new low-level
 	 * init (board/cpu) before it can be used again. */
 	ohci_inited = 0;

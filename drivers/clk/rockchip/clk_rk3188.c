@@ -13,7 +13,6 @@
 #include <malloc.h>
 #include <mapmem.h>
 #include <syscon.h>
-#include <asm/io.h>
 #include <asm/arch-rockchip/clock.h>
 #include <asm/arch-rockchip/cru_rk3188.h>
 #include <asm/arch-rockchip/grf_rk3188.h>
@@ -540,11 +539,11 @@ static struct clk_ops rk3188_clk_ops = {
 
 static int rk3188_clk_of_to_plat(struct udevice *dev)
 {
-#if !CONFIG_IS_ENABLED(OF_PLATDATA)
-	struct rk3188_clk_priv *priv = dev_get_priv(dev);
+	if (CONFIG_IS_ENABLED(OF_REAL)) {
+		struct rk3188_clk_priv *priv = dev_get_priv(dev);
 
-	priv->cru = dev_read_addr_ptr(dev);
-#endif
+		priv->cru = dev_read_addr_ptr(dev);
+	}
 
 	return 0;
 }
@@ -600,7 +599,7 @@ static int rk3188_clk_bind(struct udevice *dev)
 	ret = offsetof(struct rk3188_cru, cru_softrst_con[0]);
 	ret = rockchip_reset_bind(dev, ret, 9);
 	if (ret)
-		debug("Warning: software reset driver bind faile\n");
+		debug("Warning: software reset driver bind failed\n");
 #endif
 
 	return 0;

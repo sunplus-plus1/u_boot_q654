@@ -9,6 +9,7 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dm/lists.h>
 #include <errno.h>
 #include <usb.h>
 #include <usb/ehci-ci.h>
@@ -56,7 +57,7 @@ static int ehci_usb_probe(struct udevice *dev)
 	hcor = (struct ehci_hcor *)((phys_addr_t)hccr +
 			HC_LENGTH(ehci_readl(&(hccr)->cr_capbase)));
 
-	ret = ehci_setup_phy(dev, &p->phy, 0);
+	ret = generic_setup_phy(dev, &p->phy, 0);
 	if (ret)
 		return ret;
 
@@ -81,7 +82,7 @@ static int ehci_usb_remove(struct udevice *dev)
 	/* Stop controller. */
 	clrbits_le32(&ehci->usbcmd, CMD_RUN);
 
-	ret = ehci_shutdown_phy(dev, &p->phy);
+	ret = generic_shutdown_phy(&p->phy);
 	if (ret)
 		return ret;
 
@@ -119,6 +120,24 @@ static int ehci_usb_of_to_plat(struct udevice *dev)
 	return 0;
 }
 
+static int ehci_usb_of_bind(struct udevice *dev)
+{
+	ofnode ulpi_node = ofnode_first_subnode(dev_ofnode(dev));
+	ofnode phy_node;
+
+	if (!ofnode_valid(ulpi_node))
+		return 0;
+
+	phy_node = ofnode_first_subnode(ulpi_node);
+	if (!ofnode_valid(phy_node)) {
+		printf("%s: ulpi subnode with no phy\n", __func__);
+		return -ENOENT;
+	}
+
+	return device_bind_driver_to_node(dev, "msm8916_usbphy", "msm8916_usbphy",
+					  phy_node, NULL);
+}
+
 #if defined(CONFIG_CI_UDC)
 /* Little quirk that MSM needs with Chipidea controller
  * Must reinit phy after reset
@@ -132,7 +151,7 @@ void ci_init_after_reset(struct ehci_ctrl *ctrl)
 #endif
 
 static const struct udevice_id ehci_usb_ids[] = {
-	{ .compatible = "qcom,ehci-host", },
+	{ .compatible = "qcom,ci-hdrc", },
 	{ }
 };
 
@@ -141,6 +160,7 @@ U_BOOT_DRIVER(usb_ehci) = {
 	.id	= UCLASS_USB,
 	.of_match = ehci_usb_ids,
 	.of_to_plat = ehci_usb_of_to_plat,
+	.bind = ehci_usb_of_bind,
 	.probe = ehci_usb_probe,
 	.remove = ehci_usb_remove,
 	.ops	= &ehci_usb_ops,

@@ -26,6 +26,7 @@
 #include <asm/arch/pinmux.h>
 #include <asm/arch/power.h>
 #include <asm/arch/sromc.h>
+#include <linux/printk.h>
 #include <power/pmic.h>
 #include <power/max77686_pmic.h>
 #include <power/regulator.h>
@@ -36,11 +37,6 @@
 #include <tmu.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-
-int exynos_init(void)
-{
-	return 0;
-}
 
 static int exynos_set_regulator(const char *name, uint uv)
 {
@@ -126,12 +122,6 @@ static struct dwc3_device dwc3_device_data = {
 	.index = 0,
 };
 
-int usb_gadget_handle_interrupts(void)
-{
-	dwc3_uboot_handle_interrupt(0);
-	return 0;
-}
-
 int board_usb_init(int index, enum usb_init_type init)
 {
 	struct exynos_usb3_phy *phy = (struct exynos_usb3_phy *)
@@ -169,7 +159,7 @@ char *get_dfu_alt_boot(char *interface, char *devstr)
 	if (board_is_odroidxu4() || board_is_odroidhc1() || board_is_odroidhc2())
 		return info;
 
-	dev_num = simple_strtoul(devstr, NULL, 10);
+	dev_num = dectoul(devstr, NULL);
 
 	mmc = find_mmc_device(dev_num);
 	if (!mmc)
@@ -179,9 +169,9 @@ char *get_dfu_alt_boot(char *interface, char *devstr)
 		return NULL;
 
 	if (IS_SD(mmc))
-		alt_boot = CONFIG_DFU_ALT_BOOT_SD;
+		alt_boot = CFG_DFU_ALT_BOOT_SD;
 	else
-		alt_boot = CONFIG_DFU_ALT_BOOT_EMMC;
+		alt_boot = CFG_DFU_ALT_BOOT_EMMC;
 
 	return alt_boot;
 }
