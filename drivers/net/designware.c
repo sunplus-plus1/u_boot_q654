@@ -34,6 +34,9 @@
 #include <linux/printk.h>
 #include <power/regulator.h>
 #include "designware.h"
+#if IS_ENABLED(CONFIG_OTP_SUNPLUS)
+#include "sp_otp.h"
+#endif
 
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {
@@ -207,8 +210,10 @@ static int dw_dm_mdio_init(const char *name, void *priv)
 		const char *subnode_name = ofnode_get_name(node);
 		struct udevice *mdiodev;
 
-		if (strcmp(subnode_name, "mdio"))
-			continue;
+		if (strcmp(subnode_name, "mdio")) {
+			if (strcmp(subnode_name, "mdio0"))
+				continue;
+		}
 
 		ret = device_bind_driver_to_node(dev, "eth_designware_mdio",
 						 subnode_name, node, &mdiodev);
@@ -329,22 +334,51 @@ static int dw_adjust_link(struct dw_eth_dev *priv, struct eth_mac_regs *mac_p,
 			  struct phy_device *phydev)
 {
 	u32 conf = readl(&mac_p->conf) | FRAMEBURSTENABLE | DISABLERXOWN;
+#ifdef CONFIG_CLK
+	u32 clk_rate,clk_for_link_now = 0;
+#endif
 
 	if (!phydev->link) {
 		printf("%s: No link.\n", phydev->dev->name);
 		return 0;
 	}
 
-	if (phydev->speed != 1000)
+	if (phydev->speed != 1000) {
 		conf |= MII_PORTSELECT;
-	else
+#ifdef CONFIG_CLK
+		if (phydev->speed == 10) {
+			clk_for_link_now = 2500000;
+		}
+#endif
+	}
+	else {
 		conf &= ~MII_PORTSELECT;
+#ifdef CONFIG_CLK
+		clk_for_link_now = 125000000;
+#endif
+	}
 
-	if (phydev->speed == 100)
+	if (phydev->speed == 100) {
 		conf |= FES_100;
+#ifdef CONFIG_CLK
+		clk_for_link_now = 25000000;
+#endif
+	}
 
 	if (phydev->duplex)
 		conf |= FULLDPLXMODE;
+
+#ifdef CONFIG_CLK
+	if (clk_for_link_now) {
+		clk_rate = clk_get_rate(priv->clocks);
+		//printf("GMAC clock current = %d \n",clk_rate);
+		if ((clk_for_link_now) && (clk_for_link_now != clk_rate)) {
+			clk_set_rate(priv->clocks, clk_for_link_now);
+			//clk_rate = clk_get_rate(priv->clocks);
+			//printf("GMAC clock switch to %d \n",clk_rate);
+		}
+	}
+#endif
 
 	writel(conf, &mac_p->conf);
 
@@ -675,6 +709,53 @@ int designware_eth_write_hwaddr(struct udevice *dev)
 	return _dw_write_hwaddr(priv, pdata->enetaddr);
 }
 
+#if IS_ENABLED(CONFIG_OTP_SUNPLUS)
+int designware_eth_read_rom_hwaddr(struct udevice *dev)
+{
+	struct eth_pdata *pdata = dev_get_plat(dev);
+	int node = dev_of_offset(dev);
+	int offset = 0;
+	int i;
+	u32 otp_mac_addr;
+	u8 otp_mac[ARP_HLEN];
+
+	offset = fdtdec_lookup_phandle(gd->fdt_blob, node, "nvmem-cells");
+	if (offset > 0) {
+		otp_mac_addr = fdtdec_get_int(gd->fdt_blob, offset, "reg", -1);
+	}
+
+	if (otp_mac_addr < 128) {
+		for (i = 0; i < ARP_HLEN; i++) {
+			read_otp_data(HB_GP_REG, SP_OTPRX_REG, otp_mac_addr + i,
+				      (char *)&otp_mac[i]);
+		}
+
+		//printf("mac address = %pM\n", otp_mac);
+
+		if (fdt_node_offset_by_compatible(gd->fdt_blob, offset, "mac-base")) {
+			for (i = 0; i < (ARP_HLEN >> 1); i++) {
+				otp_mac[i] ^= otp_mac[ARP_HLEN - 1 - i];
+				otp_mac[ARP_HLEN - 1 - i] ^= otp_mac[i];
+				otp_mac[i] ^= otp_mac[ARP_HLEN - 1 - i];
+			}
+		}
+
+		if (is_valid_ethaddr(otp_mac)) {
+			memcpy(pdata->enetaddr, otp_mac, ARP_HLEN);
+		} else {
+			printf("Invalid mac address from OTP[%d:%d] = %pM!\n",
+							otp_mac_addr, otp_mac_addr+5, otp_mac);
+		}
+	} else if (otp_mac_addr == -1) {
+		printf("OTP address of mac address is not defined!\n");
+	} else {
+		printf("Invalid OTP address of mac address!\n");
+	}
+
+	return 0;
+}
+#endif
+
 static int designware_eth_bind(struct udevice *dev)
 {
 	if (IS_ENABLED(CONFIG_PCI)) {
@@ -706,6 +787,11 @@ int designware_eth_probe(struct udevice *dev)
 	clock_nb = dev_count_phandle_with_args(dev, "clocks", "#clock-cells",
 					       0);
 	if (clock_nb > 0) {
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+		// Force clock_nb to 1 because "ptp_ref" (RBUS clock) is always
+		// ON, and cannot be turned off.
+		clock_nb = 1;
+#endif
 		priv->clocks = devm_kcalloc(dev, clock_nb, sizeof(struct clk),
 					    GFP_KERNEL);
 		if (!priv->clocks)
@@ -828,6 +914,9 @@ const struct eth_ops designware_eth_ops = {
 	.free_pkt		= designware_eth_free_pkt,
 	.stop			= designware_eth_stop,
 	.write_hwaddr		= designware_eth_write_hwaddr,
+#if IS_ENABLED(CONFIG_OTP_SUNPLUS)
+	.read_rom_hwaddr	= designware_eth_read_rom_hwaddr,
+#endif
 };
 
 int designware_eth_of_to_plat(struct udevice *dev)
@@ -872,6 +961,7 @@ static const struct udevice_id designware_eth_ids[] = {
 	{ .compatible = "st,stm32-dwmac" },
 	{ .compatible = "snps,arc-dwmac-3.70a" },
 	{ .compatible = "sophgo,cv1800b-dwmac" },
+	{ .compatible = "snps,dwmac-3.70a" },
 	{ }
 };
 
