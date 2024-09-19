@@ -83,3 +83,8 @@ obj-$(CONFIG_RENESAS_SDHI)		+= tmio-common.o renesas-sdhi.o
 obj-$(CONFIG_MMC_BCM2835)		+= bcm2835_sdhost.o
 obj-$(CONFIG_MMC_MTK)			+= mtk-sd.o
 obj-$(CONFIG_MMC_SDHCI_F_SDH30)		+= f_sdh30.o
+
+#ifneq ($(findstring $(CONFIG_MMC_SP_EMMC)$(CONFIG_MMC_SP_SD), yy),)
+obj-$(CONFIG_MMC_SP_EMMC) += sp_mmc.o
+
+obj-$(CONFIG_MMC_SP_SD) += sp_sd.o
