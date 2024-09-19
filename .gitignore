@@ -57,12 +57,14 @@ fit-dtb.blob
 /spl/
 /tpl/
 /defconfig
-
+generated_defconfig
 #
 # Generated include files
 #
 /include/config/
 /include/generated/
+/include/config.h
+/include/autoconf.mk*
 
 # stgit generated dirs
 patches-*
