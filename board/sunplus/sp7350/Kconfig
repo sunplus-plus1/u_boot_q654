@@ -12,9 +12,6 @@ config SYS_BOARD
 config SYS_VENDOR
 	default "sunplus"
 
-config SYS_TEXT_BASE
-	default 0x300040
-
 config SYS_USE_QKBOOT_HEADER
 	bool "use Sunpls quick boot header"
 	default n
