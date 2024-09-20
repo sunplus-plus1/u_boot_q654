@@ -41,6 +41,7 @@ obj-$(CONFIG_USB_EHCI_PCI) += ehci-pci.o
 obj-$(CONFIG_USB_EHCI_TEGRA) += ehci-tegra.o
 obj-$(CONFIG_USB_EHCI_VF) += ehci-vf.o
 obj-$(CONFIG_USB_EHCI_ZYNQ) += ehci-zynq.o
+obj-$(CONFIG_USB_EHCI_SUNPLUS) += ehci-sunplus.o
 
 # xhci
 obj-$(CONFIG_USB_XHCI_BRCM) += xhci-brcm.o

@@ -643,6 +643,11 @@ ehci_submit_async(struct usb_device *dev, unsigned long pipe, void *buffer,
 			break;
 		schedule();
 	} while (get_timer(ts) < timeout);
+
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	udelay(1);
+#endif
+
 	qhtoken = hc32_to_cpu(qh->qh_overlay.qt_token);
 
 	ctrl->qh_list.qh_link = cpu_to_hc32(virt_to_phys(&ctrl->qh_list) | QH_LINK_TYPE_QH);
@@ -1043,6 +1048,10 @@ void *ehci_get_controller_priv(int index)
 }
 #endif
 
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+#define RETRY_WRITE_USBRUNCMD_MAX_TIMES  50
+#endif
+
 static int ehci_common_init(struct ehci_ctrl *ctrl, uint tweaks)
 {
 	struct QH *qh_list;
@@ -1050,6 +1059,9 @@ static int ehci_common_init(struct ehci_ctrl *ctrl, uint tweaks)
 	uint32_t reg;
 	uint32_t cmd;
 	int i;
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	int retry_max_count = RETRY_WRITE_USBRUNCMD_MAX_TIMES;
+#endif
 
 	/* Set the high address word (aka segment) for 64-bit controller */
 	if (ehci_readl(&ctrl->hccr->cr_hccparams) & 1)
@@ -1135,6 +1147,22 @@ static int ehci_common_init(struct ehci_ctrl *ctrl, uint tweaks)
 	cmd &= ~(CMD_LRESET|CMD_IAAD|CMD_PSE|CMD_ASE|CMD_RESET);
 	cmd |= CMD_RUN;
 	ehci_writel(&ctrl->hcor->or_usbcmd, cmd);
+
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	i = 0;
+	while((!(ehci_readl(&ctrl->hcor->or_usbcmd) & 0x1)) && (retry_max_count > 0)){
+		cmd |= CMD_RUN;
+		ehci_writel(&ctrl->hcor->or_usbcmd, cmd);
+		i++;
+		retry_max_count--;
+	}
+
+	if(!(ehci_readl(&ctrl->hcor->or_usbcmd) & 0x1))
+		printf("warn,retry write usbruncmd timeout,usbcmd:%x,retry_times:%d\n",
+								ehci_readl(&ctrl->hcor->or_usbcmd),i);
+	else
+		printf("after write usbruncmd,usbcmd:%x,retry_times:%d\n",ehci_readl(&ctrl->hcor->or_usbcmd),i);
+#endif
 
 	if (!(tweaks & EHCI_TWEAK_NO_INIT_CF)) {
 		/* take control over the ports */

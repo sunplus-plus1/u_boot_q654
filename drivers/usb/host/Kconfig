@@ -307,6 +307,12 @@ config USB_EHCI_FSL
 	---help---
 	  Enables support for the on-chip EHCI controller on FSL chips.
 
+config USB_EHCI_SUNPLUS
+	bool "Support for Sunplus on-chip EHCI USB controller"
+	default n
+	---help---
+	  Enable support for the Sunplus on-chip EHCI USB controller.
+
 config SYS_FSL_USB_INTERNAL_UTMI_PHY
 	bool
 	depends on USB_EHCI_FSL
