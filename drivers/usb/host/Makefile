@@ -21,6 +21,7 @@ obj-$(CONFIG_USB_OHCI_LPC32XX) += ohci-lpc32xx.o
 obj-$(CONFIG_USB_OHCI_PCI) += ohci-pci.o
 obj-$(CONFIG_USB_OHCI_GENERIC) += ohci-generic.o
 obj-$(CONFIG_USB_OHCI_NPCM) += ohci-npcm.o
+obj-$(CONFIG_USB_OHCI_SUNPLUS) += ohci-sunplus.o
 
 # echi
 obj-$(CONFIG_USB_EHCI_HCD) += ehci-hcd.o

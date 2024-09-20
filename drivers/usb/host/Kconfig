@@ -370,6 +370,12 @@ config USB_OHCI_NPCM
 	  Enables support for the on-chip OHCI controller on
 	  Nuvoton NPCM chips.
 
+config USB_OHCI_SUNPLUS
+	bool "Support for Sunplus on-chip OHCI USB controller"
+	default n
+	---help---
+	  Enable support for the Sunplus on-chip OHCI USB controller.
+
 endif # USB_OHCI_HCD
 
 config SYS_USB_OHCI_SLOT_NAME
