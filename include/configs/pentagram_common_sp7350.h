@@ -95,27 +95,26 @@
 
 #ifdef CONFIG_MTD_RAW_NAND
 //#define CONFIG_MTD_PARTITIONS
+#undef CFG_SYS_NAND_BASE
+#undef CONFIG_MTDIDS_DEFAULT
+#undef CONFIG_MTDPARTS_DEFAULT
+#ifdef CONFIG_SP_SPINAND /* SPI NAND */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
-#define CONFIG_SYS_NAND_SELF_INIT
-#define CONFIG_SYS_NAND_BASE		0xf8002b80
+#define CFG_SYS_NAND_BASE		0xf8002b80
 //#define CONFIG_MTD_DEVICE		/* needed for mtdparts cmd */
-#define MTDIDS_DEFAULT			"nand0=sp_spinand.0"
+#define CONFIG_MTDIDS_DEFAULT           "nand0=sp_spinand.0"
 #if 0 // Set default mtdparts for zebu sim
-#define MTDPARTS_DEFAULT		"sp_spinand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),32512k(rootfs)"
+#define CONFIG_MTDPARTS_DEFAULT         "sp_spinand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),32512k(rootfs)"
 #else
-#define MTDPARTS_DEFAULT		"sp_spinand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),-(rootfs)"
+#define CONFIG_MTDPARTS_DEFAULT         "sp_spinand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),-(rootfs)"
 #endif
-#ifdef CONFIG_SP_PARANAND
-#undef CONFIG_SYS_NAND_BASE
-#undef MTDIDS_DEFAULT
-#undef MTDPARTS_DEFAULT
-#define CONFIG_SYS_NAND_BASE            0xf8120000
-#define MTDIDS_DEFAULT                  "nand0=sp_paranand.0"
-#if (NAND_PAGE_SIZE == 8)
-/* Samsung MLC/Mirco SLC 8k page */
-#define MTDPARTS_DEFAULT                "sp_paranand.0:1m(nand_header),1m(xboot1),2m(uboot1),2m(uboot2),2m(fip),1m(env),1m(env_redund),1m(dtb),25m(kernel),-(rootfs)"
+#elif defined(CONFIG_SP_PARANAND) /* PARALLEL NAND */
+#define CFG_SYS_NAND_BASE               0xf8120000
+#define CONFIG_MTDIDS_DEFAULT           "nand0=sp_paranand.0"
+#if (NAND_PAGE_SIZE == 8) /* Samsung MLC/Mirco SLC 8k page */
+#define CONFIG_MTDPARTS_DEFAULT         "sp_paranand.0:1m(nand_header),1m(xboot1),2m(uboot1),2m(uboot2),2m(fip),1m(env),1m(env_redund),1m(dtb),25m(kernel),-(rootfs)"
 #else
-#define MTDPARTS_DEFAULT                "sp_paranand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),-(rootfs)"
+#define CONFIG_MTDPARTS_DEFAULT         "sp_paranand.0:128k(nand_header),384k(xboot1),1536k(uboot1),4096k(uboot2),2m(fip),512k(env),512k(env_redund),256k(dtb),25m(kernel),-(rootfs)"
 #endif
 #endif
 #endif
