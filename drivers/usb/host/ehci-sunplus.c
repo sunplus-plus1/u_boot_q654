@@ -20,6 +20,7 @@ struct sunplus_ehci_priv {
 	struct ehci_ctrl ehcictrl;
 	struct usb_ehci *ehci;
 	struct clk ehci_clk;
+	fdt_addr_t hcd_base;
 };
 
 int clk_usbc0_cnt = 0;
@@ -132,7 +133,6 @@ static int ehci_sunplus_probe(struct udevice *dev)
 	struct sunplus_ehci_priv *priv = dev_get_priv(dev);
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
-	fdt_addr_t hcd_base;
 	int err;
 
 	err = clk_get_by_index(dev, 0, &priv->ehci_clk);
@@ -154,11 +154,11 @@ static int ehci_sunplus_probe(struct udevice *dev)
 	uphy_init(dev->seq_);
 	usb_power_init(1, dev->seq_);
 
-	hcd_base = dev_read_addr_index(dev, 0);
-	if (hcd_base == FDT_ADDR_T_NONE)
+	priv->hcd_base = dev_read_addr_index(dev, 0);
+	if (priv->hcd_base == FDT_ADDR_T_NONE)
 		return -ENXIO;
 
-	hccr = (struct ehci_hccr *)hcd_base;
+	hccr = (struct ehci_hccr *)priv->hcd_base;
 	hcor = (struct ehci_hcor *)((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
 
 	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
@@ -171,19 +171,14 @@ static int ehci_usb_remove(struct udevice *dev)
 	struct sunplus_ehci_priv *priv = dev_get_priv(dev);
 	struct ehci_hccr *hccr;
 	struct ehci_hcor *hcor;
-	fdt_addr_t hcd_base;
 	int ret;
 
 	usb_power_init(0, dev->seq_);
 	ret = ehci_deregister(dev);
 
 	/* route all ports to OHCI */
-	hcd_base = dev_read_addr_index(dev, 0);
-	if (hcd_base == FDT_ADDR_T_NONE)
-		return -ENXIO;
-
-	hccr = (struct ehci_hccr *)hcd_base;
-	hcor = (struct ehci_hcor *) ((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
+	hccr = (struct ehci_hccr *)priv->hcd_base;
+	hcor = (struct ehci_hcor *)((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
 
 	ehci_writel(&hcor->or_configflag, 0x0);
 
