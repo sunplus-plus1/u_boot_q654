@@ -73,8 +73,6 @@
 #define CONFIG_ARCH_MISC_INIT
 #define CONFIG_SYS_HZ			1000
 
-#define CONFIG_SYS_RX_ETH_BUFFER	64
-
 #include <asm/arch/sp_bootmode_bitmap_sp7350.h>
 
 #undef DBG_SCR
