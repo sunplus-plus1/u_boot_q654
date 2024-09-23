@@ -504,6 +504,60 @@ config NAND_ARASAN
 	  controller. This uses the hardware ECC for read and
 	  write operations.
 
+config SP_SPINAND
+	bool "Sunplus SP7350 SPI NAND Controller"
+	select SYS_NAND_SELF_INIT
+	select SP_NAND_BBLK
+	depends on DM_MTD
+	imply CMD_NAND
+	help
+	  This selects the Sunplus SPI NAND Controller Interface on
+	  SP7350. If you have a controller with this interface, say Y
+	  here. If unsure, say N.
+
+config SP_PARANAND
+	bool "Sunplus SP7350 Parallel NAND Controller"
+	depends on DM_MTD
+	select SYS_NAND_SELF_INIT
+	select SP_NAND_BBLK
+	imply CMD_NAND
+	help
+	  This selects the Sunplus Parallel NAND Controller Interface on
+	  SP7350. If you have a controller with this interface,
+	  say Y here. If unsure, say N.
+
+config GLB_GMNCFG_SPINAND_ENABLE_SFTPAD
+	bool "Enable setting softpad timing"
+	default n
+	help
+	  This enable the fucntion which let us can set softpad timing to
+          optimal value which we get with ssnand-timing uboot command.
+
+if GLB_GMNCFG_SPINAND_ENABLE_SFTPAD
+
+config GLB_GMNCFG_SPINAND_SFTPAD_CTL
+	hex "The optimal setting of softpad timing"
+	default 0x00180000
+	help
+	  101.21 SPI Softpad Control Register
+	  Its bit[24:21] is to select SPI data input sample clock delay level.
+	  Its bit[19:18] is to select SPI datainput delay level.
+
+endif
+
+config SP_NAND_BBLK
+	bool "Sunplus boot block feature"
+	help
+	  Sunplus' bootloader needs this feature to write nand boot
+	  block data.
+
+config  USE_SP_BCH
+	bool "Sunplus SPI NAND BCH Interface support"
+	depends on SP_SPINAND ||SP_SPINAND_Q645
+	default y
+	help
+	  This selects the Sunplus SPI NAND Controller Interface.
+
 config NAND_MESON
 	bool "Meson NAND support"
 	select SYS_NAND_SELF_INIT
