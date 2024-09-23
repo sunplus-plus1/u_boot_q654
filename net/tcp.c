@@ -38,6 +38,7 @@ static u32 tcp_seq_init;
 static u32 tcp_ack_edge;
 
 static int tcp_activity_count;
+static int tcp_pipe_count;
 
 /*
  * Search for TCP_SACK and review the comments before the code section
@@ -260,6 +261,7 @@ int tcp_set_tcp_header(uchar *pkt, int dport, int sport, int payload_len,
 			   &net_server_ip, &net_ip,
 			   tcp_seq_num, tcp_ack_num);
 		tcp_activity_count = 0;
+		tcp_pipe_count = 0;
 		net_set_syn_options(b);
 		tcp_seq_num = 0;
 		tcp_ack_num = 0;
@@ -569,7 +571,7 @@ static u8 tcp_state_machine(u8 tcp_flags, u32 tcp_seq_num, int payload_len)
 		debug_cond(DEBUG_INT_STATE, "TCP_ESTABLISHED %x\n", tcp_flags);
 		if (payload_len > 0) {
 			tcp_hole(tcp_seq_num, payload_len);
-			tcp_fin = TCP_DATA;  /* cause standalone FIN */
+			//tcp_fin = TCP_DATA;  /* cause standalone FIN */
 		}
 
 		if ((tcp_fin) &&
@@ -689,8 +691,11 @@ void rxhand_tcp_f(union tcp_build_pkt *b, unsigned int pkt_len)
 
 	tcp_activity_count++;
 	if (tcp_activity_count > TCP_ACTIVITY) {
-		puts("| ");
 		tcp_activity_count = 0;
+		if (tcp_pipe_count++ & 0x3F)
+			puts("|");
+		else
+			puts("\n\t|");
 	}
 
 	if ((tcp_action & TCP_PUSH) || payload_len > 0) {

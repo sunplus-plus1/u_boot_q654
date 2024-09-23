@@ -66,6 +66,7 @@ static unsigned int retry_tcp_seq_num;	/* TCP retry sequence number */
 static int retry_len;			/* TCP retry length */
 
 static ulong wget_load_size;
+static ulong time_start;
 
 /**
  * wget_init_max_size() - initialize maximum load size
@@ -235,6 +236,7 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 	char *pos;
 	int hlen, i;
 	uchar *ptr1;
+	char *endp;
 
 	pkt[len] = '\0';
 	pos = strstr((char *)pkt, http_eom);
@@ -290,8 +292,11 @@ static void wget_connected(uchar *pkt, unsigned int tcp_seq_num,
 			if (!pos) {
 				content_length = -1;
 			} else {
-				pos += sizeof(content_len) + 2;
-				strict_strtoul(pos, 10, &content_length);
+				//pos += sizeof(content_len) + 2;
+				//strict_strtoul(pos, 10, &content_length);
+				pos += strlen(content_len) + 2;
+				content_length = ustrtoul(pos, &endp, 10);
+
 				debug_cond(DEBUG_WGET,
 					   "wget: Connected Len %lu\n",
 					   content_length);
@@ -436,6 +441,14 @@ static void wget_handler(uchar *pkt, u16 dport,
 		break;
 	case WGET_TRANSFERRED:
 		printf("Packets received %d, Transfer Successful\n", packets);
+		net_boot_file_size = content_length;
+		time_start = get_timer(time_start);
+		if (time_start > 0) {
+			puts("\t");
+			print_size(net_boot_file_size /
+				time_start * 1000, "/s");
+		}
+		puts("\ndone\n");
 		net_set_state(wget_loop_state);
 		break;
 	}
@@ -522,6 +535,7 @@ void wget_start(void)
 	 */
 
 	memset(net_server_ethaddr, 0, 6);
+	time_start = get_timer(0);
 
 	wget_send(TCP_SYN, 0, 0, 0);
 }
