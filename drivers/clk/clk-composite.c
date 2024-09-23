@@ -65,10 +65,16 @@ static ulong clk_composite_set_rate(struct clk *clk, unsigned long rate)
 		(struct clk *)dev_get_clk_ptr(clk->dev) : clk);
 	const struct clk_ops *rate_ops = composite->rate_ops;
 	struct clk *clk_rate = composite->rate;
+	const struct clk_ops *mux_ops = composite->mux_ops;
+	struct clk *mux = composite->mux;
 
 	if (rate && rate_ops && rate_ops->set_rate)
 		return rate_ops->set_rate(clk_rate, rate);
-	else
+	else if (mux && mux_ops) {
+		ulong ret = mux_ops->set_rate(mux, rate);
+		device_reparent(clk->dev, dev_get_parent(mux->dev));
+		return ret;
+	} else
 		return clk_get_rate(clk);
 }
 
