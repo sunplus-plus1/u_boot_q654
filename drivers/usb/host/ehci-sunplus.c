@@ -135,17 +135,6 @@ static int ehci_sunplus_probe(struct udevice *dev)
 	fdt_addr_t hcd_base;
 	int err;
 
-	hcd_base = dev_read_addr_index(dev, 0);
-	if (hcd_base == FDT_ADDR_T_NONE)
-		return -ENXIO;
-
-	hccr = (struct ehci_hccr *)hcd_base;
-	hcor = (struct ehci_hcor *)
-		((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
-
-
-	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
-
 	err = clk_get_by_index(dev, 0, &priv->ehci_clk);
 	if (err < 0) {
 		pr_err("not found clk source\n");
@@ -165,6 +154,15 @@ static int ehci_sunplus_probe(struct udevice *dev)
 	uphy_init(dev->seq_);
 	usb_power_init(1, dev->seq_);
 
+	hcd_base = dev_read_addr_index(dev, 0);
+	if (hcd_base == FDT_ADDR_T_NONE)
+		return -ENXIO;
+
+	hccr = (struct ehci_hccr *)hcd_base;
+	hcor = (struct ehci_hcor *)((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
+
+	printf("%s.%d, dev_name:%s,port_num:%d\n",__FUNCTION__, __LINE__, dev->name, dev->seq_);
+
 	return ehci_register(dev, hccr, hcor, NULL, 0, plat->init_type);
 }
 
@@ -179,6 +177,16 @@ static int ehci_usb_remove(struct udevice *dev)
 	usb_power_init(0, dev->seq_);
 	ret = ehci_deregister(dev);
 
+	/* route all ports to OHCI */
+	hcd_base = dev_read_addr_index(dev, 0);
+	if (hcd_base == FDT_ADDR_T_NONE)
+		return -ENXIO;
+
+	hccr = (struct ehci_hccr *)hcd_base;
+	hcor = (struct ehci_hcor *) ((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
+
+	ehci_writel(&hcor->or_configflag, 0x0);
+
 	if (clk_usbc0_cnt == 1) {
 		/* disable clock for UPHY0 */
 		MOON2_REG->sft_cfg[6] = RF_MASK_V_CLR(1 << 12);
@@ -188,17 +196,6 @@ static int ehci_usb_remove(struct udevice *dev)
 	}
 
 	clk_usbc0_cnt--;
-
-	/* route all ports to OHCI */
-	hcd_base = dev_read_addr_index(dev, 0);
-	if (hcd_base == FDT_ADDR_T_NONE)
-		return -ENXIO;
-
-	hccr = (struct ehci_hccr *)hcd_base;
-	hcor = (struct ehci_hcor *)
-		((void *)hccr + HC_LENGTH(ehci_readl(&hccr->cr_capbase)));
-
-	ehci_writel(&hcor->or_configflag, 0x0);
 
 	return ret;
 }
