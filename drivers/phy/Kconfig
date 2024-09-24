@@ -302,6 +302,12 @@ config PHY_XILINX_ZYNQMP
 	  Enable this to support ZynqMP High Speed Gigabit Transceiver
 	  that is part of ZynqMP SoC.
 
+config SUNPLUS_DWC_USB3_PHY
+	bool "SUNPLUS DWC3 USB3 PHY support"
+	select PHY
+	help
+	  Support the DWC3 USB3 PHY in Sunplus SoCs
+
 source "drivers/phy/rockchip/Kconfig"
 source "drivers/phy/cadence/Kconfig"
 source "drivers/phy/ti/Kconfig"
