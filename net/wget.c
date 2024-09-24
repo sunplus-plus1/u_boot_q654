@@ -433,6 +433,9 @@ static void wget_handler(uchar *pkt, u16 dport,
 			wget_loop_state = NETLOOP_SUCCESS;
 			break;
 		case TCP_CLOSE_WAIT:     /* End of transfer */
+			if (len != 0)
+				tcp_seq_num++;
+
 			current_wget_state = WGET_TRANSFERRED;
 			wget_send(action | TCP_ACK | TCP_FIN,
 				  tcp_seq_num, tcp_ack_num, len);
