@@ -189,13 +189,16 @@ static void getvar_current_slot(char *var_parameter, char *response)
 
 static void __maybe_unused getvar_has_slot(char *part_name, char *response)
 {
+	#if !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	char part_name_wslot[PART_NAME_LEN];
 	size_t len;
+	#endif
 	int r;
 
 	if (!part_name || part_name[0] == '\0')
 		goto fail;
 
+	#if !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	/* part_name_wslot = part_name + "_a" */
 	len = strlcpy(part_name_wslot, part_name, PART_NAME_LEN - 3);
 	if (len >= PART_NAME_LEN - 3)
@@ -207,6 +210,7 @@ static void __maybe_unused getvar_has_slot(char *part_name, char *response)
 		fastboot_okay("yes", response); /* part exists and slotted */
 		return;
 	}
+	#endif
 
 	r = getvar_get_part_info(part_name, response, NULL);
 	if (r >= 0)

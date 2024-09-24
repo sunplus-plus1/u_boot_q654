@@ -236,10 +236,26 @@ static int fastboot_bind(struct usb_configuration *c, struct usb_function *f)
 	fastboot_string_defs[0].id = id;
 	interface_desc.iInterface = id;
 
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	fs_ep_in.bLength = USB_DT_ENDPOINT_SIZE;
+	fs_ep_in.bDescriptorType = USB_DT_ENDPOINT;
+	fs_ep_in.bEndpointAddress = USB_DIR_IN;
+	fs_ep_in.bmAttributes = USB_ENDPOINT_XFER_BULK;
+	fs_ep_in.wMaxPacketSize = cpu_to_le16(64);
+#endif
+
 	f_fb->in_ep = usb_ep_autoconfig(gadget, &fs_ep_in);
 	if (!f_fb->in_ep)
 		return -ENODEV;
 	f_fb->in_ep->driver_data = c->cdev;
+
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	fs_ep_out.bLength = USB_DT_ENDPOINT_SIZE;
+	fs_ep_out.bDescriptorType = USB_DT_ENDPOINT;
+	fs_ep_out.bEndpointAddress = USB_DIR_OUT;
+	fs_ep_out.bmAttributes = USB_ENDPOINT_XFER_BULK;
+	fs_ep_out.wMaxPacketSize = cpu_to_le16(64);
+#endif
 
 	f_fb->out_ep = usb_ep_autoconfig(gadget, &fs_ep_out);
 	if (!f_fb->out_ep)
