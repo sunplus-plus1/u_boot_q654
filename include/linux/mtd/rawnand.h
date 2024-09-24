@@ -985,6 +985,10 @@ struct nand_chip {
 		const struct nand_manufacturer *desc;
 		void *priv;
 	} manufacturer;
+
+#if defined(CONFIG_SP_SPINAND)
+	unsigned int drv_options;
+#endif
 };
 
 static inline void nand_set_flash_node(struct nand_chip *chip,
@@ -1127,6 +1131,9 @@ struct nand_flash_dev {
 		uint16_t step_ds;
 	} ecc;
 	int onfi_timing_mode_default;
+#if defined(CONFIG_SP_SPINAND)
+	unsigned int drv_options;
+#endif
 };
 
 /**

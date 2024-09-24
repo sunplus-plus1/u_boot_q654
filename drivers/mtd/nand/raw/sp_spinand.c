@@ -1614,10 +1614,8 @@ static int sp_spinand_probe(struct udevice *dev)
 	}
 
 	ret = clk_enable(&clk_spind);
-	if (ret) {
-		clk_free(&clk_spind);
+	if (ret)
 		return ret;
-	}
 	//SPINAND_LOGI("clk_enable for SPI-NAND succeed\n");
 
 	/* get and enable bch clock */
@@ -1628,10 +1626,8 @@ static int sp_spinand_probe(struct udevice *dev)
 	}
 
 	ret = clk_enable(&clk_bch);
-	if (ret) {
-		clk_free(&clk_bch);
+	if (ret)
 		return ret;
-	}
 	//SPINAND_LOGI("clk_enable for BCH succeed\n");
 
 	/* do sp_spinand initialization */
