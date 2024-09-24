@@ -24,6 +24,9 @@
 #include <dm/ofnode.h>
 #include <net.h>
 #include <watchdog.h>
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+#include <asm/arch/sp_bootinfo.h>
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -417,6 +420,13 @@ int env_import(const char *buf, int check, int flags)
 {
 	env_t *ep = (env_t *)buf;
 
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+	if (SP_IS_ISPBOOT()) {
+		env_set_default("!ISP mode",0);
+		return 0;
+	}
+#endif
+
 	if (check) {
 		uint32_t crc;
 
@@ -498,6 +508,13 @@ int env_import_redund(const char *buf1, int buf1_read_fail,
 {
 	env_t *ep;
 	int ret;
+
+#if defined(CONFIG_TARGET_PENTAGRAM_SP7350)
+	if (SP_IS_ISPBOOT()) {
+		env_set_default("!ISP mode",0);
+		return 0;
+	}
+#endif
 
 	ret = env_check_redund(buf1, buf1_read_fail, buf2, buf2_read_fail);
 
