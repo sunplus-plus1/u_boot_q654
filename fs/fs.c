@@ -47,7 +47,10 @@ void fs_set_type(int type)
 static inline int fs_probe_unsupported(struct blk_desc *fs_dev_desc,
 				      struct disk_partition *fs_partition)
 {
+#if !defined(CONFIG_TARGET_PENTAGRAM_SP7350)
 	log_debug("Unrecognized filesystem type\n");
+#endif
+
 	return -1;
 }
 
