@@ -742,7 +742,7 @@ static int do_nand(struct cmd_tbl *cmdtp, int flag, int argc,
 			else
 				ret = nand_write_skip_bad(mtd, off, &rwsize,
 							  NULL, maxsize, buf,
-#ifdef CONFIG_TARGET_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 							  0);
 #else
 							  WITH_WR_VERIFY);
@@ -783,7 +783,7 @@ static int do_nand(struct cmd_tbl *cmdtp, int flag, int argc,
 		printf(" %zu bytes %s: %s\n", rwsize,
 		       read ? "read" : "written", ret ? "ERROR" : "OK");
 
-#ifdef CONFIG_TARGET_PENTAGRAM
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 		/*
 		 * Calculate next address for ISP
 		 * When executing nand-read commmand, set it to isp_addr_nand_read_next.
