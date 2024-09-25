@@ -35,6 +35,9 @@
 #include <linux/log2.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/partitions.h>
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+#include <env.h>
+#endif
 
 #include "mtdcore.h"
 
@@ -1001,6 +1004,9 @@ int mtd_read(struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen,
 		return -ENOTSUPP;
 	}
 
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	env_set_hex("isp_addr_next", *retlen + from);
+#endif
 	if (unlikely(ret_code < 0))
 		return ret_code;
 	if (mtd->ecc_strength == 0)
@@ -1012,6 +1018,9 @@ EXPORT_SYMBOL_GPL(mtd_read);
 int mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen,
 	      const u_char *buf)
 {
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	int ret;
+#endif
 	*retlen = 0;
 	if (to < 0 || to > mtd->size || len > mtd->size - to)
 		return -EINVAL;
@@ -1033,7 +1042,12 @@ int mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen,
 		return ret;
 	}
 
+#ifndef CONFIG_TARGET_PENTAGRAM_SP7350
 	return mtd->_write(mtd, to, len, retlen, buf);
+#else
+	ret = mtd->_write(mtd, to, len, retlen, buf);
+	return (ret | env_set_hex("isp_addr_next", *retlen + to));
+#endif
 }
 EXPORT_SYMBOL_GPL(mtd_write);
 
