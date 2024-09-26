@@ -445,6 +445,7 @@ struct udc_endpoint {
 };
 
 struct sp_udc {
+	bool			 first_enum_xfer;
 	bool 			 aset_flag; 			/* auto set flag, If this flag is true, zero packet will not be sent */
 	struct clk		 clock;
 	int 			 irq_num;

@@ -170,6 +170,10 @@ static int ehci_usb_remove(struct udevice *dev)
 	usb_power_init(0, dev->seq_);
 	ret = ehci_deregister(dev);
 
+	/* route all ports to OHCI */
+	hcor = (struct ehci_hcor *)((uint64_t)&priv->ehci->ehci_usbcmd);
+	ehci_writel(&hcor->or_configflag, 0x0);
+
 	if (clk_usbc0_cnt == 1) {
 		/* disable clock for UPHY0 */
 		MOON2_REG->sft_cfg[6] = RF_MASK_V_CLR(1 << 12);
@@ -179,10 +183,6 @@ static int ehci_usb_remove(struct udevice *dev)
 	}
 
 	clk_usbc0_cnt--;
-
-	/* route all ports to OHCI */
-	hcor = (struct ehci_hcor *)((uint64_t)&priv->ehci->ehci_usbcmd);
-	ehci_writel(&hcor->or_configflag, 0x0);
 
 	return ret;
 }
