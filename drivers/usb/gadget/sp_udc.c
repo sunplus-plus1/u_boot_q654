@@ -654,6 +654,14 @@ static void hal_udc_transfer_event_handle(struct transfer_event_trb *transfer_ev
 	UDC_LOGD("ep %x[%c],trb:%px,%x len %d - %d\n", ep_num, ep_trb->dir ? 'I' : 'O', ep_trb,
 						transfer_evnet->trbp, trans_len, transfer_evnet->len);
 
+	UDC_LOGL("========================= ep%d Transfer Event TRB =========================\n", ep_num);
+	UDC_LOGL("transfer trb virtual addr = 0x%px\n", ep_trb);
+	UDC_LOGL("entry0 = 0x%x\n", ((struct trb_data *)transfer_evnet)->entry0);
+	UDC_LOGL("entry1 = 0x%x\n", ((struct trb_data *)transfer_evnet)->entry1);
+	UDC_LOGL("entry2 = 0x%x\n", ((struct trb_data *)transfer_evnet)->entry2);
+	UDC_LOGL("entry3 = 0x%x\n", ((struct trb_data *)transfer_evnet)->entry3);
+	UDC_LOGL("==========================================================================\n");
+
 	if (!ep->num && !trans_len && list_empty (&ep->queue)) {
 		spin_unlock_irqrestore(&ep->lock, flags);
 		UDC_LOGD("+%s.%d ep0 zero\n", __func__, __LINE__);
@@ -781,7 +789,11 @@ static void hal_udc_analysis_event_trb(struct trb_data *event_trb, struct sp_udc
 
 		switch (ret) {
 		case UDC_RESET:
+			UDC_LOGL("bus reset\n");
+
+			udc->first_enum_xfer = true;
 			USBx->EP0_CS &= ~EP_EN;		/* dislabe ep0 */
+
 			if (udc->driver->reset)
 				udc->driver->reset(&udc->gadget);
 
@@ -790,7 +802,6 @@ static void hal_udc_analysis_event_trb(struct trb_data *event_trb, struct sp_udc
 				mod_timer(&udc->before_sof_polling_timer, jiffies + 1 * HZ);
 #endif
 
-			UDC_LOGL("bus reset\n");
 			break;
 		case UDC_SUSPEND:
 			UDC_LOGL("udc suspend\n");
@@ -1118,6 +1129,19 @@ static void hal_udc_fill_transfer_trb(struct trb_data *t_trb, struct udc_endpoin
 
 	aligned_len = roundup(sizeof(struct normal_trb), ARCH_DMA_MINALIGN);
 	flush_dcache_range((unsigned long)tmp_trb, (unsigned long)tmp_trb + aligned_len);
+
+	if (ioc == 1) {
+		UDC_LOGL("============================ ep%d Transfer TRB ============================\n", ep->num);
+		UDC_LOGL("transfer trb virtual addr = 0x%px\n", tmp_trb);
+		UDC_LOGL("transfer trb physical addr = 0x%llx\n",
+		         (dma_addr_t)((tmp_trb - (struct normal_trb *)ep->ep_transfer_ring.trb_va) *
+				      sizeof(struct trb_data) + ep->ep_transfer_ring.trb_pa));
+		UDC_LOGL("entry0 = 0x%x\n", t_trb->entry0);
+		UDC_LOGL("entry1 = 0x%x\n", t_trb->entry1);
+		UDC_LOGL("entry2 = 0x%x\n", t_trb->entry2);
+		UDC_LOGL("entry3 = 0x%x\n", t_trb->entry3);
+		UDC_LOGL("==========================================================================\n");
+	}
 }
 
 static void hal_udc_fill_ep_desc(struct sp_udc *udc, struct udc_endpoint *ep)
@@ -1181,7 +1205,20 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 {
 	struct trb_data *end_trb;
 	struct trb_data *fill_trb = NULL;
+	struct endpoint0_desc *tmp_ep0_desc = NULL;
+	struct trb_data *t_trb = NULL;
+	struct normal_trb *tmp_trb = NULL;
 	uint32_t aligned_len;
+	uint32_t dptr;
+
+	if ((ep->num == 0) && (udc->first_enum_xfer == true)) {
+		dptr = SHIFT_LEFT_BIT4(ep->ep_transfer_ring.trb_pa +
+				       ((ep->ep_trb_ring_dq - ep->ep_transfer_ring.trb_va) *
+					sizeof(struct trb_data)));
+
+		tmp_trb = (struct normal_trb *)ep->ep_trb_ring_dq;
+		t_trb = ep->ep_trb_ring_dq;
+	}
 
 	end_trb = ep->ep_transfer_ring.end_trb_va;
 
@@ -1265,10 +1302,24 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 	}
 
 	wmb();
-	if (ep->num == 0)
-		udc->reg->EP0_CS |= EP_EN;
-	else
+
+	if (ep->num == 0) {
+		if (udc->first_enum_xfer == true) {
+			/* bypass the unexecuted ep0 Transfer TRBs (last connection) after bus */ 
+			/* reset (new connection) for 1st data transfer of the enumeration.    */
+			udc->first_enum_xfer = false;
+
+			tmp_ep0_desc = (struct endpoint0_desc *)ep->dev->ep_desc;
+			tmp_ep0_desc->dptr = dptr;
+			tmp_ep0_desc->dcs = tmp_trb->cycbit;
+
+			udc->reg->EP0_CS |= (RDP_EN | EP_EN);
+		} else {
+			udc->reg->EP0_CS |= EP_EN;
+		}
+	} else {
 		udc->reg->EPN_CS[ep->num-1] |= EP_EN;
+	}
 
 	return fill_trb;
 }
@@ -2523,6 +2574,7 @@ static int sp_udc_probe(struct udevice *udev)
 	init_ep_spin(udc);
 
 	udc->bus_reset_finish = false;
+	udc->first_enum_xfer = false;
 	udc->frame_num = 0;
 	udc->vbus_active = false;
 	udc->dev = udev;
