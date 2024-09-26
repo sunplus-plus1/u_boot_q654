@@ -538,18 +538,8 @@
 #define SPEED_UP_SPI_NOR_CLK    /* Set CLK based on flash id */
 #endif
 
-#ifdef CONFIG_DM_VIDEO
-//#define CONFIG_VIDEO_BMP_RLE8
-//#define CONFIG_VIDEO_BMP_GZIP
-#define CONFIG_SYS_VIDEO_LOGO_MAX_SIZE (2<<20)
-//#define CONFIG_BMP_16BPP
-//#define CONFIG_BMP_24BPP
-//#define CONFIG_BMP_32BPP
-#ifdef CONFIG_DM_VIDEO_SP7350_LOGO
-#define STDOUT_CFG "serial"
-#else
+#ifdef CONFIG_VIDEO_SP7350
 #define STDOUT_CFG "vidconsole,serial"
-#endif
 #else
 #define STDOUT_CFG "serial"
 #endif

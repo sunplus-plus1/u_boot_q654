@@ -303,7 +303,7 @@ u32 video_index_to_colour(struct video_priv *priv, enum colour_idx idx)
 			default:
 				return (colours[idx].r << 16) |
 				       (colours[idx].g <<  8) |
-				       (colours[idx].b <<  0);
+				       (colours[idx].b <<  0) | (0xff << 24);
 			}
 		}
 		break;
@@ -341,10 +341,29 @@ void video_set_default_colors(struct udevice *dev, bool invert)
 		fore = back;
 		back = temp;
 	}
+
+#if defined(CONFIG_VIDEO_SP7350)
+	priv->fg_col_idx = fore;
+	priv->bg_col_idx = back;
+	switch (priv->bpix) {
+		case VIDEO_BPP8: {
+			printf("video_set_default_colors VIDEO_BPP8\n");
+			priv->colour_fg = fore;
+			priv->colour_bg = back;
+			break;
+		}
+		default:
+			printf("video_index_to_colour default\n");
+			priv->colour_fg = video_index_to_colour(priv, fore);
+			priv->colour_bg = video_index_to_colour(priv, back);
+			break;
+	}
+#else
 	priv->fg_col_idx = fore;
 	priv->bg_col_idx = back;
 	priv->colour_fg = video_index_to_colour(priv, fore);
 	priv->colour_bg = video_index_to_colour(priv, back);
+#endif
 }
 
 /* Flush video activity to the caches */
