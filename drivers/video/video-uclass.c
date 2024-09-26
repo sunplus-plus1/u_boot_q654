@@ -347,13 +347,11 @@ void video_set_default_colors(struct udevice *dev, bool invert)
 	priv->bg_col_idx = back;
 	switch (priv->bpix) {
 		case VIDEO_BPP8: {
-			printf("video_set_default_colors VIDEO_BPP8\n");
 			priv->colour_fg = fore;
 			priv->colour_bg = back;
 			break;
 		}
 		default:
-			printf("video_index_to_colour default\n");
 			priv->colour_fg = video_index_to_colour(priv, fore);
 			priv->colour_bg = video_index_to_colour(priv, back);
 			break;
