@@ -1097,7 +1097,7 @@ static void hal_udc_fill_transfer_trb(struct trb_data *t_trb, struct udc_endpoin
 
 		if (ep->transfer_len)
 			flush_dcache_range((unsigned long)tmp_trb->ptr,
-						(unsigned long)tmp_trb->ptr + aligned_len);
+					   (unsigned long)tmp_trb->ptr + aligned_len);
 	}
 
 	if (ep->type == UDC_EP_TYPE_ISOC)
@@ -1165,18 +1165,16 @@ static void hal_udc_fill_ep_desc(struct sp_udc *udc, struct udc_endpoint *ep)
 	}
 	wmb();
 
-	if (ep->num == 0)
+	if (ep->num == EP0) {
 		USBx->EP0_CS |= RDP_EN;					/* Endpoint register enable,RDP enable */
-	else
-		USBx->EPN_CS[ep->num - 1] |= RDP_EN;			/* Endpoint register enable,RDP enable */
-
-	if (ep->num == 0)
 		aligned_len = roundup(sizeof(struct endpoint0_desc), ARCH_DMA_MINALIGN);
-	else
+	} else {
+		USBx->EPN_CS[ep->num - 1] |= RDP_EN;			/* Endpoint register enable,RDP enable */
 		aligned_len = roundup(sizeof(struct endpointn_desc), ARCH_DMA_MINALIGN);
-
+	}
+	
 	flush_dcache_range(((unsigned long)udc->ep_desc + ep->num),
-					((unsigned long)udc->ep_desc + ep->num) + aligned_len);
+			   (unsigned long)udc->ep_desc + ep->num + aligned_len);
 }
 
 static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint *ep, uint32_t zero)
@@ -1189,7 +1187,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 	uint32_t aligned_len;
 	uint32_t dptr;
 
-	if ((ep->num == 0) && (udc->first_enum_xfer == true)) {
+	if ((ep->num == EP0) && (udc->first_enum_xfer == true)) {
 		dptr = SHIFT_LEFT_BIT4(ep->ep_transfer_ring.trb_pa +
 				       ((ep->ep_trb_ring_dq - ep->ep_transfer_ring.trb_va) *
 					sizeof(struct trb_data)));
@@ -1206,7 +1204,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 
 		aligned_len = roundup(sizeof(struct trb_data), ARCH_DMA_MINALIGN);
 		flush_dcache_range((unsigned long)ep->ep_trb_ring_dq,
-					(unsigned long)ep->ep_trb_ring_dq + aligned_len);
+				   (unsigned long)ep->ep_trb_ring_dq + aligned_len);
 
 		ep->ep_trb_ring_dq = ep->ep_transfer_ring.trb_va;
 	}
@@ -1223,7 +1221,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 
 			aligned_len = roundup(sizeof(struct trb_data), ARCH_DMA_MINALIGN);
 			flush_dcache_range((unsigned long)ep->ep_trb_ring_dq,
-						(unsigned long)ep->ep_trb_ring_dq + aligned_len);
+					   (unsigned long)ep->ep_trb_ring_dq + aligned_len);
 
 			ep->ep_trb_ring_dq = ep->ep_transfer_ring.trb_va;
 		}
@@ -1241,7 +1239,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 
 				aligned_len = roundup(sizeof(struct trb_data), ARCH_DMA_MINALIGN);
 				flush_dcache_range((unsigned long)ep->ep_trb_ring_dq,
-							(unsigned long)ep->ep_trb_ring_dq + aligned_len);
+						   (unsigned long)ep->ep_trb_ring_dq + aligned_len);
 
 				ep->ep_trb_ring_dq = ep->ep_transfer_ring.trb_va;
 			}
@@ -1267,7 +1265,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 
 			aligned_len = roundup(sizeof(struct trb_data), ARCH_DMA_MINALIGN);
 			flush_dcache_range((unsigned long)ep->ep_trb_ring_dq,
-						(unsigned long)ep->ep_trb_ring_dq + aligned_len);
+					   (unsigned long)ep->ep_trb_ring_dq + aligned_len);
 
 			ep->ep_trb_ring_dq = ep->ep_transfer_ring.trb_va;
 		}
@@ -1281,7 +1279,7 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 
 	wmb();
 
-	if (ep->num == 0) {
+	if (ep->num == EP0) {
 		if (udc->first_enum_xfer == true) {
 			/* bypass the unexecuted ep0 Transfer TRBs (last connection) after bus */ 
 			/* reset (new connection) for 1st data transfer of the enumeration.    */
@@ -1291,12 +1289,16 @@ static struct trb_data *hal_udc_fill_trb(struct sp_udc	*udc, struct udc_endpoint
 			tmp_ep0_desc->dptr = dptr;
 			tmp_ep0_desc->dcs = tmp_trb->cycbit;
 
+			aligned_len = roundup(sizeof(struct endpoint0_desc), ARCH_DMA_MINALIGN);
+			flush_dcache_range(((unsigned long)udc->ep_desc + ep->num),
+			   		   (unsigned long)udc->ep_desc + ep->num + aligned_len);
+
 			udc->reg->EP0_CS |= (RDP_EN | EP_EN);
 		} else {
 			udc->reg->EP0_CS |= EP_EN;
 		}
 	} else {
-		udc->reg->EPN_CS[ep->num-1] |= EP_EN;
+		udc->reg->EPN_CS[ep->num - 1] |= EP_EN;
 	}
 
 	return fill_trb;
@@ -1339,7 +1341,7 @@ int32_t hal_udc_endpoint_transfer(struct sp_udc	*udc, struct sp_request *req, ui
 		if (ep->is_in) {
 			aligned_len = roundup(length, ARCH_DMA_MINALIGN);
 			flush_dcache_range((unsigned long)virt_to_phys(req->buffer),
-						(unsigned long)virt_to_phys(req->buffer) + aligned_len);
+					   (unsigned long)virt_to_phys(req->buffer) + aligned_len);
 
 			if (EP_NUM(ep_addr) == EP0)
 				memcpy(req->buffer, (uint8_t *)data, USB_COMP_EP0_BUFSIZ);
@@ -1440,7 +1442,7 @@ int32_t hal_udc_device_connect(struct sp_udc *udc)
 
 			aligned_len = roundup(tmp_ring->num_mem * ENTRY_SIZE, ARCH_DMA_MINALIGN);
 			flush_dcache_range((unsigned long)tmp_ring->trb_va,
-						(unsigned long)tmp_ring->trb_va + aligned_len);
+					   (unsigned long)tmp_ring->trb_va + aligned_len);
 		}
 	}
 
@@ -1546,7 +1548,7 @@ int32_t hal_udc_init(struct sp_udc *udc)
 
 		aligned_len = roundup(sizeof(struct segment_table) * udc->event_ring_seg_total, ARCH_DMA_MINALIGN);
 		flush_dcache_range((unsigned long)udc->event_seg_table,
-					(unsigned long)udc->event_seg_table + aligned_len);
+				   (unsigned long)udc->event_seg_table + aligned_len);
 
 		UDC_LOGD("Event_ring[%d]:%px,%llx -> %px,%llx\n", seg_count, udc->event_ring[seg_count].trb_va,
 						udc->event_ring[seg_count].trb_pa, tmp_ring->trb_va, tmp_ring->trb_pa);
