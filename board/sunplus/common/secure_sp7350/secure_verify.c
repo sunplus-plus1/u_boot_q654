@@ -165,7 +165,7 @@ static int do_verify(struct cmd_tbl *cmdtp, int flag, int argc, char * const arg
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
-	image_header_t *hdr = (void *)simple_strtoul(argv[1], NULL, 0);
+	struct legacy_img_hdr *hdr = (void *)simple_strtoul(argv[1], NULL, 0);
 	u32 data_size = image_get_size(hdr) - (RSA_KEY_SZ * 2);
 	u8 *data = (u8 *)image_get_data(hdr);
 	u8 *src = data + data_size; // sign
