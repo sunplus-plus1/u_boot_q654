@@ -47,7 +47,7 @@ __weak int sp7350_video_show_board_info(void);
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
-#ifdef CONFIG_DM_VIDEO
+#ifdef CONFIG_VIDEO_SP7350
 	sp7350_video_show_board_info();
 #endif
 

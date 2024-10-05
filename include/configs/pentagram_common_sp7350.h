@@ -538,7 +538,7 @@
 #define SPEED_UP_SPI_NOR_CLK    /* Set CLK based on flash id */
 #endif
 
-#ifdef CONFIG_VIDEO_SP7350
+#if defined(CONFIG_VIDEO_SP7350) && !defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 #define STDOUT_CFG "vidconsole,serial"
 #else
 #define STDOUT_CFG "serial"
@@ -550,7 +550,7 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 #endif
 
-#ifdef CONFIG_USB_KEYBOARD
+#if defined(CONFIG_USB_KEYBOARD) && !defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 #define STDIN_CFG "usbkbd,serial"
 #define CONFIG_PREBOOT "usb start"
 #undef CONFIG_BOOTDELAY

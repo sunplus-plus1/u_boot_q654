@@ -109,8 +109,9 @@ static void show_video_info(void)
 				bdinfo_print_num_l(" copy size",
 						   plat->copy_size);
 			}
-			printf("%-12s= %dx%dx%d\n", "FB size", upriv->xsize,
-			       upriv->ysize, 1 << upriv->bpix);
+			printf("%-12s= %dx%dx%dbpp (%dKB)\n", "FB size", upriv->xsize,
+			       upriv->ysize, 1 << upriv->bpix,
+				   (upriv->xsize * upriv->ysize * (1 << upriv->bpix)) >> 13);
 		}
 	}
 }
@@ -159,6 +160,9 @@ static int bdinfo_print_all(struct bd_info *bd)
 	bdinfo_print_num_l("fdt_size", (ulong)gd->fdt_size);
 	if (IS_ENABLED(CONFIG_VIDEO))
 		show_video_info();
+#if defined(CONFIG_VIDEO)
+	bdinfo_print_num_l("logo addr   ", gd->bmp_logo_addr);
+#endif
 #if CONFIG_IS_ENABLED(MULTI_DTB_FIT)
 	bdinfo_print_num_l("multi_dtb_fit", (ulong)gd->multi_dtb_fit);
 #endif

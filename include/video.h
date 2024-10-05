@@ -71,6 +71,14 @@ enum video_format {
 	VIDEO_X8B8G8R8,
 	VIDEO_X8R8G8B8,
 	VIDEO_X2R10G10B10,
+	/* sp7350_video_format */
+	VIDEO_FMT_8BPP_ARGB, /* 8bit   8bpp(palette ARGB) */
+	VIDEO_FMT_RGB565,    /* 16bit  RGB565(no palette) */
+	VIDEO_FMT_ARGB1555,  /* 16bit  ARGB1555(no palette) */
+	VIDEO_FMT_RGBA4444,  /* 16bit  RGBA4444(no palette) */
+	VIDEO_FMT_ARGB4444,  /* 16bit  ARGB4444(no palette) */
+	VIDEO_FMT_RGBA8888,  /* 32bit  RGBA8888(no palette) */
+	VIDEO_FMT_ARGB8888,  /* 32bit  ARGB8888(no palette) */
 };
 
 /**
@@ -125,6 +133,18 @@ struct video_priv {
 	u8 fg_col_idx;
 	u8 bg_col_idx;
 };
+
+#if defined(CONFIG_VIDEO_SP7350)
+typedef struct vidinfo {
+	u_int logo_width;
+	u_int logo_height;
+	int logo_x_offset;
+	int logo_y_offset;
+	u_long logo_addr;
+} vidinfo_t;
+
+void sp7350_logo_info(vidinfo_t *info);
+#endif
 
 /**
  * struct video_ops - structure for keeping video operations

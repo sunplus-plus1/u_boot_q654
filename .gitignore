@@ -32,8 +32,10 @@ ext_dtb
 *.bak
 # Build tree
 /build-*
-/tools/dm_video_bmp_logo
 /tools/dm_video_bmp_logo_sp7350
+/include/dm_video_logo.h
+/include/dm_video_logo_data.h
+/drivers/video/u_boot_logo.S
 
 #
 # Top-level generic files

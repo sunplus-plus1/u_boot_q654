@@ -84,10 +84,20 @@ static int sp7350_display_probe(struct udevice *dev)
 	}
 #endif
 
+	#if 0
+	/*
+	 * refer to kernel dts reserved-memory disp_reserve
+	 */
+	fb_alloc = (void *)0x5c000000;
+	#else
+	/*
+	 * alloc memory in uboot
+	 */
 	fb_alloc = malloc((width*height*
 					(CONFIG_VIDEO_SP7350_MAX_BPP >> 3)) + 64 );
+	#endif
 
-	//printf("Disp: fb_alloc = %p\n", fb_alloc);
+	//printf("Disp: fb_alloc = 0x%p\n", fb_alloc);
 	//printf("Disp: fb_alloc = %ld\n", sizeof(fb_alloc));
 
 	if (fb_alloc == NULL) {
@@ -135,7 +145,11 @@ static int sp7350_display_probe(struct udevice *dev)
 	//osd_base_addr = (u32)((uintptr_t)fb_alloc & 0x00000000ffffffff);
 	osd_base_addr = (u32)((uintptr_t)fb_alloc);
 
-	if(CONFIG_VIDEO_SP7350_MAX_BPP == 16) {
+	if(CONFIG_VIDEO_SP7350_MAX_BPP == 8) {
+		API_OSD_UI_Init(width ,height, osd_base_addr, DRV_OSD_REGION_FORMAT_8BPP);
+		max_bpp = 8;
+	}
+	else if(CONFIG_VIDEO_SP7350_MAX_BPP == 16) {
 		API_OSD_UI_Init(width ,height, osd_base_addr, DRV_OSD_REGION_FORMAT_RGB_565);
 		max_bpp = 16;
 	}
@@ -144,6 +158,7 @@ static int sp7350_display_probe(struct udevice *dev)
 		max_bpp = 32;
 	}
 	else {
+		//printf("only support 8/16/32\n",);
 		API_OSD_UI_Init(width ,height, osd_base_addr, DRV_OSD_REGION_FORMAT_8BPP);
 		max_bpp = 8;
 	}
@@ -165,12 +180,15 @@ static int sp7350_display_probe(struct udevice *dev)
 
 	if(CONFIG_VIDEO_SP7350_MAX_BPP == 16) {
 		uc_priv->bpix = VIDEO_BPP16;
+		uc_priv->format = VIDEO_FMT_RGB565;
 	}
 	else if(CONFIG_VIDEO_SP7350_MAX_BPP == 32) {
 		uc_priv->bpix = VIDEO_BPP32;
+		uc_priv->format = VIDEO_FMT_ARGB8888;
 	}
 	else {
 		uc_priv->bpix = VIDEO_BPP8;
+		uc_priv->format = VIDEO_FMT_8BPP_ARGB;
 	}
 
 	#ifdef CONFIG_BMP_8BPP_UPDATE_CMAP

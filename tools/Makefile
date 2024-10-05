@@ -47,6 +47,10 @@ hostprogs-$(CONFIG_SPL_GENERATE_ATMEL_PMECC_HEADER) += atmel_pmecc_params
 hostprogs-$(CONFIG_VIDEO_LOGO) += bmp_logo
 HOSTCFLAGS_bmp_logo.o := -pedantic
 
+hostprogs-$(CONFIG_DM_VIDEO_SP7350_LOGO) += dm_video_bmp_logo_sp7350
+HOSTCFLAGS_dm_video_bmp_logo_sp7350.o := -pedantic
+
+
 hostprogs-$(BUILD_ENVCRC) += envcrc
 envcrc-objs := envcrc.o generated/lib/crc32.o generated/env/embedded.o generated/lib/sha1.o
 
@@ -289,6 +293,14 @@ LOGO_DATA_H = $(objtree)/include/bmp_logo_data.h
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_DATA_H)
 
+# Generated SP7350 LCD/video logo
+ifeq ($(CONFIG_DM_VIDEO_SP7350_LOGO),y)
+LOGO_H = $(objtree)/include/dm_video_logo.h
+LOGO_DATA_H = $(objtree)/include/dm_video_logo_data.h
+LOGO-$(CONFIG_DM_VIDEO_SP7350_LOGO) += $(LOGO_H)
+LOGO-$(CONFIG_DM_VIDEO_SP7350_LOGO) += $(LOGO_DATA_H)
+endif
+
 # Generic logo
 ifeq ($(LOGO_BMP),)
 LOGO_BMP= $(srctree)/$(src)/logos/denx.bmp
@@ -303,6 +315,20 @@ endif
 endif
 
 endif # !LOGO_BMP
+
+# Generic logo for GZIP file
+ifeq ($(CONFIG_VIDEO_BMP_GZIP),y)
+LOGO_BMP= $(srctree)/$(src)/logos/denx-bmp.gz
+else
+# Use board logo and fallback to vendor
+ifneq ($(wildcard $(srctree)/$(src)/logos/$(BOARD)-bmp.gz),)
+LOGO_BMP= $(srctree)/$(src)/logos/$(BOARD)-bmp.gz
+else
+ifneq ($(wildcard $(srctree)/$(src)/logos/$(VENDOR)-bmp.gz),)
+LOGO_BMP= $(srctree)/$(src)/logos/$(VENDOR)-bmp.gz
+endif
+endif
+endif # CONFIG_VIDEO_BMP_GZIP
 
 #
 # Use native tools and options
@@ -319,6 +345,13 @@ HOST_EXTRACFLAGS += -include $(srctree)/include/compiler.h \
 
 __build:	$(LOGO-y)
 
+ifeq ($(CONFIG_DM_VIDEO_SP7350_LOGO),y)
+$(LOGO_H):	$(obj)/dm_video_bmp_logo_sp7350 $(LOGO_BMP)
+	$(obj)/dm_video_bmp_logo_sp7350 --gen-info $(LOGO_BMP) > $@
+
+$(LOGO_DATA_H):	$(obj)/dm_video_bmp_logo_sp7350 $(LOGO_BMP)
+	$(obj)/dm_video_bmp_logo_sp7350 --gen-data $(LOGO_BMP) > $@
+else
 $(LOGO_H):	$(obj)/bmp_logo $(LOGO_BMP)
 	$(obj)/bmp_logo --gen-info $(LOGO_BMP) > $@
 
@@ -328,7 +361,7 @@ $(LOGO_DATA_H):	$(obj)/bmp_logo $(LOGO_BMP)
 else
 $(LOGO_DATA_H):	$(obj)/bmp_logo $(LOGO_BMP)
 	$(obj)/bmp_logo --gen-data $(LOGO_BMP) > $@
-#endif
+endif
 endif
 
 # Let clean descend into subdirs

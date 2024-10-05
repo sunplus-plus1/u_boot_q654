@@ -5,8 +5,6 @@
 
 #include <common.h>
 #include <dm.h>
-#include <lcd.h>
-#include <sp7350_lcd.h>
 #include <version.h>
 #include <video.h>
 #include <video_console.h>
@@ -35,25 +33,17 @@ extern int sp7350_video_show_board_info(void);
 
 int sp7350_video_show_board_info(void)
 {
-#ifdef CONFIG_DM_VIDEO
-#if defined(CONFIG_CMD_BMP)
-#ifdef CONFIG_DM_VIDEO_SP7350_LOGO	
+#if defined(CONFIG_CMD_BMP) && defined(CONFIG_VIDEO_SP7350) && defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 	struct vidconsole_priv *priv;
-#endif
-#endif
 #endif
 	ulong dram_size;
 	int i;
 	u32 len = 0;
 	char buf[255];
-	char *corp = "2022 Sunplus Technology Inc.\n";
+	char *corp = "2024 Sunplus Technology Inc.\n";
 	struct udevice *dev, *con;
-#ifdef CONFIG_DM_VIDEO
-#if defined(CONFIG_CMD_BMP)
-#ifdef CONFIG_DM_VIDEO_SP7350_LOGO
+#if defined(CONFIG_CMD_BMP) && defined(CONFIG_VIDEO_SP7350) && defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 	const char *s;
-#endif
-#endif
 #endif
 	vidinfo_t logo_info;
 	int ret;
@@ -82,9 +72,7 @@ int sp7350_video_show_board_info(void)
 
 	sp7350_logo_info(&logo_info);
 
-#ifdef CONFIG_DM_VIDEO
-#if defined(CONFIG_CMD_BMP)
-#ifdef CONFIG_DM_VIDEO_SP7350_LOGO
+#if defined(CONFIG_CMD_BMP) && defined(CONFIG_VIDEO_SP7350) && defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 	gd->bmp_logo_addr = (long long)sp7350_uboot_logo;
 	//debug("bmp addr = 0x%08x \n", (long long)sp7350_uboot_logo);
 #ifdef CONFIG_DM_VIDEO_SP7350_LOGO_ALIGN
@@ -95,26 +83,31 @@ int sp7350_video_show_board_info(void)
 	bmp_display((long long)sp7350_uboot_logo,
 		    logo_info.logo_x_offset,
 			logo_info.logo_y_offset);
+#endif /* CONFIG_DM_VIDEO_SP7350_LOGO_ALIGN */
 #endif
-#endif /* CONFIG_DM_VIDEO_SP7350_LOGO */
-#endif /* CONFIG_CMD_BMP */
-#endif /* CONFIG_DM_VIDEO */
 
 	ret = uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con);
 	if (ret)
 		return ret;
 	
-#ifdef CONFIG_DM_VIDEO
-#if defined(CONFIG_CMD_BMP)
-#ifdef CONFIG_DM_VIDEO_SP7350_LOGO
+#if defined(CONFIG_CMD_BMP) && defined(CONFIG_VIDEO_SP7350)
+
+#ifdef CONFIG_VIDEO_BMP_LOGO_MANUAL
+	priv = dev_get_uclass_priv(con);
+	vidconsole_position_cursor(con, 0, ( logo_info.logo_height +
+					priv->y_charsize * 4 - 1) / priv->y_charsize);
+	for (s = buf, i = 0; i < len; s++, i++)
+		vidconsole_put_char(con, *s);
+#else
+#if defined(CONFIG_DM_VIDEO_SP7350_LOGO)
 	priv = dev_get_uclass_priv(con);
 	vidconsole_position_cursor(con, 0, ( logo_info.logo_height +
 				   priv->y_charsize - 1) / priv->y_charsize);
 	for (s = buf, i = 0; i < len; s++, i++)
 		vidconsole_put_char(con, *s);
 #endif /* CONFIG_DM_VIDEO_SP7350_LOGO */
-#endif /* CONFIG_CMD_BMP */
-#endif /* CONFIG_DM_VIDEO */
+#endif /* CONFIG_VIDEO_BMP_LOGO_MANUAL */
+#endif
 
 	return 0;
 }

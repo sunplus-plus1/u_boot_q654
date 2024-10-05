@@ -51,7 +51,7 @@ config VIDEO_SP7350_MAX_YRES
 config VIDEO_SP7350_MAX_BPP
 	int "Maximum bits per pixel (for memory allocation purposes)"
 	depends on VIDEO_SP7350
-	default 8
+	default 16
 	help
 	  The maximum bits per pixel to support for the framebuffer.
 	  This configuration is used for reserving/allocating memory for the
