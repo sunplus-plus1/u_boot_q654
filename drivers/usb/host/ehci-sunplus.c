@@ -84,7 +84,7 @@ static void uphy_init(int port_num)
 
 		/* OTP for USB DISC (disconnect voltage) */
 		/* G149.7[4:0] */
-		val = OTP_REG->hb_otp_data[6];
+		val = (OTP_REG->reserved_8[11] >> 8);
 	        set = val & 0x1f;
 	        if (!set)
 	                set = DEFAULT_UPHY_DISC;

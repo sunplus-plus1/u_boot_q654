@@ -12,8 +12,8 @@
 #define RF_MASK_V_CLR(_mask)         (((_mask) << 16) | 0)
 
 // usb spec 2.0 Table 7-3  VHSDSC (min, max) = (525, 625)
-// default = 577 mV (374 + 7 * 29)
-#define DEFAULT_UPHY_DISC	0x7   // 7 (=577mv)
+// default = 576.3 mV (374 + 7 * 28.9)
+#define DEFAULT_UPHY_DISC	0x7   // 7 (= 576.3mv)
 #define DEFAULT_SQ_CT		0x3
 
 extern int clk_usbc0_cnt;
