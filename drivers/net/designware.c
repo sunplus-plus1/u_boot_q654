@@ -33,6 +33,7 @@
 
 #ifdef CONFIG_TARGET_PENTAGRAM_SP7350
 #define GMAC_TX_SOFTPAD_REG	0xF8803378
+static int gmac_dev_node = 0;
 #endif
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {
@@ -251,7 +252,6 @@ static int dw_adjust_link(struct dw_eth_dev *priv, struct eth_mac_regs *mac_p,
 #endif
 #ifdef CONFIG_TARGET_PENTAGRAM_SP7350
     int len;
-	int node = dev_of_offset(priv->dev);
 	u32 rgmii_tx_softpad_value_100m;
 	u32 rgmii_tx_softpad_value_1000m;
 #endif
@@ -262,14 +262,14 @@ static int dw_adjust_link(struct dw_eth_dev *priv, struct eth_mac_regs *mac_p,
 	}
 
 #ifdef CONFIG_TARGET_PENTAGRAM_SP7350
-	const u32 *rgmii_tx_softpad_100m = fdt_getprop(gd->fdt_blob, node, "rgmii-tx-softpad-100m", &len);
+	const u32 *rgmii_tx_softpad_100m = fdt_getprop(gd->fdt_blob, gmac_dev_node, "rgmii-tx-softpad-100m", &len);
     if (!rgmii_tx_softpad_100m) {
 		rgmii_tx_softpad_value_100m = 0xFFFFFFFF;
     }
 	else {
 		rgmii_tx_softpad_value_100m = fdt32_to_cpu(*rgmii_tx_softpad_100m);
 	}
-	const u32 *rgmii_tx_softpad_1000m = fdt_getprop(gd->fdt_blob, node, "rgmii-tx-softpad-1000m", &len);
+	const u32 *rgmii_tx_softpad_1000m = fdt_getprop(gd->fdt_blob, gmac_dev_node, "rgmii-tx-softpad-1000m", &len);
     if (!rgmii_tx_softpad_1000m) {
 		rgmii_tx_softpad_value_1000m = 0xFFFFFFFF;
     }
@@ -822,6 +822,8 @@ int designware_eth_probe(struct udevice *dev)
 		// Force clock_nb to 1 because "ptp_ref" (RBUS clock) is always
 		// ON, and cannot be turned off.
 		clock_nb = 1;
+		// Get Gmac device node for using in dw_adjust_link()
+		gmac_dev_node = dev_of_offset(dev);
 #endif
 		priv->clocks = devm_kcalloc(dev, clock_nb, sizeof(struct clk),
 					    GFP_KERNEL);
