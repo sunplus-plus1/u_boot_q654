@@ -31,6 +31,9 @@
 #include "designware.h"
 #include "sp_otp.h"
 
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+#define GMAC_TX_SOFTPAD_REG	0xF8803378
+#endif
 static int dw_mdio_read(struct mii_dev *bus, int addr, int devad, int reg)
 {
 #ifdef CONFIG_DM_ETH
@@ -246,31 +249,71 @@ static int dw_adjust_link(struct dw_eth_dev *priv, struct eth_mac_regs *mac_p,
 #ifdef CONFIG_CLK
 	u32 clk_rate,clk_for_link_now = 0;
 #endif
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+    int len;
+	int node = dev_of_offset(priv->dev);
+	u32 rgmii_tx_softpad_value_100m;
+	u32 rgmii_tx_softpad_value_1000m;
+#endif
 
 	if (!phydev->link) {
 		printf("%s: No link.\n", phydev->dev->name);
 		return 0;
 	}
 
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+	const u32 *rgmii_tx_softpad_100m = fdt_getprop(gd->fdt_blob, node, "rgmii-tx-softpad-100m", &len);
+    if (!rgmii_tx_softpad_100m) {
+		rgmii_tx_softpad_value_100m = 0xFFFFFFFF;
+    }
+	else {
+		rgmii_tx_softpad_value_100m = fdt32_to_cpu(*rgmii_tx_softpad_100m);
+	}
+	const u32 *rgmii_tx_softpad_1000m = fdt_getprop(gd->fdt_blob, node, "rgmii-tx-softpad-1000m", &len);
+    if (!rgmii_tx_softpad_1000m) {
+		rgmii_tx_softpad_value_1000m = 0xFFFFFFFF;
+    }
+	else {
+		rgmii_tx_softpad_value_1000m = fdt32_to_cpu(*rgmii_tx_softpad_1000m);
+	}
+#endif
+
 	if (phydev->speed != 1000) {
 		conf |= MII_PORTSELECT;
 #ifdef CONFIG_CLK
 		if (phydev->speed == 10) {
-			clk_for_link_now = 2500000;
+			if (phydev->interface == PHY_INTERFACE_MODE_RGMII) {
+				clk_for_link_now = 2500000;
+			}
+			else {
+				clk_for_link_now = 5000000;
+			}
 		}
 #endif
+		if (phydev->speed == 100) {
+			conf |= FES_100;
+#ifdef CONFIG_CLK
+			if (phydev->interface == PHY_INTERFACE_MODE_RGMII) {
+				clk_for_link_now = 25000000;
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+				if (rgmii_tx_softpad_value_100m != 0xFFFFFFFF)
+					writel(rgmii_tx_softpad_value_100m, (void __iomem *)GMAC_TX_SOFTPAD_REG);
+#endif
+			}
+			else {
+				clk_for_link_now = 50000000;
+			}
+#endif
+		}
 	}
 	else {
 		conf &= ~MII_PORTSELECT;
 #ifdef CONFIG_CLK
 		clk_for_link_now = 125000000;
 #endif
-	}
-
-	if (phydev->speed == 100) {
-		conf |= FES_100;
-#ifdef CONFIG_CLK
-		clk_for_link_now = 25000000;
+#ifdef CONFIG_TARGET_PENTAGRAM_SP7350
+		if (rgmii_tx_softpad_value_100m != 0xFFFFFFFF)
+			writel(rgmii_tx_softpad_value_1000m, (void __iomem *)GMAC_TX_SOFTPAD_REG);
 #endif
 	}
 
@@ -767,6 +810,7 @@ int designware_eth_probe(struct udevice *dev)
 	ulong ioaddr;
 	int ret, err;
 	struct reset_ctl_bulk reset_bulk;
+
 #ifdef CONFIG_CLK
 	int i, clock_nb;
 
