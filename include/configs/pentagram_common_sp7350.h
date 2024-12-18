@@ -204,6 +204,7 @@
 		"else " \
 			"echo [scr] emmc boot; " \
 			"run emmc_boot; " \
+			"run check_boot;" \
 		"fi; " \
 	"fi; " \
 "elif itest.l *${bootinfo_base} == " __stringify(SPINAND_BOOT) "; then " \
@@ -320,12 +321,13 @@
 #define CFG_EXTRA_ENV_SETTINGS \
 "sz_sign="                       __stringify(SIGN_SIZE) "\0" \
 "b_c=console=ttyS0,115200 earlycon\0" \
-"emmc_root=root=/dev/mmcblk0p8 rw rootwait" ROOTFS_TYPE \
+"emmc_root=root=/dev/mmcblk0p9 rw rootwait" ROOTFS_TYPE \
 "stdin=" STDIN_CFG "\0" \
 "stdout=" STDOUT_CFG "\0" \
 "stderr=" STDOUT_CFG "\0" \
 "bootinfo_base="                __stringify(SP_BOOTINFO_BASE) "\0" \
 "addr_src_kernel="              __stringify(CONFIG_SRCADDR_KERNEL) "\0" \
+"addr_src_kernel_bkup="         __stringify(CONFIG_SRCADDR_KERNEL_BKUP) "\0" \
 "addr_src_dtb="                 __stringify(CONFIG_SRCADDR_DTB) "\0" \
 "addr_dst_kernel="              __stringify(DSTADDR_KERNEL) "\0" \
 "addr_dst_dtb="                 __stringify(DSTADDR_DTB) "\0" \
@@ -391,6 +393,14 @@
 	"mmc read ${addr_temp_kernel} ${addr_src_kernel} ${sz_kernel}; " \
 	"setenv bootargs ${b_c} ${emmc_root} ${args_emmc} ${args_kern}; " \
 	"run boot_kernel \0" \
+"check_boot=" \
+"if test $? -ne 0; then " \
+	"echo 'copy kernel '${addr_src_kernel_bkup}' to '${addr_src_kernel};" \
+	"mmc read ${addr_temp_kernel} ${addr_src_kernel_bkup} ${sz_kernel};" \
+	"mmc write ${addr_temp_kernel} ${addr_src_kernel} ${sz_kernel};" \
+	"reset; " \
+"fi;" \
+"\0" \
 "qk_emmc_boot=mmc read ${addr_tmp_header} ${addr_src_kernel} 0x1; " \
 	"setenv tmpval 0; setexpr tmpaddr ${addr_tmp_header} + 0x0c; run be2le; " \
 	"setexpr sz_kernel ${tmpval} + 0x40; " \
@@ -420,13 +430,18 @@
 		"setenv bootargs ${b_c} root=/dev/nfs nfsroot=${nfs_serverip}:${nfs_rootfs_dir} ip=${nfs_clintip}:${nfs_serverip}:${nfs_gatewayip}:${nfs_netmask}::eth0:off rdinit=/linuxrc noinitrd rw; "\
 	"fi; " \
 	"verify ${addr_temp_kernel} ${do_secure}; "\
-	"setexpr addr_temp_kernel ${addr_temp_kernel} + 0x40; " \
-	"setexpr addr_dst_kernel ${addr_dst_kernel} + 0x40; " \
-	"echo unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
-	"unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
-	dbg_scr("echo booti ${addr_dst_kernel} - ${fdtcontroladdr}; ") \
-	"echo booti ${addr_dst_kernel} - ${fdtcontroladdr}; " \
-	"booti ${addr_dst_kernel} - ${fdtcontroladdr}\0" \
+	"if test $? -eq 0; then " \
+		"setexpr addr_temp_kernel ${addr_temp_kernel} + 0x40; " \
+		"setexpr addr_dst_kernel ${addr_dst_kernel} + 0x40; " \
+		"echo unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
+		"unzip ${addr_temp_kernel} ${addr_dst_kernel}; " \
+		"if test $? -eq 0; then " \
+			dbg_scr("echo booti ${addr_dst_kernel} - ${fdtcontroladdr}; ") \
+			"echo booti ${addr_dst_kernel} - ${fdtcontroladdr}; " \
+			"booti ${addr_dst_kernel} - ${fdtcontroladdr}; " \
+		"fi; " \
+	"fi; " \
+	"\0" \
 "qk_zmem_boot=sp_go ${addr_dst_kernel} ${fdtcontroladdr}\0" \
 "zmem_boot=setenv verify 0; " \
 	"verify ${addr_dst_kernel} ${do_secure}; " \
