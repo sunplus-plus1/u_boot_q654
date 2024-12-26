@@ -394,13 +394,18 @@
 	"setenv bootargs ${b_c} ${emmc_root} ${args_emmc} ${args_kern}; " \
 	"run boot_kernel \0" \
 "check_boot=" \
-"if test $? -ne 0; then " \
-	"echo 'copy kernel '${addr_src_kernel_bkup}' to '${addr_src_kernel};" \
-	"mmc read ${addr_temp_kernel} ${addr_src_kernel_bkup} ${sz_kernel};" \
-	"mmc write ${addr_temp_kernel} ${addr_src_kernel} ${sz_kernel};" \
-	"reset; " \
-"fi;" \
-"\0" \
+	"if test $? -ne 0; then " \
+		"echo Bad kernel image! Restoring...; " \
+		"mmc read ${addr_tmp_header} ${addr_src_kernel_bkup} 0x1; " \
+		"setenv tmpval 0; setexpr tmpaddr ${addr_tmp_header} + 0x0c; run be2le; " \
+		"setexpr sz_kernel ${tmpval} + 0x40; " \
+		"setexpr sz_kernel ${sz_kernel} + ${sz_sign}; " \
+		"setexpr sz_kernel ${sz_kernel} + 0x200; setexpr sz_kernel ${sz_kernel} / 0x200; " \
+		"mmc read ${addr_temp_kernel} ${addr_src_kernel_bkup} ${sz_kernel};" \
+		"mmc write ${addr_temp_kernel} ${addr_src_kernel} ${sz_kernel};" \
+		"echo Done!; " \
+		"reset; " \
+	"fi;\0" \
 "qk_emmc_boot=mmc read ${addr_tmp_header} ${addr_src_kernel} 0x1; " \
 	"setenv tmpval 0; setexpr tmpaddr ${addr_tmp_header} + 0x0c; run be2le; " \
 	"setexpr sz_kernel ${tmpval} + 0x40; " \
