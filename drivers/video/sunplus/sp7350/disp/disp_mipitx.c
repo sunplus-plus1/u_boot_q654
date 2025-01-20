@@ -26,8 +26,9 @@
 /**************************************************************************
  *             F U N C T I O N    I M P L E M E N T A T I O N S           *
  **************************************************************************/
-void DRV_mipitx_gpio_set(struct sp7350_disp_priv *sp)
+void DRV_mipitx_gpio_set(struct sp7350_disp_priv *sp, int sel)
 {
+	if (sel == 0) {
 	/* reset panel */
 	#if 0 //active low
 	dm_gpio_set_value(&sp->reset, false);
@@ -42,6 +43,15 @@ void DRV_mipitx_gpio_set(struct sp7350_disp_priv *sp)
 	dm_gpio_set_value(&sp->reset, true);
 	mdelay(25);
 	#endif
+	} else if (sel == 1) { //for GM-70P476CK
+		dm_gpio_set_value(&sp->reset, true);
+		mdelay(5);
+		dm_gpio_set_value(&sp->reset, false);
+		mdelay(10);
+		dm_gpio_set_value(&sp->reset, true);
+		mdelay(120);
+	}
+
 }
 
 void DRV_mipitx_pllclk_init(void)
@@ -139,6 +149,17 @@ void DRV_mipitx_pllclk_set(int mode, int width, int height)
 			G205_MIPITX_REG1->sft_cfg[11] = 0x00000c00; //TXPLL MIPITX CLK = 300MHz
 			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
 			#endif
+		} else if ((width == 800) && (height == 1280)) {
+			//DISP_MOON3_REG->sft_cfg[14] = 0x00780040; //PLLH
+			//DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0x1A << 7)); //PLLH
+			//DISP_MOON3_REG->sft_cfg[25] = 0x07800180; //PLLH MIPITX CLK = 75MHz
+
+			DISP_MOON3_REG->sft_cfg[14] = 0x00780078; //PLLH
+			DISP_MOON3_REG->sft_cfg[14] = (0x7f800000 | (0xB << 7)); //PLLH
+			DISP_MOON3_REG->sft_cfg[25] = 0x07800080; //PLLH MIPITX CLK = 75MHz
+
+			G205_MIPITX_REG1->sft_cfg[11] = 0x00001200; //TXPLL MIPITX CLK = 450MHz
+			G205_MIPITX_REG1->sft_cfg[12] = 0x00000140; //TXPLL BNKSEL = 300MHz -- 640MHz
 		} else if ((width == 240) && (height == 320)) {
 			#if 1 //fine tune for screen flicker
 			//#if 1 //update for sync drm setting
@@ -235,6 +256,8 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 	//	lane = 2;
 	else if ((width == 480) && (height == 1280))
 		lane = 4;
+	else if ((width == 800) && (height == 1280))
+		lane = 4;
 	else
 		lane = 4;
 
@@ -264,6 +287,8 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 	else if ((width == 800) && (height == 480))
 		G204_MIPITX_REG0->sft_cfg[12] = 0x00000030; //vtf = sync pluse RGB888
 #endif
+	else if ((width == 800) && (height == 1280))
+		G204_MIPITX_REG0->sft_cfg[12] = 0x00000030; //vtf = sync pluse RGB888
 	else //if ((width == 480) && (height == 1280))
 		G204_MIPITX_REG0->sft_cfg[12] = 0x00001030; //vtf = sync event RGB888
 
@@ -319,6 +344,9 @@ void DRV_mipitx_Init(int is_mipi_dsi_tx, int width, int height)
 		//G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
 		//G204_MIPITX_REG0->sft_cfg[1] = 0x00010823; //VSA=0x01 VFP=0x08 VBP=0x23
 		#endif
+	} else if ((width == 800) && (height == 1280)) { // 800x1280
+		G204_MIPITX_REG0->sft_cfg[0] = 0x0a06102d; //fix
+		G204_MIPITX_REG0->sft_cfg[1] = 0x0001100f; //VSA=0x01 VFP=0x10 VBP=0x0f
 	} else if ((width == 240) && (height == 320)) { // 240x320
 		#if 1 //fine tune for screen flicker
 		G204_MIPITX_REG0->sft_cfg[0] = 0x04080005; //fix
@@ -597,11 +625,225 @@ void sp7350_dcs_write_buf(const void *data, size_t len)
 void DRV_mipitx_panel_Init(int is_mipi_dsi_tx, int width, int height)
 {
 	if (is_mipi_dsi_tx) {
-		if ((width == 480) && (height == 1280)) {
-			#if 0
+		if ((width == 800) && (height == 1280)) {
+
+			printf("MIPITX DSI Panel : GM-70P476CK(%dx%d)\n", width, height);
+			//Panel GM-70P476CK
+			DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio, 1);
+
+			sp7350_dcs_write_seq(0xE0, 0x00);
+			sp7350_dcs_write_seq(0xE1, 0x93);
+			sp7350_dcs_write_seq(0xE2, 0x65);
+			sp7350_dcs_write_seq(0xE3, 0xF8);
+			sp7350_dcs_write_seq(0x80, 0x03);
+			sp7350_dcs_write_seq(0xE0, 0x01);
+			sp7350_dcs_write_seq(0x00, 0x00);
+			sp7350_dcs_write_seq(0x01, 0x3D); //VCOM
+			sp7350_dcs_write_seq(0x03, 0x10);
+			sp7350_dcs_write_seq(0x04, 0x43);
+			sp7350_dcs_write_seq(0x0C, 0x74);
+			sp7350_dcs_write_seq(0x17, 0x00);
+			sp7350_dcs_write_seq(0x18, 0xEF);
+			sp7350_dcs_write_seq(0x19, 0x01);
+			sp7350_dcs_write_seq(0x1A, 0x00);
+			sp7350_dcs_write_seq(0x1B, 0xEF);
+			sp7350_dcs_write_seq(0x1C, 0x01);
+			sp7350_dcs_write_seq(0x24, 0xFE);
+			sp7350_dcs_write_seq(0x37, 0x09);
+			sp7350_dcs_write_seq(0x38, 0x04);
+			sp7350_dcs_write_seq(0x39, 0x08);
+			sp7350_dcs_write_seq(0x3A, 0x12);
+			sp7350_dcs_write_seq(0x3C, 0x78);
+			sp7350_dcs_write_seq(0x3D, 0xFF);
+			sp7350_dcs_write_seq(0x3E, 0xFF);
+			sp7350_dcs_write_seq(0x3F, 0x7F);
+			sp7350_dcs_write_seq(0x40, 0x06);
+			sp7350_dcs_write_seq(0x41, 0xA0);
+			sp7350_dcs_write_seq(0x43, 0x14);
+			sp7350_dcs_write_seq(0x44, 0x11);
+			sp7350_dcs_write_seq(0x45, 0x24);
+			sp7350_dcs_write_seq(0x55, 0x02);
+			sp7350_dcs_write_seq(0x57, 0x69);
+			sp7350_dcs_write_seq(0x59, 0x0A);
+			sp7350_dcs_write_seq(0x5A, 0x29);
+			sp7350_dcs_write_seq(0x5B, 0x10);
+
+					//G2.2    //G2.5
+			sp7350_dcs_write_seq(0x5D, 0x70);  //0x70
+			sp7350_dcs_write_seq(0x5E, 0x5B);  //0x58
+			sp7350_dcs_write_seq(0x5F, 0x4B);  //0x46
+			sp7350_dcs_write_seq(0x60, 0x3F);  //0x39
+			sp7350_dcs_write_seq(0x61, 0x3B);  //0x33
+			sp7350_dcs_write_seq(0x62, 0x2D);  //0x24
+			sp7350_dcs_write_seq(0x63, 0x2F);  //0x26
+			sp7350_dcs_write_seq(0x64, 0x18);  //0x10
+			sp7350_dcs_write_seq(0x65, 0x2F);  //0x27
+			sp7350_dcs_write_seq(0x66, 0x2C);  //0x24
+			sp7350_dcs_write_seq(0x67, 0x2B);  //0x22
+			sp7350_dcs_write_seq(0x68, 0x47);  //0x3C
+			sp7350_dcs_write_seq(0x69, 0x34);  //0x27
+			sp7350_dcs_write_seq(0x6A, 0x3B);  //0x2C
+			sp7350_dcs_write_seq(0x6B, 0x2E);  //0x1F
+			sp7350_dcs_write_seq(0x6C, 0x2A);  //0x1F
+			sp7350_dcs_write_seq(0x6D, 0x1F);  //0x15
+			sp7350_dcs_write_seq(0x6E, 0x11);  //0x0A
+			sp7350_dcs_write_seq(0x6F, 0x02);  //0x02
+			sp7350_dcs_write_seq(0x70, 0x70);  //0x70
+			sp7350_dcs_write_seq(0x71, 0x5B);  //0x58
+			sp7350_dcs_write_seq(0x72, 0x4B);  //0x46
+			sp7350_dcs_write_seq(0x73, 0x3F);  //0x39
+			sp7350_dcs_write_seq(0x74, 0x3B);  //0x33
+			sp7350_dcs_write_seq(0x75, 0x2D);  //0x24
+			sp7350_dcs_write_seq(0x76, 0x2F);  //0x26
+			sp7350_dcs_write_seq(0x77, 0x18);  //0x10
+			sp7350_dcs_write_seq(0x78, 0x2F);  //0x27
+			sp7350_dcs_write_seq(0x79, 0x2C);  //0x24
+			sp7350_dcs_write_seq(0x7A, 0x2B);  //0x22
+			sp7350_dcs_write_seq(0x7B, 0x47);  //0x3C
+			sp7350_dcs_write_seq(0x7C, 0x34);  //0x27
+			sp7350_dcs_write_seq(0x7D, 0x3B);  //0x2C
+			sp7350_dcs_write_seq(0x7E, 0x2E);  //0x1F
+			sp7350_dcs_write_seq(0x7F, 0x2A);  //0x1F
+			sp7350_dcs_write_seq(0x80, 0x1F);  //0x15
+			sp7350_dcs_write_seq(0x81, 0x11);  //0x0A
+			sp7350_dcs_write_seq(0x82, 0x02);  //0x02
+			sp7350_dcs_write_seq(0xE0, 0x02);
+			sp7350_dcs_write_seq(0x00, 0x5E);
+			sp7350_dcs_write_seq(0x01, 0x5F);
+			sp7350_dcs_write_seq(0x02, 0x57);
+			sp7350_dcs_write_seq(0x03, 0x58);
+			sp7350_dcs_write_seq(0x04, 0x48);
+			sp7350_dcs_write_seq(0x05, 0x4A);
+			sp7350_dcs_write_seq(0x06, 0x44);
+			sp7350_dcs_write_seq(0x07, 0x46);
+			sp7350_dcs_write_seq(0x08, 0x40);
+			sp7350_dcs_write_seq(0x09, 0x5F);
+			sp7350_dcs_write_seq(0x0A, 0x5F);
+			sp7350_dcs_write_seq(0x0B, 0x5F);
+			sp7350_dcs_write_seq(0x0C, 0x5F);
+			sp7350_dcs_write_seq(0x0D, 0x5F);
+			sp7350_dcs_write_seq(0x0E, 0x5F);
+			sp7350_dcs_write_seq(0x0F, 0x42);
+			sp7350_dcs_write_seq(0x10, 0x5F);
+			sp7350_dcs_write_seq(0x11, 0x5F);
+			sp7350_dcs_write_seq(0x12, 0x5F);
+			sp7350_dcs_write_seq(0x13, 0x5F);
+			sp7350_dcs_write_seq(0x14, 0x5F);
+			sp7350_dcs_write_seq(0x15, 0x5F);
+			sp7350_dcs_write_seq(0x16, 0x5E);
+			sp7350_dcs_write_seq(0x17, 0x5F);
+			sp7350_dcs_write_seq(0x18, 0x57);
+			sp7350_dcs_write_seq(0x19, 0x58);
+			sp7350_dcs_write_seq(0x1A, 0x49);
+			sp7350_dcs_write_seq(0x1B, 0x4B);
+			sp7350_dcs_write_seq(0x1C, 0x45);
+			sp7350_dcs_write_seq(0x1D, 0x47);
+			sp7350_dcs_write_seq(0x1E, 0x41);
+			sp7350_dcs_write_seq(0x1F, 0x5F);
+			sp7350_dcs_write_seq(0x20, 0x5F);
+			sp7350_dcs_write_seq(0x21, 0x5F);
+			sp7350_dcs_write_seq(0x22, 0x5F);
+			sp7350_dcs_write_seq(0x23, 0x5F);
+			sp7350_dcs_write_seq(0x24, 0x5F);
+			sp7350_dcs_write_seq(0x25, 0x43);
+			sp7350_dcs_write_seq(0x26, 0x5F);
+			sp7350_dcs_write_seq(0x27, 0x5F);
+			sp7350_dcs_write_seq(0x28, 0x5F);
+			sp7350_dcs_write_seq(0x29, 0x5F);
+			sp7350_dcs_write_seq(0x2A, 0x5F);
+			sp7350_dcs_write_seq(0x2B, 0x5F);
+			sp7350_dcs_write_seq(0x2C, 0x1F);
+			sp7350_dcs_write_seq(0x2D, 0x1E);
+			sp7350_dcs_write_seq(0x2E, 0x17);
+			sp7350_dcs_write_seq(0x2F, 0x18);
+			sp7350_dcs_write_seq(0x30, 0x07);
+			sp7350_dcs_write_seq(0x31, 0x05);
+			sp7350_dcs_write_seq(0x32, 0x0B);
+			sp7350_dcs_write_seq(0x33, 0x09);
+			sp7350_dcs_write_seq(0x34, 0x03);
+			sp7350_dcs_write_seq(0x35, 0x1F);
+			sp7350_dcs_write_seq(0x36, 0x1F);
+			sp7350_dcs_write_seq(0x37, 0x1F);
+			sp7350_dcs_write_seq(0x38, 0x1F);
+			sp7350_dcs_write_seq(0x39, 0x1F);
+			sp7350_dcs_write_seq(0x3A, 0x1F);
+			sp7350_dcs_write_seq(0x3B, 0x01);
+			sp7350_dcs_write_seq(0x3C, 0x1F);
+			sp7350_dcs_write_seq(0x3D, 0x1F);
+			sp7350_dcs_write_seq(0x3E, 0x1F);
+			sp7350_dcs_write_seq(0x3F, 0x1F);
+			sp7350_dcs_write_seq(0x40, 0x1F);
+			sp7350_dcs_write_seq(0x41, 0x1F);
+			sp7350_dcs_write_seq(0x42, 0x1F);
+			sp7350_dcs_write_seq(0x43, 0x1E);
+			sp7350_dcs_write_seq(0x44, 0x17);
+			sp7350_dcs_write_seq(0x45, 0x18);
+			sp7350_dcs_write_seq(0x46, 0x06);
+			sp7350_dcs_write_seq(0x47, 0x04);
+			sp7350_dcs_write_seq(0x48, 0x0A);
+			sp7350_dcs_write_seq(0x49, 0x08);
+			sp7350_dcs_write_seq(0x4A, 0x02);
+			sp7350_dcs_write_seq(0x4B, 0x1F);
+			sp7350_dcs_write_seq(0x4C, 0x1F);
+			sp7350_dcs_write_seq(0x4D, 0x1F);
+			sp7350_dcs_write_seq(0x4E, 0x1F);
+			sp7350_dcs_write_seq(0x4F, 0x1F);
+			sp7350_dcs_write_seq(0x50, 0x1F);
+			sp7350_dcs_write_seq(0x51, 0x00);
+			sp7350_dcs_write_seq(0x52, 0x1F);
+			sp7350_dcs_write_seq(0x53, 0x1F);
+			sp7350_dcs_write_seq(0x54, 0x1F);
+			sp7350_dcs_write_seq(0x55, 0x1F);
+			sp7350_dcs_write_seq(0x56, 0x1F);
+			sp7350_dcs_write_seq(0x57, 0x1F);
+			sp7350_dcs_write_seq(0x58, 0x40);
+			sp7350_dcs_write_seq(0x5B, 0x30);
+			sp7350_dcs_write_seq(0x5C, 0x07);
+			sp7350_dcs_write_seq(0x5D, 0x30);
+			sp7350_dcs_write_seq(0x5E, 0x01);
+			sp7350_dcs_write_seq(0x5F, 0x02);
+			sp7350_dcs_write_seq(0x60, 0x30);
+			sp7350_dcs_write_seq(0x61, 0x03);
+			sp7350_dcs_write_seq(0x62, 0x04);
+			sp7350_dcs_write_seq(0x63, 0x6A);
+			sp7350_dcs_write_seq(0x64, 0x6A);
+			sp7350_dcs_write_seq(0x65, 0x35);
+			sp7350_dcs_write_seq(0x66, 0x0D);
+			sp7350_dcs_write_seq(0x67, 0x73);
+			sp7350_dcs_write_seq(0x68, 0x0B);
+			sp7350_dcs_write_seq(0x69, 0x6A);
+			sp7350_dcs_write_seq(0x6A, 0x6A);
+			sp7350_dcs_write_seq(0x6B, 0x08);
+			sp7350_dcs_write_seq(0x6C, 0x00);
+			sp7350_dcs_write_seq(0x6D, 0x04);
+			sp7350_dcs_write_seq(0x6E, 0x00);
+			sp7350_dcs_write_seq(0x6F, 0x88);
+			sp7350_dcs_write_seq(0x75, 0xBC);
+			sp7350_dcs_write_seq(0x76, 0x00);
+			sp7350_dcs_write_seq(0x77, 0x0D);
+			sp7350_dcs_write_seq(0x78, 0x1B);
+			sp7350_dcs_write_seq(0xE0, 0x04);
+			sp7350_dcs_write_seq(0x00, 0x0E);
+			sp7350_dcs_write_seq(0x02, 0xB3);
+			sp7350_dcs_write_seq(0x09, 0x60);
+			sp7350_dcs_write_seq(0x0E, 0x4A);
+			sp7350_dcs_write_seq(0x37, 0x58); //全志平台add
+			sp7350_dcs_write_seq(0x2B, 0x0F); //全志平台add
+			sp7350_dcs_write_seq(0xE0, 0x05);
+			sp7350_dcs_write_seq(0x15, 0x1D); //全志平台add
+			sp7350_dcs_write_seq(0xE0, 0x00);
+
+			sp7350_dcs_write_seq(0x11, 0x00);
+			mdelay(120);
+			sp7350_dcs_write_seq(0x29, 0x00);
+			mdelay(20);
+			sp7350_dcs_write_seq(0x35, 0x00);
+
+		} else if ((width == 480) && (height == 1280)) {
+			#if 1
 			printf("MIPITX DSI Panel : HXM0686TFT-001(%dx%d)\n", width, height);
 			//Panel HXM0686TFT-001 IPS
-			DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio);
+			DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio, 0);
 
 			sp7350_dcs_write_seq(0xB9, 0xF1, 0x12, 0x87);
 			sp7350_dcs_write_seq(0xB2, 0x40, 0x05, 0x78);
@@ -661,7 +903,7 @@ void DRV_mipitx_panel_Init(int is_mipi_dsi_tx, int width, int height)
 			#else
 			printf("MIPITX DSI Panel : HXM0686TFT-001(%dx%d)\n", width, height);
 			//Panel HXM0686TFT-001 IPS
-			DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio);
+			DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio, 0);
 
 			check_cmd_fifo_empty();
 			check_data_fifo_empty();
@@ -888,7 +1130,7 @@ void DRV_mipitx_panel_Init(int is_mipi_dsi_tx, int width, int height)
 			#else
 			printf("MIPITX DSI Panel : TCXD024IBLON-2(%dx%d)\n", width, height);
 			//Panel TCXD024IBLON-2
-			//DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio);
+			//DRV_mipitx_gpio_set(( struct sp7350_disp_priv *)sp_gpio, 0);
 
 			check_cmd_fifo_empty();
 			check_data_fifo_empty();

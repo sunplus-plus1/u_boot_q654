@@ -72,6 +72,14 @@ void DRV_TGEN_Init(int width, int height)
 		G197_TGEN_REG->sft_cfg[11] = 0x00000512;
 		G197_TGEN_REG->sft_cfg[12] = 0x00000011;
 		#endif
+	} else if ( (width == 800) && (height == 1280) ) {
+		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
+
+		G197_TGEN_REG->sft_cfg[8] = 0x000003B8; //952
+		G197_TGEN_REG->sft_cfg[9] = 0x00000320; //800
+		G197_TGEN_REG->sft_cfg[10] = 0x00000520; //1312
+		G197_TGEN_REG->sft_cfg[11] = 0x00000511; //1297
+		G197_TGEN_REG->sft_cfg[12] = 0x00000010; //16
 	} else if ( (width == 240) && (height == 320) ) {
 		G197_TGEN_REG->sft_cfg[4] = 0x00000001; //user mode
 
