@@ -127,7 +127,7 @@ struct video_priv {
 	u32 colour_fg;
 	u32 colour_bg;
 	bool flush_dcache;
-#if defined(CONFIG_VIDEO_SP7350)
+#if 1 //defined(CONFIG_VIDEO_SP7350)
 	u32 *cmap;
 #endif
 	u8 fg_col_idx;
