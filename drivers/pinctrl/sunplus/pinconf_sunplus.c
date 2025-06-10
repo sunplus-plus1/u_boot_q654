@@ -231,6 +231,9 @@ int sunplus_pinconf_group_set(struct udevice *dev, unsigned int group,
 					sunplus_pinconf_set(dev, pin, param,
 							    argument);
 				}
+				#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+				sunplus_gpio_gather_gpio_ao_int(group, func->grps[j].pins, func->grps[j].pnum);
+				#endif
 			}
 		}
 	}

@@ -27,11 +27,8 @@ u32 *first_regs;
 u32 *padctl2_regs;
 u32 *gpioxt_regs;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 u32 *gpio_ao_int_regs;
-u32 gpio_ao_int_prescale;
-u32 gpio_ao_int_debounce;
-int gpio_ao_int_pins[32];
 #endif
 
 void *pin_registered_by_udev[MAX_PINS];
@@ -719,7 +716,7 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	sunplus_reg_base_addr_set((void *)moon1_regs, (void *)padctl1_regs,
 				  (void *)first_regs, (void *)padctl2_regs,
 				  (void *)gpioxt_regs,

@@ -31,6 +31,11 @@ int sunplus_pinmux_get(struct udevice *dev, u8 reg_offset, u8 bit_offset,
 void sunplus_reg_base_addr_set(void *moon1, void *pad_ctl_1, void *first,
 			       void *pad_ctl_2, void *gpioxt,
 			       void *gpio_ao_int);
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+int sunplus_gpio_gather_gpio_ao_int(unsigned int group, 
+			const unsigned *const pins, unsigned int npins);
+#endif
+
 
 /*
  * On return 1, Selected pin is in GPIO mode.

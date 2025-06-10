@@ -53,8 +53,11 @@ static void *padctl1_regs_base;
 static void *first_regs_base;
 static void *padctl2_regs_base;
 static void *gpioxt_regs_base;
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 static void *gpio_ao_int_regs_base;
+u32 gpio_ao_int_prescale;
+u32 gpio_ao_int_debounce;
+int gpio_ao_int_pins[32];
 #endif
 
 void sunplus_reg_base_addr_set(void *moon1, void *pad_ctl_1, void *first,
@@ -65,10 +68,121 @@ void sunplus_reg_base_addr_set(void *moon1, void *pad_ctl_1, void *first,
 	first_regs_base = first;
 	padctl2_regs_base = pad_ctl_2;
 	gpioxt_regs_base = gpioxt;
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	gpio_ao_int_regs_base = gpio_ao_int;
 #endif
 }
+
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+int sunplus_gpio_gather_gpio_ao_int(unsigned int group,
+		  const unsigned *const pins, unsigned int npins)
+{
+	int i;
+
+	if (group == 284 || group == 285) { // GPIO_AO_INT0_PIN0
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i] = pins[i];
+	} else if (group == 286 || group == 287) { // GPIO_AO_INT0_PIN1
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 1] = pins[i];
+	} else if (group == 288 || group == 289) { // GPIO_AO_INT0_PIN2
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 2] = pins[i];
+	} else if (group == 290 || group == 291) { // GPIO_AO_INT0_PIN3
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 3] = pins[i];
+	} else if (group == 292 || group == 293) { // GPIO_AO_INT0_PIN4
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 4] = pins[i];
+	} else if (group == 294 || group == 295) { // GPIO_AO_INT0_PIN5
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 5] = pins[i];
+	} else if (group == 296 || group == 297) { // GPIO_AO_INT0_PIN6
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 6] = pins[i];
+	} else if (group == 298 || group == 299) { // GPIO_AO_INT0_PIN7
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 7] = pins[i];
+	} else if (group == 300 || group == 301) { // GPIO_AO_INT1_PIN0
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 8] = pins[i];
+	} else if (group == 302 || group == 303) { // GPIO_AO_INT1_PIN1
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 9] = pins[i];
+	} else if (group == 304 || group == 305) { // GPIO_AO_INT1_PIN2
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 10] = pins[i];
+	} else if (group == 306 || group == 307) { // GPIO_AO_INT1_PIN3
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 11] = pins[i];
+	} else if (group == 308 || group == 309) { // GPIO_AO_INT1_PIN4
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 12] = pins[i];
+	} else if (group == 310 || group == 311) { // GPIO_AO_INT1_PIN5
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 13] = pins[i];
+	} else if (group == 312 || group == 313) { // GPIO_AO_INT1_PIN6
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 14] = pins[i];
+	} else if (group == 314 || group == 315) { // GPIO_AO_INT1_PIN7
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 15] = pins[i];
+	} else if (group == 316 || group == 317) { // GPIO_AO_INT2_PIN0
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 16] = pins[i];
+	} else if (group == 318 || group == 319) { // GPIO_AO_INT2_PIN1
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 17] = pins[i];
+	} else if (group == 320 || group == 321) { // GPIO_AO_INT2_PIN2
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 18] = pins[i];
+	} else if (group == 322 || group == 323) { // GPIO_AO_INT2_PIN3
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 19] = pins[i];
+	} else if (group == 324 || group == 325) { // GPIO_AO_INT2_PIN4
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 20] = pins[i];
+	} else if (group == 326 || group == 327) { // GPIO_AO_INT2_PIN5
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 21] = pins[i];
+	} else if (group == 328 || group == 329) { // GPIO_AO_INT2_PIN6
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 22] = pins[i];
+	} else if (group == 330 || group == 331) { // GPIO_AO_INT2_PIN7
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 23] = pins[i];
+	} else if (group == 332 || group == 333) { // GPIO_AO_INT3_PIN0
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 24] = pins[i];
+	} else if (group == 334 || group == 335) { // GPIO_AO_INT3_PIN1
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 25] = pins[i];
+	} else if (group == 336 || group == 337) { // GPIO_AO_INT3_PIN2
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 26] = pins[i];
+	} else if (group == 338 || group == 339) { // GPIO_AO_INT3_PIN3
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 27] = pins[i];
+	} else if (group == 340 || group == 341) { // GPIO_AO_INT3_PIN4
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 28] = pins[i];
+	} else if (group == 342 || group == 343) { // GPIO_AO_INT3_PIN5
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 29] = pins[i];
+	} else if (group == 344 || group == 345) { // GPIO_AO_INT3_PIN6
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 30] = pins[i];
+	} else if (group == 346 || group == 347) { // GPIO_AO_INT3_PIN7
+		for (i = 0; i < npins; i++)
+			gpio_ao_int_pins[i + 31] = pins[i];
+	}
+
+  return 0;
+}
+
+#endif
+
+
 
 int sunplus_pinmux_set(struct udevice *dev, u8 reg_offset, u8 bit_offset,
 		       u8 bit_nums, u8 bit_value)
@@ -890,7 +1004,7 @@ int sunplus_gpio_drive_strength_set(struct udevice *dev, unsigned int offset,
 	return ret;
 }
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 static int sunplus_gpio_ao_int_find_pin(struct udevice *dev,
 					unsigned int offset)
 {
@@ -912,7 +1026,7 @@ int sunplus_gpio_direction_query(struct udevice *dev, unsigned int offset)
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
@@ -937,7 +1051,7 @@ int sunplus_gpio_set_direction_input(struct udevice *dev, unsigned int offset)
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
@@ -966,7 +1080,7 @@ int sunplus_gpio_input_enable_set(struct udevice *dev, unsigned int offset,
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
@@ -1002,7 +1116,7 @@ int sunplus_gpio_output_enable_set(struct udevice *dev, unsigned int offset,
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
@@ -1038,7 +1152,7 @@ int sunplus_gpio_output_set(struct udevice *dev, unsigned int offset,
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
@@ -1069,7 +1183,7 @@ int sunplus_gpio_input_query(struct udevice *dev, unsigned int offset)
 {
 	u32 reg_val;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
 	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
