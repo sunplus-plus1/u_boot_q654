@@ -36,6 +36,17 @@ config SRCADDR_KERNEL
 	  address. This address can be nand/emmc
 	  address.
 
+config SRCADDR_KERNEL_BKUP
+	hex "The backup of linux kernel source address"
+	default 0x0 if SD_BOOT
+	default 0x0 if NAND_BOOT
+	default 0x12222
+	help
+	  The backup of linux kernel source address
+	  Linux kernel backup of image is stored in this
+	  address. This address can be nand/emmc
+	  address.
+
 config SRCADDR_DTB
 	hex "DTB source address"
 	default 0x0 if SD_BOOT

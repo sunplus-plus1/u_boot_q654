@@ -12,6 +12,6 @@ void DRV_mipitx_Init(int is_mipitx, int width, int height);
 void DRV_mipitx_Init_1(int is_mipitx, int width, int height);
 void DRV_mipitx_panel_Init(int is_mipi_dsi_tx, int width, int height);
 
-void DRV_mipitx_gpio_set(struct sp7350_disp_priv *priv);
+void DRV_mipitx_gpio_set(struct sp7350_disp_priv *priv, int sel);
 
 #endif	//__DISP_MIPITX_H__
