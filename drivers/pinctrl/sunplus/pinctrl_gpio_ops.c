@@ -35,6 +35,22 @@ struct sppctl_reg_t {
 #define REG_OFFSET_PULL_DOWN 0x28 /* padctl2_regs_base */
 #define REG_OFFSET_MODE_SELECT 0x30 /* padctl2_regs_base */
 
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+#define REG_OFFSET_PRE_SCALE 0x00 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_DEB_TIME 0x04 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_DEB_EN 0x08 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INT_I 0x0c /* gpio_ao_int_regs_base */
+#define REG_OFFSET_DEB_I 0x10 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_AO_OUTPUT 0x14 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_OE 0x18 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_EN 0x1c /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_MODE 0x20 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_POL 0x24 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_CLR 0x28 /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_STATUS 0x2c /* gpio_ao_int_regs_base */
+#define REG_OFFSET_INTR_MASK 0x30 /* gpio_ao_int_regs_base */
+#endif
+
 // (/16)*4
 #define R16_ROF(r) (((r) >> 4) << 2)
 #define R16_BOF(r) ((r) % 16)
@@ -1005,16 +1021,203 @@ int sunplus_gpio_drive_strength_set(struct udevice *dev, unsigned int offset,
 }
 
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
-static int sunplus_gpio_ao_int_find_pin(struct udevice *dev,
+static int sunplus_gpio_to_ao_pin(struct udevice *dev,
 					unsigned int offset)
 {
 	int i;
 
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < ARRAY_SIZE(gpio_ao_int_pins); i++) {
 		if (offset == gpio_ao_int_pins[i])
 			return i;
 	}
 	return -1;
+}
+
+int sunplus_gpio_ao_int_debounce_ctrl_set(struct udevice *dev,
+					 unsigned int selector, int value)
+{
+	int ao_pin;
+	int mask;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	mask = 1 << ao_pin;
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_DEB_EN);
+	if (value == 0)
+		r &= ~mask; /* disable */
+	else
+		r |= mask; /* enable */
+
+	writel(r, gpio_ao_int_regs_base + REG_OFFSET_DEB_EN);
+
+	return 0;
+}
+
+int sunplus_gpio_ao_int_debounce_ctrl_get(struct udevice *dev,
+					 unsigned int selector)
+{
+	int ao_pin;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_DEB_EN);
+
+	return R32_VAL(r, R32_BOF(ao_pin));
+}
+
+int sunplus_gpio_ao_int_ctrl_set(struct udevice *dev, unsigned int selector,
+				int value)
+{
+	int ao_pin;
+	int mask;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	mask = 1 << ao_pin;
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_EN);
+	if (value == 0)
+		r &= ~mask; /* disable */
+	else
+		r |= mask; /* enable */
+
+	writel(r, gpio_ao_int_regs_base + REG_OFFSET_INTR_EN);
+
+	return 0;
+}
+
+int sunplus_gpio_ao_int_ctrl_get(struct udevice *dev, unsigned int selector)
+{
+	int ao_pin;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_EN);
+
+	return R32_VAL(r, R32_BOF(ao_pin));
+}
+
+int sunplus_gpio_ao_int_trigger_mode_set(struct udevice *dev,
+					unsigned int selector, int value)
+{
+	int ao_pin;
+	int mask;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	mask = 1 << ao_pin;
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+	if (value == 0)
+		r &= ~mask; /* edge trigger */
+	else
+		r |= mask; /* level trigger */
+
+	writel(r, gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+
+	return 0;
+}
+
+int sunplus_gpio_ao_int_trigger_mode_get(struct udevice *dev,
+					unsigned int selector)
+{
+	int ao_pin;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+
+	return R32_VAL(r, R32_BOF(ao_pin));
+}
+
+int sunplus_gpio_ao_int_trigger_polarity_set(struct udevice *dev,
+					    unsigned int selector, int value)
+{
+	int ao_pin;
+	int mask;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	mask = 1 << ao_pin;
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+	if (value == 0)
+		r &= ~mask; /* rising edge or level high */
+	else
+		r |= mask; /* falling edge or level low */
+
+	writel(r, gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+
+	return 0;
+}
+
+int sunplus_gpio_ao_int_trigger_polarity_get(struct udevice *dev,
+					    unsigned int selector)
+{
+	int ao_pin;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MODE);
+
+	return R32_VAL(r, R32_BOF(ao_pin));
+}
+
+int sunplus_gpio_ao_int_mask_set(struct udevice *dev, unsigned int selector,
+				int value)
+{
+	int ao_pin;
+	int mask;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	mask = 1 << ao_pin;
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MASK);
+	if (value == 0)
+		r &= ~mask;
+	else
+		r |= mask;
+	writel(r, gpio_ao_int_regs_base + REG_OFFSET_INTR_MASK);
+
+	return 0;
+}
+
+int sunplus_gpio_ao_int_mask_get(struct udevice *dev, unsigned int selector)
+{
+	int ao_pin;
+	u32 r;
+
+	ao_pin = sunplus_gpio_to_ao_pin(dev, selector);
+	if (ao_pin < 0)
+		return -EINVAL;
+
+	r = readl(gpio_ao_int_regs_base + REG_OFFSET_INTR_MASK);
+
+	return R32_VAL(r, R32_BOF(ao_pin));
 }
 #endif
 
@@ -1029,10 +1232,10 @@ int sunplus_gpio_direction_query(struct udevice *dev, unsigned int offset)
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
-		if (readl(gpio_ao_int_regs_base + 0x18) & mask) // GPIO_OE
+		if (readl(gpio_ao_int_regs_base + REG_OFFSET_OE) & mask) // GPIO_OE
 			return 0;
 		else
 			return 1;
@@ -1054,12 +1257,12 @@ int sunplus_gpio_set_direction_input(struct udevice *dev, unsigned int offset)
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
-		reg_val = readl(gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		reg_val = readl(gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		reg_val &= ~mask;
-		writel(reg_val, gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		writel(reg_val, gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		return 0;
 	}
 #endif
@@ -1083,17 +1286,17 @@ int sunplus_gpio_input_enable_set(struct udevice *dev, unsigned int offset,
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
 
-		reg_val = readl(gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		reg_val = readl(gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		if (value == 1)
 			reg_val &= ~mask; /* enable */
 		else
 			reg_val |= mask; /* disable */
 
-		writel(reg_val, gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		writel(reg_val, gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		return 0;
 	}
 #endif
@@ -1119,17 +1322,17 @@ int sunplus_gpio_output_enable_set(struct udevice *dev, unsigned int offset,
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
 
-		reg_val = readl(gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		reg_val = readl(gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		if (value == 1)
 			reg_val |= mask; /* enable */
 		else
 			reg_val &= ~mask; /* disable */
 
-		writel(reg_val, gpio_ao_int_regs_base + 0x18); // GPIO_OE
+		writel(reg_val, gpio_ao_int_regs_base + REG_OFFSET_OE); // GPIO_OE
 		return 0;
 	}
 #endif
@@ -1155,16 +1358,16 @@ int sunplus_gpio_output_set(struct udevice *dev, unsigned int offset,
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
 
-		reg_val = readl(gpio_ao_int_regs_base + 0x14); // GPIO_O
+		reg_val = readl(gpio_ao_int_regs_base + REG_OFFSET_AO_OUTPUT); // GPIO_O
 		if (value)
 			reg_val |= mask;
 		else
 			reg_val &= ~mask;
-		writel(reg_val, gpio_ao_int_regs_base + 0x14); // GPIO_O
+		writel(reg_val, gpio_ao_int_regs_base + REG_OFFSET_AO_OUTPUT); // GPIO_O
 		return 0;
 	}
 #endif
@@ -1186,14 +1389,14 @@ int sunplus_gpio_input_query(struct udevice *dev, unsigned int offset)
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	int ao_pin, mask;
 
-	ao_pin = sunplus_gpio_ao_int_find_pin(dev, offset);
+	ao_pin = sunplus_gpio_to_ao_pin(dev, offset);
 	if (ao_pin >= 0) {
 		mask = 1 << ao_pin;
-		if (readl(gpio_ao_int_regs_base + 0x08) & mask) // GPIO_DEB_EN
+		if (readl(gpio_ao_int_regs_base + REG_OFFSET_DEB_EN) & mask) // GPIO_DEB_EN
 			reg_val = readl(gpio_ao_int_regs_base +
-					0x10); // GPIO_DEB_I
+					REG_OFFSET_DEB_I); // GPIO_DEB_I
 		else
-			reg_val = readl(gpio_ao_int_regs_base + 0x0c); // GPIO_I
+			reg_val = readl(gpio_ao_int_regs_base + REG_OFFSET_INT_I); // GPIO_I
 		if (reg_val & mask)
 			return 1;
 		else

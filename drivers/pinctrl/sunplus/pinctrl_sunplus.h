@@ -8,7 +8,8 @@
 #define DISABLE_CONFLICT_CODE_WITH_GENERIC_USAGE
 
 #define pctl_err(fmt, arg...) printf(fmt, ##arg)
-#if 0
+
+#ifdef CONFIG_PINCTRL_SUNPLUS_DEBUG
 #define pctl_info(fmt, arg...) printf(fmt, ##arg)
 #else
 #define pctl_info(fmt, arg...)

@@ -32,8 +32,27 @@ void sunplus_reg_base_addr_set(void *moon1, void *pad_ctl_1, void *first,
 			       void *pad_ctl_2, void *gpioxt,
 			       void *gpio_ao_int);
 #ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
-int sunplus_gpio_gather_gpio_ao_int(unsigned int group, 
+int sunplus_gpio_gather_gpio_ao_int(unsigned int group,
 			const unsigned *const pins, unsigned int npins);
+int sunplus_gpio_ao_int_debounce_ctrl_set(struct udevice *dev,
+					 unsigned int selector, int value);
+int sunplus_gpio_ao_int_debounce_ctrl_get(struct udevice *dev,
+					 unsigned int selector);
+int sunplus_gpio_ao_int_ctrl_set(struct udevice *dev, unsigned int selector,
+				int value);
+int sunplus_gpio_ao_int_ctrl_get(struct udevice *dev, unsigned int selector);
+int sunplus_gpio_ao_int_trigger_mode_set(struct udevice *dev,
+					unsigned int selector, int value);
+int sunplus_gpio_ao_int_trigger_mode_get(struct udevice *dev,
+					unsigned int selector);
+int sunplus_gpio_ao_int_trigger_polarity_set(struct udevice *dev,
+					    unsigned int selector, int value);
+int sunplus_gpio_ao_int_trigger_polarity_get(struct udevice *dev,
+					    unsigned int selector);
+int sunplus_gpio_ao_int_mask_set(struct udevice *dev, unsigned int selector,
+				int value);
+int sunplus_gpio_ao_int_mask_get(struct udevice *dev, unsigned int selector);
+
 #endif
 
 

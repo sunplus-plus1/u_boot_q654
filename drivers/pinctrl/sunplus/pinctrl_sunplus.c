@@ -641,6 +641,18 @@ static const struct pinconf_param sunplus_pinconf_params[] = {
 	{ "sunplus,slew-rate-control-disable", PIN_CONFIG_SLEW_RATE_CTRL, 0 },
 	{ "sunplus,slew-rate-control-enable", PIN_CONFIG_SLEW_RATE_CTRL, 1 },
 	{ "sunplus,bias-strong-pull-up", PIN_CONFIG_BIAS_STRONG_PULL_UP, 1 },
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+	{ "sunplus,ao-int-enable", PIN_CONFIG_AO_INT_CTRL, 1 },
+	{ "sunplus,ao-int-disable", PIN_CONFIG_AO_INT_CTRL, 0 },
+	{ "sunplus,ao-int-debounce-enable", PIN_CONFIG_AO_INT_DEBOUNCE_CTRL,
+	  1 },
+	{ "sunplus,ao-int-debounce-disable", PIN_CONFIG_AO_INT_DEBOUNCE_CTRL,
+	  0 },
+	{ "sunplus,ao-int-trigger-mode", PIN_CONFIG_AO_INT_TRIG_MODE, 0 },
+	{ "sunplus,ao-int-trigger-polarity", PIN_CONFIG_AO_INT_TRIG_POL, 0 },
+	{ "sunplus,ao-int-mask", PIN_CONFIG_AO_INT_MASK, 1 },
+	{ "sunplus,ao-int-unmask", PIN_CONFIG_AO_INT_MASK, 0 },
+#endif
 };
 
 static struct pinctrl_ops sunplus_pinctrl_ops = {

@@ -18,3 +18,12 @@ config PINCTRL_SUPPORT_GPIO_AO_INT
 	  Say Y if you need to use the group of GPIO_AO_INT.
 	  This function is dependent on PINCTRL_SUNPLUS_SP7350. It
 	  should be enabled first.
+
+config PINCTRL_SUNPLUS_DEBUG
+	bool "Sunplus pin control specific debug"
+	depends on PINCTRL_SUNPLUS_SP7350
+	help
+	  Say Y if you need to debug Sunplus pinmux driver in-depth.
+	  Pin control driver will output more messages if you enable
+	  this item. This function is dependent on PINCTRL_SUNPLUS_SP7350. It
+	  should be enabled first.
