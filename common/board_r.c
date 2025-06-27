@@ -67,6 +67,10 @@
 #include <efi_loader.h>
 #include <relocate.h>
 
+#ifdef CONFIG_CMD_MMC
+extern int set_env_serialno(void);
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
 
 ulong monitor_flash_len;
@@ -730,6 +734,9 @@ static init_fnc_t init_sequence_r[] = {
 	/* PPC has a udelay(20) here dating from 2002. Why? */
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
+#endif
+#ifdef CONFIG_CMD_MMC
+	set_env_serialno,
 #endif
 #ifdef CONFIG_BITBANGMII
 	bb_miiphy_init,

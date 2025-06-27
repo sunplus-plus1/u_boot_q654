@@ -165,6 +165,35 @@ static struct mmc *init_mmc_device(int dev, bool force_init)
 	return __init_mmc_device(dev, force_init, MMC_MODES_END);
 }
 
+int set_env_serialno(void)
+{
+	struct mmc *mmc;
+#define MAX_STRING_SERIAL 64
+	char serialno[MAX_STRING_SERIAL];
+
+	if (curr_device < 0) {
+		if (get_mmc_num() > 0)
+			curr_device = 0;
+		else {
+			puts("No MMC device available\n");
+			return 1;
+		}
+	}
+
+	mmc = init_mmc_device(curr_device, false);
+	if (!mmc)
+		return CMD_RET_FAILURE;
+
+	if (!env_get("serial#")) {
+		memset(serialno, 0, MAX_STRING_SERIAL);
+		snprintf(serialno, sizeof(serialno), "%04x%04x",
+			mmc->cid[2], mmc->cid[3]);
+		env_set("serial#", serialno);
+	}
+
+	return 0;
+}
+
 static int do_mmcinfo(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
