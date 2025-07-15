@@ -1473,7 +1473,7 @@ static int sp_mmc_probe(struct udevice *dev)
 	if(SPMMC_DEVICE_TYPE_EMMC == host->dev_info.type) {
 
 		cfg->host_caps	=  MMC_MODE_8BIT | MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS;
-		cfg->voltages	= MMC_VDD_32_33 | MMC_VDD_33_34;
+		cfg->voltages	= MMC_VDD_32_33 | MMC_VDD_33_34 | MMC_VDD_165_195;
 		cfg->f_min		= SPEMMC_MIN_CLK;
 		cfg->f_max		= SPEMMC_MAX_CLK;
 		/* Limited by sdram_sector_#_size max value */
@@ -1486,6 +1486,9 @@ static int sp_mmc_probe(struct udevice *dev)
 		cfg->voltages  |= MMC_VDD_165_195;
 		#endif
 		host->dmapio_mode = SP_MMC_DMA_MODE;
+		//dvb board
+		if (0xfa00 == (readl(CONFIG_BOARD_TYPE_ADDR) & 0xff00))
+			cfg->f_max = CLOCK_30M;
 	}
 	else {
 		cfg->host_caps	=  MMC_MODE_4BIT | MMC_MODE_HS_52MHz | MMC_MODE_HS;

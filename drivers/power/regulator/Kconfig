@@ -452,3 +452,11 @@ config DM_REGULATOR_TPS65219
 	features for REGULATOR TPS65219 and the family of TPS65219 PMICs.
 	TPS65219 series of PMICs have 3 single phase BUCKs & 4 LDOs.
 	The driver implements get/set api for value and enable.
+
+config DM_REGULATOR_IP6103
+	bool "Enable driver for IP6103 PMIC regulators"
+	help
+	This enables implementation of driver-model regulator uclass
+	features for REGULATOR IP6103 PMICs. IP6103 have 6 ldos and 4 dcdcs
+	that can also be configured via i2c bus. The driver implements get/set
+	api for value and enable.

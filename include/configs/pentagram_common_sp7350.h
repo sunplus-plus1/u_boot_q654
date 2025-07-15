@@ -28,6 +28,8 @@
 #define CFG_SYS_INIT_RAM_ADDR     CONFIG_SYS_SDRAM_BASE
 #define CFG_SYS_INIT_RAM_SIZE     CONFIG_SYS_SDRAM_SIZE
 
+#define CONFIG_BOARD_TYPE_ADDR    0xfa23ff00
+
 #ifndef CONFIG_TEXT_BASE		/* where U-Boot is loaded by xBoot */
 /* It is defined in arch/arm/mach-pentagram/Kconfig */
 #error "CONFIG_TEXT_BASE not defined"
@@ -553,7 +555,9 @@
 	"\0"
 
 /* MMC related configs */
+#ifndef CONFIG_SUPPORT_EMMC_BOOT
 #define CONFIG_SUPPORT_EMMC_BOOT
+#endif
 /* #define CONFIG_MMC_TRACE */
 
 #define CONFIG_ENV_OVERWRITE    /* Allow to overwrite ethaddr and serial */
