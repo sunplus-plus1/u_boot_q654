@@ -10,10 +10,8 @@
 #define PIN_CONFIG_BIAS_STRONG_PULL_UP (PIN_CONFIG_END + 4)
 #define PIN_CONFIG_AO_INT_CTRL (PIN_CONFIG_END + 5)
 #define PIN_CONFIG_AO_INT_DEBOUNCE_CTRL (PIN_CONFIG_END + 6)
-#define PIN_CONFIG_AO_INT_TRIG_MODE (PIN_CONFIG_END + 7)
-#define PIN_CONFIG_AO_INT_TRIG_POL (PIN_CONFIG_END + 8)
-#define PIN_CONFIG_AO_INT_MASK (PIN_CONFIG_END + 9)
-
+#define PIN_CONFIG_AO_INT_TRIG_TYPE (PIN_CONFIG_END + 7)
+#define PIN_CONFIG_AO_INT_MASK (PIN_CONFIG_END + 8)
 
 int sunplus_pinconf_set(struct udevice *dev, unsigned int offset,
 			unsigned int param, unsigned int argument);

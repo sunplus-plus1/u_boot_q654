@@ -4,6 +4,7 @@
 #define __PINCTRL_SUNPLUS_H__
 
 #include <common.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 #define DISABLE_CONFLICT_CODE_WITH_GENERIC_USAGE
 
@@ -27,7 +28,7 @@
 #define GPIO_FIRST(x) first_regs[x]
 
 #define MAX_PINS 108
-#define D(x, y) ((x)*8 + (y))
+#define D(x, y) ((x) * 8 + (y))
 
 typedef enum {
 	F_OFF_0, // nowhere

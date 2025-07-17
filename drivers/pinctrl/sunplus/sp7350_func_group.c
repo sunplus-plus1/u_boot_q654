@@ -506,232 +506,229 @@ static const struct sppctlgrp_t sp7350grps_int7[] = {
 	EGRP("INT7_X11", 11, pins_int6_x11),
 };
 
-//GPIO_AO_INT_0 pin0-7
-static const unsigned int pins_gpio_ao_int0_pin0_x1[] = { 52 };
-static const unsigned int pins_gpio_ao_int0_pin0_x2[] = { 68 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin0[] = {
-	EGRP("GPIO_AO_INT0_PIN0_X1", 1, pins_gpio_ao_int0_pin0_x1),
-	EGRP("GPIO_AO_INT0_PIN0_X2", 2, pins_gpio_ao_int0_pin0_x2),
+//GPIO_AO_INT
+static const unsigned int pins_gpio_ao_int0_x1[] = { 52 };
+static const unsigned int pins_gpio_ao_int0_x2[] = { 68 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int0[] = {
+	EGRP("GPIO_AO_0_INT_X1", 1, pins_gpio_ao_int0_x1),
+	EGRP("GPIO_AO_0_INT_X2", 2, pins_gpio_ao_int0_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin1_x1[] = { 53 };
-static const unsigned int pins_gpio_ao_int0_pin1_x2[] = { 69 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin1[] = {
-	EGRP("GPIO_AO_INT0_PIN1_X1", 1, pins_gpio_ao_int0_pin1_x1),
-	EGRP("GPIO_AO_INT0_PIN1_X2", 2, pins_gpio_ao_int0_pin1_x2),
+static const unsigned int pins_gpio_ao_int1_x1[] = { 53 };
+static const unsigned int pins_gpio_ao_int1_x2[] = { 69 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int1[] = {
+	EGRP("GPIO_AO_1_INT_X1", 1, pins_gpio_ao_int1_x1),
+	EGRP("GPIO_AO_1_INT_X2", 2, pins_gpio_ao_int1_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin2_x1[] = { 54 };
-static const unsigned int pins_gpio_ao_int0_pin2_x2[] = { 70 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin2[] = {
-	EGRP("GPIO_AO_INT0_PIN2_X1", 1, pins_gpio_ao_int0_pin2_x1),
-	EGRP("GPIO_AO_INT0_PIN2_X2", 2, pins_gpio_ao_int0_pin2_x2),
+static const unsigned int pins_gpio_ao_int2_x1[] = { 54 };
+static const unsigned int pins_gpio_ao_int2_x2[] = { 70 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int2[] = {
+	EGRP("GPIO_AO_2_INT_X1", 1, pins_gpio_ao_int2_x1),
+	EGRP("GPIO_AO_2_INT_X2", 2, pins_gpio_ao_int2_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin3_x1[] = { 55 };
-static const unsigned int pins_gpio_ao_int0_pin3_x2[] = { 71 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin3[] = {
-	EGRP("GPIO_AO_INT0_PIN3_X1", 1, pins_gpio_ao_int0_pin3_x1),
-	EGRP("GPIO_AO_INT0_PIN3_X2", 2, pins_gpio_ao_int0_pin3_x2),
+static const unsigned int pins_gpio_ao_int3_x1[] = { 55 };
+static const unsigned int pins_gpio_ao_int3_x2[] = { 71 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int3[] = {
+	EGRP("GPIO_AO_3_INT_X1", 1, pins_gpio_ao_int3_x1),
+	EGRP("GPIO_AO_3_INT_X2", 2, pins_gpio_ao_int3_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin4_x1[] = { 56 };
-static const unsigned int pins_gpio_ao_int0_pin4_x2[] = { 72 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin4[] = {
-	EGRP("GPIO_AO_INT0_PIN4_X1", 1, pins_gpio_ao_int0_pin4_x1),
-	EGRP("GPIO_AO_INT0_PIN4_X2", 2, pins_gpio_ao_int0_pin4_x2),
+static const unsigned int pins_gpio_ao_int4_x1[] = { 56 };
+static const unsigned int pins_gpio_ao_int4_x2[] = { 72 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int4[] = {
+	EGRP("GPIO_AO_4_INT_X1", 1, pins_gpio_ao_int4_x1),
+	EGRP("GPIO_AO_4_INT_X2", 2, pins_gpio_ao_int4_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin5_x1[] = { 57 };
-static const unsigned int pins_gpio_ao_int0_pin5_x2[] = { 73 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin5[] = {
-	EGRP("GPIO_AO_INT0_PIN5_X1", 1, pins_gpio_ao_int0_pin5_x1),
-	EGRP("GPIO_AO_INT0_PIN5_X2", 2, pins_gpio_ao_int0_pin5_x2),
+static const unsigned int pins_gpio_ao_int5_x1[] = { 57 };
+static const unsigned int pins_gpio_ao_int5_x2[] = { 73 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int5[] = {
+	EGRP("GPIO_AO_5_INT_X1", 1, pins_gpio_ao_int5_x1),
+	EGRP("GPIO_AO_5_INT_X2", 2, pins_gpio_ao_int5_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin6_x1[] = { 58 };
-static const unsigned int pins_gpio_ao_int0_pin6_x2[] = { 74 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin6[] = {
-	EGRP("GPIO_AO_INT0_PIN6_X1", 1, pins_gpio_ao_int0_pin6_x1),
-	EGRP("GPIO_AO_INT0_PIN6_X2", 2, pins_gpio_ao_int0_pin6_x2),
+static const unsigned int pins_gpio_ao_int6_x1[] = { 58 };
+static const unsigned int pins_gpio_ao_int6_x2[] = { 74 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int6[] = {
+	EGRP("GPIO_AO_6_INT_X1", 1, pins_gpio_ao_int6_x1),
+	EGRP("GPIO_AO_6_INT_X2", 2, pins_gpio_ao_int6_x2),
 };
 
-static const unsigned int pins_gpio_ao_int0_pin7_x1[] = { 59 };
-static const unsigned int pins_gpio_ao_int0_pin7_x2[] = { 75 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int0_pin7[] = {
-	EGRP("GPIO_AO_INT0_PIN7_X1", 1, pins_gpio_ao_int0_pin7_x1),
-	EGRP("GPIO_AO_INT0_PIN7_X2", 2, pins_gpio_ao_int0_pin7_x2),
+static const unsigned int pins_gpio_ao_int7_x1[] = { 59 };
+static const unsigned int pins_gpio_ao_int7_x2[] = { 75 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int7[] = {
+	EGRP("GPIO_AO_7_INT_X1", 1, pins_gpio_ao_int7_x1),
+	EGRP("GPIO_AO_7_INT_X2", 2, pins_gpio_ao_int7_x2),
 };
 
-//GPIO_AO_INT_1 pin8-15
-static const unsigned int pins_gpio_ao_int1_pin0_x1[] = { 60 };
-static const unsigned int pins_gpio_ao_int1_pin0_x2[] = { 76 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin0[] = {
-	EGRP("GPIO_AO_INT1_PIN0_X1", 1, pins_gpio_ao_int1_pin0_x1),
-	EGRP("GPIO_AO_INT1_PIN0_X2", 2, pins_gpio_ao_int1_pin0_x2),
+static const unsigned int pins_gpio_ao_int8_x1[] = { 60 };
+static const unsigned int pins_gpio_ao_int8_x2[] = { 76 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int8[] = {
+	EGRP("GPIO_AO_8_INT_X1", 1, pins_gpio_ao_int8_x1),
+	EGRP("GPIO_AO_8_INT_X2", 2, pins_gpio_ao_int8_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin1_x1[] = { 61 };
-static const unsigned int pins_gpio_ao_int1_pin1_x2[] = { 77 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin1[] = {
-	EGRP("GPIO_AO_INT1_PIN1_X1", 1, pins_gpio_ao_int1_pin1_x1),
-	EGRP("GPIO_AO_INT1_PIN1_X2", 2, pins_gpio_ao_int1_pin1_x2),
+static const unsigned int pins_gpio_ao_int9_x1[] = { 61 };
+static const unsigned int pins_gpio_ao_int9_x2[] = { 77 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int9[] = {
+	EGRP("GPIO_AO_9_INT_X1", 1, pins_gpio_ao_int9_x1),
+	EGRP("GPIO_AO_9_INT_X2", 2, pins_gpio_ao_int9_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin2_x1[] = { 62 };
-static const unsigned int pins_gpio_ao_int1_pin2_x2[] = { 78 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin2[] = {
-	EGRP("GPIO_AO_INT1_PIN2_X1", 1, pins_gpio_ao_int1_pin2_x1),
-	EGRP("GPIO_AO_INT1_PIN2_X2", 2, pins_gpio_ao_int1_pin2_x2),
+static const unsigned int pins_gpio_ao_int10_x1[] = { 62 };
+static const unsigned int pins_gpio_ao_int10_x2[] = { 78 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int10[] = {
+	EGRP("GPIO_AO_10_INT_X1", 1, pins_gpio_ao_int10_x1),
+	EGRP("GPIO_AO_10_INT_X2", 2, pins_gpio_ao_int10_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin3_x1[] = { 63 };
-static const unsigned int pins_gpio_ao_int1_pin3_x2[] = { 79 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin3[] = {
-	EGRP("GPIO_AO_INT1_PIN3_X1", 1, pins_gpio_ao_int1_pin3_x1),
-	EGRP("GPIO_AO_INT1_PIN3_X2", 2, pins_gpio_ao_int1_pin3_x2),
+static const unsigned int pins_gpio_ao_int11_x1[] = { 63 };
+static const unsigned int pins_gpio_ao_int11_x2[] = { 79 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int11[] = {
+	EGRP("GPIO_AO_11_INT_X1", 1, pins_gpio_ao_int11_x1),
+	EGRP("GPIO_AO_11_INT_X2", 2, pins_gpio_ao_int11_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin4_x1[] = { 64 };
-static const unsigned int pins_gpio_ao_int1_pin4_x2[] = { 80 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin4[] = {
-	EGRP("GPIO_AO_INT1_PIN4_X1", 1, pins_gpio_ao_int1_pin4_x1),
-	EGRP("GPIO_AO_INT1_PIN4_X2", 2, pins_gpio_ao_int1_pin4_x2),
+static const unsigned int pins_gpio_ao_int12_x1[] = { 64 };
+static const unsigned int pins_gpio_ao_int12_x2[] = { 80 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int12[] = {
+	EGRP("GPIO_AO_12_INT_X1", 1, pins_gpio_ao_int12_x1),
+	EGRP("GPIO_AO_12_INT_X2", 2, pins_gpio_ao_int12_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin5_x1[] = { 65 };
-static const unsigned int pins_gpio_ao_int1_pin5_x2[] = { 81 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin5[] = {
-	EGRP("GPIO_AO_INT1_PIN5_X1", 1, pins_gpio_ao_int1_pin5_x1),
-	EGRP("GPIO_AO_INT1_PIN5_X2", 2, pins_gpio_ao_int1_pin5_x2),
+static const unsigned int pins_gpio_ao_int13_x1[] = { 65 };
+static const unsigned int pins_gpio_ao_int13_x2[] = { 81 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int13[] = {
+	EGRP("GPIO_AO_13_INT_X1", 1, pins_gpio_ao_int13_x1),
+	EGRP("GPIO_AO_13_INT_X2", 2, pins_gpio_ao_int13_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin6_x1[] = { 66 };
-static const unsigned int pins_gpio_ao_int1_pin6_x2[] = { 82 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin6[] = {
-	EGRP("GPIO_AO_INT1_PIN6_X1", 1, pins_gpio_ao_int1_pin6_x1),
-	EGRP("GPIO_AO_INT1_PIN6_X2", 2, pins_gpio_ao_int1_pin6_x2),
+static const unsigned int pins_gpio_ao_int14_x1[] = { 66 };
+static const unsigned int pins_gpio_ao_int14_x2[] = { 82 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int14[] = {
+	EGRP("GPIO_AO_14_INT_X1", 1, pins_gpio_ao_int14_x1),
+	EGRP("GPIO_AO_14_INT_X2", 2, pins_gpio_ao_int14_x2),
 };
 
-static const unsigned int pins_gpio_ao_int1_pin7_x1[] = { 67 };
-static const unsigned int pins_gpio_ao_int1_pin7_x2[] = { 83 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int1_pin7[] = {
-	EGRP("GPIO_AO_INT1_PIN7_X1", 1, pins_gpio_ao_int1_pin7_x1),
-	EGRP("GPIO_AO_INT1_PIN7_X2", 2, pins_gpio_ao_int1_pin7_x2),
+static const unsigned int pins_gpio_ao_int15_x1[] = { 67 };
+static const unsigned int pins_gpio_ao_int15_x2[] = { 83 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int15[] = {
+	EGRP("GPIO_AO_15_INT_X1", 1, pins_gpio_ao_int15_x1),
+	EGRP("GPIO_AO_15_INT_X2", 2, pins_gpio_ao_int15_x2),
 };
 
-//GPIO_AO_INT_2 pin16-23
-static const unsigned int pins_gpio_ao_int2_pin0_x1[] = { 68 };
-static const unsigned int pins_gpio_ao_int2_pin0_x2[] = { 84 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin0[] = {
-	EGRP("GPIO_AO_INT2_PIN0_X1", 1, pins_gpio_ao_int2_pin0_x1),
-	EGRP("GPIO_AO_INT2_PIN0_X2", 2, pins_gpio_ao_int2_pin0_x2),
+static const unsigned int pins_gpio_ao_int16_x1[] = { 68 };
+static const unsigned int pins_gpio_ao_int16_x2[] = { 84 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int16[] = {
+	EGRP("GPIO_AO_16_INT_X1", 1, pins_gpio_ao_int16_x1),
+	EGRP("GPIO_AO_16_INT_X2", 2, pins_gpio_ao_int16_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin1_x1[] = { 69 };
-static const unsigned int pins_gpio_ao_int2_pin1_x2[] = { 85 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin1[] = {
-	EGRP("GPIO_AO_INT2_PIN1_X1", 1, pins_gpio_ao_int2_pin1_x1),
-	EGRP("GPIO_AO_INT2_PIN1_X2", 2, pins_gpio_ao_int2_pin1_x2),
+static const unsigned int pins_gpio_ao_int17_x1[] = { 69 };
+static const unsigned int pins_gpio_ao_int17_x2[] = { 85 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int17[] = {
+	EGRP("GPIO_AO_17_INT_X1", 1, pins_gpio_ao_int17_x1),
+	EGRP("GPIO_AO_17_INT_X2", 2, pins_gpio_ao_int17_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin2_x1[] = { 70 };
-static const unsigned int pins_gpio_ao_int2_pin2_x2[] = { 86 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin2[] = {
-	EGRP("GPIO_AO_INT2_PIN2_X1", 1, pins_gpio_ao_int2_pin2_x1),
-	EGRP("GPIO_AO_INT2_PIN2_X2", 2, pins_gpio_ao_int2_pin2_x2),
+static const unsigned int pins_gpio_ao_int18_x1[] = { 70 };
+static const unsigned int pins_gpio_ao_int18_x2[] = { 86 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int18[] = {
+	EGRP("GPIO_AO_18_INT_X1", 1, pins_gpio_ao_int18_x1),
+	EGRP("GPIO_AO_18_INT_X2", 2, pins_gpio_ao_int18_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin3_x1[] = { 71 };
-static const unsigned int pins_gpio_ao_int2_pin3_x2[] = { 87 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin3[] = {
-	EGRP("GPIO_AO_INT2_PIN3_X1", 1, pins_gpio_ao_int2_pin3_x1),
-	EGRP("GPIO_AO_INT2_PIN3_X2", 2, pins_gpio_ao_int2_pin3_x2),
+static const unsigned int pins_gpio_ao_int19_x1[] = { 71 };
+static const unsigned int pins_gpio_ao_int19_x2[] = { 87 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int19[] = {
+	EGRP("GPIO_AO_19_INT_X1", 1, pins_gpio_ao_int19_x1),
+	EGRP("GPIO_AO_19_INT_X2", 2, pins_gpio_ao_int19_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin4_x1[] = { 72 };
-static const unsigned int pins_gpio_ao_int2_pin4_x2[] = { 88 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin4[] = {
-	EGRP("GPIO_AO_INT2_PIN4_X1", 1, pins_gpio_ao_int2_pin4_x1),
-	EGRP("GPIO_AO_INT2_PIN4_X2", 2, pins_gpio_ao_int2_pin4_x2),
+static const unsigned int pins_gpio_ao_int20_x1[] = { 72 };
+static const unsigned int pins_gpio_ao_int20_x2[] = { 88 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int20[] = {
+	EGRP("GPIO_AO_20_INT_X1", 1, pins_gpio_ao_int20_x1),
+	EGRP("GPIO_AO_20_INT_X2", 2, pins_gpio_ao_int20_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin5_x1[] = { 73 };
-static const unsigned int pins_gpio_ao_int2_pin5_x2[] = { 89 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin5[] = {
-	EGRP("GPIO_AO_INT2_PIN5_X1", 1, pins_gpio_ao_int2_pin5_x1),
-	EGRP("GPIO_AO_INT2_PIN5_X2", 2, pins_gpio_ao_int2_pin5_x2),
+static const unsigned int pins_gpio_ao_int21_x1[] = { 73 };
+static const unsigned int pins_gpio_ao_int21_x2[] = { 89 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int21[] = {
+	EGRP("GPIO_AO_21_INT_X1", 1, pins_gpio_ao_int21_x1),
+	EGRP("GPIO_AO_21_INT_X2", 2, pins_gpio_ao_int21_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin6_x1[] = { 74 };
-static const unsigned int pins_gpio_ao_int2_pin6_x2[] = { 90 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin6[] = {
-	EGRP("GPIO_AO_INT2_PIN6_X1", 1, pins_gpio_ao_int2_pin6_x1),
-	EGRP("GPIO_AO_INT2_PIN6_X2", 2, pins_gpio_ao_int2_pin6_x2),
+static const unsigned int pins_gpio_ao_int22_x1[] = { 74 };
+static const unsigned int pins_gpio_ao_int22_x2[] = { 90 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int22[] = {
+	EGRP("GPIO_AO_22_INT_X1", 1, pins_gpio_ao_int22_x1),
+	EGRP("GPIO_AO_22_INT_X2", 2, pins_gpio_ao_int22_x2),
 };
 
-static const unsigned int pins_gpio_ao_int2_pin7_x1[] = { 75 };
-static const unsigned int pins_gpio_ao_int2_pin7_x2[] = { 91 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int2_pin7[] = {
-	EGRP("GPIO_AO_INT2_PIN7_X1", 1, pins_gpio_ao_int2_pin7_x1),
-	EGRP("GPIO_AO_INT2_PIN7_X2", 2, pins_gpio_ao_int2_pin7_x2),
+static const unsigned int pins_gpio_ao_int23_x1[] = { 75 };
+static const unsigned int pins_gpio_ao_int23_x2[] = { 91 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int23[] = {
+	EGRP("GPIO_AO_23_INT_X1", 1, pins_gpio_ao_int23_x1),
+	EGRP("GPIO_AO_23_INT_X2", 2, pins_gpio_ao_int23_x2),
 };
 
-//GPIO_AO_INT_3 pin24-31
-static const unsigned int pins_gpio_ao_int3_pin0_x1[] = { 76 };
-static const unsigned int pins_gpio_ao_int3_pin0_x2[] = { 91 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin0[] = {
-	EGRP("GPIO_AO_INT3_PIN0_X1", 1, pins_gpio_ao_int3_pin0_x1),
-	EGRP("GPIO_AO_INT3_PIN0_X2", 2, pins_gpio_ao_int3_pin0_x2),
+static const unsigned int pins_gpio_ao_int24_x1[] = { 76 };
+static const unsigned int pins_gpio_ao_int24_x2[] = { 91 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int24[] = {
+	EGRP("GPIO_AO_24_INT_X1", 1, pins_gpio_ao_int24_x1),
+	EGRP("GPIO_AO_24_INT_X2", 2, pins_gpio_ao_int24_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin1_x1[] = { 77 };
-static const unsigned int pins_gpio_ao_int3_pin1_x2[] = { 92 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin1[] = {
-	EGRP("GPIO_AO_INT3_PIN1_X1", 1, pins_gpio_ao_int3_pin1_x1),
-	EGRP("GPIO_AO_INT3_PIN1_X2", 2, pins_gpio_ao_int3_pin1_x2),
+static const unsigned int pins_gpio_ao_int25_x1[] = { 77 };
+static const unsigned int pins_gpio_ao_int25_x2[] = { 92 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int25[] = {
+	EGRP("GPIO_AO_25_INT_X1", 1, pins_gpio_ao_int25_x1),
+	EGRP("GPIO_AO_25_INT_X2", 2, pins_gpio_ao_int25_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin2_x1[] = { 78 };
-static const unsigned int pins_gpio_ao_int3_pin2_x2[] = { 93 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin2[] = {
-	EGRP("GPIO_AO_INT3_PIN2_X1", 1, pins_gpio_ao_int3_pin2_x1),
-	EGRP("GPIO_AO_INT3_PIN2_X2", 2, pins_gpio_ao_int3_pin2_x2),
+static const unsigned int pins_gpio_ao_int26_x1[] = { 78 };
+static const unsigned int pins_gpio_ao_int26_x2[] = { 93 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int26[] = {
+	EGRP("GPIO_AO_26_INT_X1", 1, pins_gpio_ao_int26_x1),
+	EGRP("GPIO_AO_26_INT_X2", 2, pins_gpio_ao_int26_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin3_x1[] = { 79 };
-static const unsigned int pins_gpio_ao_int3_pin3_x2[] = { 94 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin3[] = {
-	EGRP("GPIO_AO_INT3_PIN3_X1", 1, pins_gpio_ao_int3_pin3_x1),
-	EGRP("GPIO_AO_INT3_PIN3_X2", 2, pins_gpio_ao_int3_pin3_x2),
+static const unsigned int pins_gpio_ao_int27_x1[] = { 79 };
+static const unsigned int pins_gpio_ao_int27_x2[] = { 94 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int27[] = {
+	EGRP("GPIO_AO_27_INT_X1", 1, pins_gpio_ao_int27_x1),
+	EGRP("GPIO_AO_27_INT_X2", 2, pins_gpio_ao_int27_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin4_x1[] = { 80 };
-static const unsigned int pins_gpio_ao_int3_pin4_x2[] = { 95 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin4[] = {
-	EGRP("GPIO_AO_INT3_PIN4_X1", 1, pins_gpio_ao_int3_pin4_x1),
-	EGRP("GPIO_AO_INT3_PIN4_X2", 2, pins_gpio_ao_int3_pin4_x2),
+static const unsigned int pins_gpio_ao_int28_x1[] = { 80 };
+static const unsigned int pins_gpio_ao_int28_x2[] = { 95 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int28[] = {
+	EGRP("GPIO_AO_28_INT_X1", 1, pins_gpio_ao_int28_x1),
+	EGRP("GPIO_AO_28_INT_X2", 2, pins_gpio_ao_int28_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin5_x1[] = { 81 };
-static const unsigned int pins_gpio_ao_int3_pin5_x2[] = { 96 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin5[] = {
-	EGRP("GPIO_AO_INT3_PIN5_X1", 1, pins_gpio_ao_int3_pin5_x1),
-	EGRP("GPIO_AO_INT3_PIN5_X2", 2, pins_gpio_ao_int3_pin5_x2),
+static const unsigned int pins_gpio_ao_int29_x1[] = { 81 };
+static const unsigned int pins_gpio_ao_int29_x2[] = { 96 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int29[] = {
+	EGRP("GPIO_AO_29_INT_X1", 1, pins_gpio_ao_int29_x1),
+	EGRP("GPIO_AO_29_INT_X2", 2, pins_gpio_ao_int29_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin6_x1[] = { 82 };
-static const unsigned int pins_gpio_ao_int3_pin6_x2[] = { 97 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin6[] = {
-	EGRP("GPIO_AO_INT3_PIN6_X1", 1, pins_gpio_ao_int3_pin6_x1),
-	EGRP("GPIO_AO_INT3_PIN6_X2", 2, pins_gpio_ao_int3_pin6_x2),
+static const unsigned int pins_gpio_ao_int30_x1[] = { 82 };
+static const unsigned int pins_gpio_ao_int30_x2[] = { 97 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int30[] = {
+	EGRP("GPIO_AO_30_INT_X1", 1, pins_gpio_ao_int30_x1),
+	EGRP("GPIO_AO_30_INT_X2", 2, pins_gpio_ao_int30_x2),
 };
 
-static const unsigned int pins_gpio_ao_int3_pin7_x1[] = { 83 };
-static const unsigned int pins_gpio_ao_int3_pin7_x2[] = { 98 };
-static const struct sppctlgrp_t sp7350grps_gpio_ao_int3_pin7[] = {
-	EGRP("GPIO_AO_INT3_PIN7_X1", 1, pins_gpio_ao_int3_pin7_x1),
-	EGRP("GPIO_AO_INT3_PIN7_X2", 2, pins_gpio_ao_int3_pin7_x2),
+static const unsigned int pins_gpio_ao_int31_x1[] = { 83 };
+static const unsigned int pins_gpio_ao_int31_x2[] = { 98 };
+static const struct sppctlgrp_t sp7350grps_gpio_ao_int31[] = {
+	EGRP("GPIO_AO_31_INT_X1", 1, pins_gpio_ao_int31_x1),
+	EGRP("GPIO_AO_31_INT_X2", 2, pins_gpio_ao_int31_x2),
 };
 
 struct func_t list_funcs[] = {
@@ -815,75 +812,74 @@ struct func_t list_funcs[] = {
 	FNCE("INT6", F_OFF_G, 9, 0, 4, sp7350grps_int6),
 	FNCE("INT7", F_OFF_G, 9, 4, 4, sp7350grps_int7),
 
-	FNCE("GPIO_AO_INT0_PIN0", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin0),
-	FNCE("GPIO_AO_INT0_PIN1", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin1),
-	FNCE("GPIO_AO_INT0_PIN2", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin2),
-	FNCE("GPIO_AO_INT0_PIN3", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin3),
-	FNCE("GPIO_AO_INT0_PIN4", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin4),
-	FNCE("GPIO_AO_INT0_PIN5", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin5),
-	FNCE("GPIO_AO_INT0_PIN6", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin6),
-	FNCE("GPIO_AO_INT0_PIN7", F_OFF_G, 9, 8, 2,
-	     sp7350grps_gpio_ao_int0_pin7),
+	FNCE("GPIO_AO_0_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int0),
+	FNCE("GPIO_AO_1_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int1),
+	FNCE("GPIO_AO_2_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int2),
+	FNCE("GPIO_AO_3_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int3),
+	FNCE("GPIO_AO_4_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int4),
+	FNCE("GPIO_AO_5_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int5),
+	FNCE("GPIO_AO_6_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int6),
+	FNCE("GPIO_AO_7_INT", F_OFF_G, 9, 8, 2,
+	     sp7350grps_gpio_ao_int7),
 
-	FNCE("GPIO_AO_INT1_PIN0", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin0),
-	FNCE("GPIO_AO_INT1_PIN1", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin1),
-	FNCE("GPIO_AO_INT1_PIN2", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin2),
-	FNCE("GPIO_AO_INT1_PIN3", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin3),
-	FNCE("GPIO_AO_INT1_PIN4", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin4),
-	FNCE("GPIO_AO_INT1_PIN5", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin5),
-	FNCE("GPIO_AO_INT1_PIN6", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin6),
-	FNCE("GPIO_AO_INT1_PIN7", F_OFF_G, 9, 10, 2,
-	     sp7350grps_gpio_ao_int1_pin7),
+	FNCE("GPIO_AO_8_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int8),
+	FNCE("GPIO_AO_9_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int9),
+	FNCE("GPIO_AO_10_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int10),
+	FNCE("GPIO_AO_11_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int11),
+	FNCE("GPIO_AO_12_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int12),
+	FNCE("GPIO_AO_13_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int13),
+	FNCE("GPIO_AO_14_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int14),
+	FNCE("GPIO_AO_15_INT", F_OFF_G, 9, 10, 2,
+	     sp7350grps_gpio_ao_int15),
 
-	FNCE("GPIO_AO_INT2_PIN0", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin0),
-	FNCE("GPIO_AO_INT2_PIN1", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin1),
-	FNCE("GPIO_AO_INT2_PIN2", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin2),
-	FNCE("GPIO_AO_INT2_PIN3", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin3),
-	FNCE("GPIO_AO_INT2_PIN4", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin4),
-	FNCE("GPIO_AO_INT2_PIN5", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin5),
-	FNCE("GPIO_AO_INT2_PIN6", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin6),
-	FNCE("GPIO_AO_INT2_PIN7", F_OFF_G, 9, 12, 2,
-	     sp7350grps_gpio_ao_int2_pin7),
+	FNCE("GPIO_AO_16_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int16),
+	FNCE("GPIO_AO_17_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int17),
+	FNCE("GPIO_AO_18_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int18),
+	FNCE("GPIO_AO_19_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int19),
+	FNCE("GPIO_AO_20_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int20),
+	FNCE("GPIO_AO_21_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int21),
+	FNCE("GPIO_AO_22_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int22),
+	FNCE("GPIO_AO_23_INT", F_OFF_G, 9, 12, 2,
+	     sp7350grps_gpio_ao_int23),
 
-	FNCE("GPIO_AO_INT3_PIN0", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin0),
-	FNCE("GPIO_AO_INT3_PIN1", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin1),
-	FNCE("GPIO_AO_INT3_PIN2", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin2),
-	FNCE("GPIO_AO_INT3_PIN3", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin3),
-	FNCE("GPIO_AO_INT3_PIN4", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin4),
-	FNCE("GPIO_AO_INT3_PIN5", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin5),
-	FNCE("GPIO_AO_INT3_PIN6", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin6),
-	FNCE("GPIO_AO_INT3_PIN7", F_OFF_G, 9, 14, 2,
-	     sp7350grps_gpio_ao_int3_pin7)
+	FNCE("GPIO_AO_24_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int24),
+	FNCE("GPIO_AO_25_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int25),
+	FNCE("GPIO_AO_26_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int26),
+	FNCE("GPIO_AO_27_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int27),
+	FNCE("GPIO_AO_28_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int28),
+	FNCE("GPIO_AO_29_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int29),
+	FNCE("GPIO_AO_30_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int30),
+	FNCE("GPIO_AO_31_INT", F_OFF_G, 9, 14, 2,
+	     sp7350grps_gpio_ao_int31)
 };
-
 
 const size_t list_func_nums = ARRAY_SIZE(list_funcs);
 
