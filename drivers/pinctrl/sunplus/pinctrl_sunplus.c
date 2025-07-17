@@ -7,7 +7,7 @@
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
 #include <linux/io.h>
-
+#include <linux/compat.h>
 #include "gpio_sunplus.h"
 #include "pinconf_sunplus.h"
 #include "pinctrl_gpio_ops.h"
@@ -27,11 +27,8 @@ u32 *first_regs;
 u32 *padctl2_regs;
 u32 *gpioxt_regs;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 u32 *gpio_ao_int_regs;
-u32 gpio_ao_int_prescale;
-u32 gpio_ao_int_debounce;
-int gpio_ao_int_pins[32];
 #endif
 
 void *pin_registered_by_udev[MAX_PINS];
@@ -644,6 +641,15 @@ static const struct pinconf_param sunplus_pinconf_params[] = {
 	{ "sunplus,slew-rate-control-disable", PIN_CONFIG_SLEW_RATE_CTRL, 0 },
 	{ "sunplus,slew-rate-control-enable", PIN_CONFIG_SLEW_RATE_CTRL, 1 },
 	{ "sunplus,bias-strong-pull-up", PIN_CONFIG_BIAS_STRONG_PULL_UP, 1 },
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+	{ "sunplus,ao-int-enable", PIN_CONFIG_AO_INT_CTRL, 1 },
+	{ "sunplus,ao-int-disable", PIN_CONFIG_AO_INT_CTRL, 0 },
+	{ "sunplus,ao-int-debounce-enable", PIN_CONFIG_AO_INT_DEBOUNCE_CTRL,
+	  1 },
+	{ "sunplus,ao-int-debounce-disable", PIN_CONFIG_AO_INT_DEBOUNCE_CTRL,
+	  0 },
+	{ "sunplus,ao-int-trigger-type", PIN_CONFIG_AO_INT_TRIG_TYPE, IRQ_TYPE_EDGE_RISING },
+#endif
 };
 
 static struct pinctrl_ops sunplus_pinctrl_ops = {
@@ -719,7 +725,7 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-#if defined(SUPPORT_GPIO_AO_INT)
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
 	sunplus_reg_base_addr_set((void *)moon1_regs, (void *)padctl1_regs,
 				  (void *)first_regs, (void *)padctl2_regs,
 				  (void *)gpioxt_regs,
@@ -738,6 +744,15 @@ static int sunplus_pinctrl_probe(struct udevice *dev)
 
 	return 0;
 }
+
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+void sunplus_gpio_ao_int_clear(int irq_num)
+{
+	if (irq_num >= 232 && irq_num <= 263)
+		sunplus_gpio_ao_int_flag_clear(NULL, irq_num - 232);
+}
+EXPORT_SYMBOL_GPL(sunplus_gpio_ao_int_clear);
+#endif
 
 static const struct udevice_id sunplus_pinctrl_ids[] = {
 	{ .compatible = "sunplus,sp7350-pctl" },

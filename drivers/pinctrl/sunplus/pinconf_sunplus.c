@@ -193,6 +193,42 @@ int sunplus_pinconf_set(struct udevice *dev, unsigned int offset,
 		pctl_info("GPIO[%d]:bias disable\n", offset);
 		ret = sunplus_pinconf_bias_disable(dev, offset);
 		break;
+#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+	case PIN_CONFIG_AO_INT_CTRL:
+		pctl_info("GPIO[%d]:%s interrupt\n",
+			  offset, argument == 0 ? "disable" : "enable");
+		sunplus_gpio_ao_int_ctrl_set(dev, offset, argument);
+		break;
+	case PIN_CONFIG_AO_INT_DEBOUNCE_CTRL:
+		pctl_info("GPIO[%d]:%s interrupt debounce\n",
+			  offset, argument == 0 ? "disable" : "enable");
+		sunplus_gpio_ao_int_debounce_ctrl_set(dev, offset,
+						      argument);
+		break;
+	case PIN_CONFIG_AO_INT_TRIG_TYPE:
+		if (argument == IRQ_TYPE_LEVEL_HIGH) {
+			pctl_info("GPIO[%d]:trigger interrupt by level high\n",
+				  offset);
+			sunplus_gpio_ao_int_trigger_mode_set(dev, offset, 1);
+
+			sunplus_gpio_ao_int_trigger_polarity_set(
+				dev, offset, 0);
+		} else if (argument == IRQ_TYPE_EDGE_RISING) {
+			pctl_info("GPIO[%d]:trigger interrupt by edge rising\n",
+				  offset);
+			sunplus_gpio_ao_int_trigger_mode_set(dev, offset, 0);
+
+			sunplus_gpio_ao_int_trigger_polarity_set(
+				dev, offset, 0);
+		}
+		break;
+	case PIN_CONFIG_AO_INT_MASK:
+		pctl_info("GPIO[%d]:%s interrupt\n",
+			  offset, argument == 0 ? "unmask" : "mask");
+		sunplus_gpio_ao_int_mask_set(dev, offset, argument);
+		break;
+#endif
+
 	default:
 		pctl_err("GPIO[%d]:param:0x%x is not supported\n", offset,
 			 param);
@@ -231,6 +267,9 @@ int sunplus_pinconf_group_set(struct udevice *dev, unsigned int group,
 					sunplus_pinconf_set(dev, pin, param,
 							    argument);
 				}
+				#ifdef CONFIG_PINCTRL_SUPPORT_GPIO_AO_INT
+				sunplus_gpio_gather_gpio_ao_int(group, func->grps[j].pins, func->grps[j].pnum);
+				#endif
 			}
 		}
 	}
