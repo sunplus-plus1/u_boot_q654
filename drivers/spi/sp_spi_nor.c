@@ -389,7 +389,7 @@ static UINT8 spi_nor_read_status1(void)
 	spi_reg->spi_data = 0;
 	spi_reg->spi_ctrl = ctrl;
 	spi_reg->spi_auto_cfg |= PIO_TRIGGER;
-	pr_debug("wait PIO_TRIGGER\n")
+	pr_debug("wait PIO_TRIGGER\n");
 	while ((spi_reg->spi_auto_cfg & PIO_TRIGGER) != 0)
 		;
 
@@ -508,11 +508,11 @@ static int spi_flash_xfer_read(UINT8 *cmd, size_t cmd_len, void *data, size_t da
 		}
 
 		addr_offset = addr_offset + 1;
-		pr_debug("wait DEVICE busy\n")
+		pr_debug("wait DEVICE busy\n");
 		while ((spi_nor_read_status1() & 0x01) != 0)
 			;
 	}
-	pr_debug("wait PIO_TRIGGER\n")
+	pr_debug("wait PIO_TRIGGER\n");
 	while ((spi_reg->spi_auto_cfg & PIO_TRIGGER) != 0)
 		;
 
@@ -648,11 +648,11 @@ static int spi_flash_xfer_write(UINT8 *cmd, size_t cmd_len, const void *data, si
 		}
 		addr_offset = addr_offset + 1;
 
-		pr_debug("wait DEVICE busy\n")
+		pr_debug("wait DEVICE busy\n");
 		while ((spi_nor_read_status1() & 0x01) != 0)
 			;
 	}
-	pr_debug("wait PIO_TRIGGER\n")
+	pr_debug("wait PIO_TRIGGER\n");
 	while ((spi_reg->spi_auto_cfg & PIO_TRIGGER) != 0)
 		;
 
