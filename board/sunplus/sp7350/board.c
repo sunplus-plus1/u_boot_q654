@@ -305,11 +305,10 @@ int board_late_init(void)
 	usb_ether_init();
 #endif
 
-	if (board != board_dvb1)
-		return 0;
-
-	// enable gpio2
-	writel(readl(0xf88033b4) | 0x00040004, 0xf88033b4);
+	if (board != board_dvb1) {
+		// enable gpio2
+		writel(readl(0xf88033b4) | 0x00040004, 0xf88033b4);
+	}
 
 	boot_mode_check();
 
