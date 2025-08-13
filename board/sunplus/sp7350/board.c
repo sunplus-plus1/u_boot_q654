@@ -60,7 +60,34 @@ int board_init(void)
 	if (model)
 		init_board_info(model);
 
-	if (board != board_dvb1 && board != board_evs)
+	if (board == board_evs) {
+		/* set gpio-27 as clock 24M for camera sensor */
+		reg_val = readl(0xf8800090);
+		reg_val |= 0x30001000;
+		writel(reg_val, 0xf8800090); //enable CLK_DGO pinmux
+		writel(0x8000800, 0xf8803384);//enable GPIO Output
+		// config to 24M
+		writel(0x01, 0xf88077e4);
+		writel(0x08, 0xf88077e8);
+		writel(0x04, 0xf88077ec);
+		writel(0x01, 0xf88077e0);
+		/* set gpio-27 as clock 24M for camera sensor */
+
+		/* set gpio-1 as clock 24M for camera sensor */
+		reg_val = readl(0xf8800090);
+		reg_val |= 0x00300010;
+		writel(reg_val, 0xf8800090);  //enable CLK_DGO pinmux
+		writel(0x00020002, 0xf8803380);//enable GPIO Output
+		// config to 24M
+		writel(0x01, 0xf88077a4);
+		writel(0x08, 0xf88077a8);
+		writel(0x04, 0xf88077ac);
+		writel(0x01, 0xf88077a0);
+		/* set gpio-1 as clock 24M for camera sensor */
+		return 0;
+	}
+
+	if (board != board_dvb1)
 		return 0;
 
 	if (fdt_path_offset(gd->fdt_blob, "/stmmac@f8103000") >= 0) {
@@ -78,7 +105,6 @@ int board_init(void)
 		reg_val = readl(0xf88032c0);
 		writel(reg_val&0xfffe0007, 0xf88032c0);
 	}
-
 	/* MS#0,MS#1 output 1.8V */
 	reg_val = readl(0xf8803330);
 	reg_val |= 0x13;
@@ -107,6 +133,7 @@ int board_init(void)
 	writel(0x01, 0xf88077e0);
 	/* set gpio-27 as clock 24M for camera sensor */
 
+#if 0
 	if( board == board_evs ) {
 		/* set gpio-1 as clock 24M for camera sensor */
 		reg_val = readl(0xf8800090);
@@ -120,7 +147,7 @@ int board_init(void)
 		writel(0x01, 0xf88077a0);
 		/* set gpio-1 as clock 24M for camera sensor */
 	}
-
+#endif
 	return 0;
 }
 
