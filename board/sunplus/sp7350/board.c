@@ -24,7 +24,7 @@ typedef enum {
 	board_none,
 	board_dvb1,
 	//board_dvb2,
-	//board_flare5,
+	board_evs,
 	board_max,
 }board_type;
 
@@ -42,8 +42,8 @@ static int board = board_none;
 static int init_board_info(const char *model){
 	if( !strcmp(model,"Sunplus SP7350 DVB")) {
 		board = board_dvb1;
-	/*} else if (!strcmp(model,"Sunplus SP7350 DVB2")) {
-		board = board_dvb2;*/
+	} else if (!strcmp(model,"Sunplus SP7350 EVS")) {
+		board = board_evs;
 	}
 
 	printf("board = %d\n", board);
@@ -60,7 +60,7 @@ int board_init(void)
 	if (model)
 		init_board_info(model);
 
-	if (board != board_dvb1)
+	if (board != board_dvb1 && board != board_evs)
 		return 0;
 
 	if (fdt_path_offset(gd->fdt_blob, "/stmmac@f8103000") >= 0) {
@@ -107,8 +107,7 @@ int board_init(void)
 	writel(0x01, 0xf88077e0);
 	/* set gpio-27 as clock 24M for camera sensor */
 
-#if 0
-	if( board == board_flare5 ) {
+	if( board == board_evs ) {
 		/* set gpio-1 as clock 24M for camera sensor */
 		reg_val = readl(0xf8800090);
 		reg_val |= 0x00300010;
@@ -121,7 +120,7 @@ int board_init(void)
 		writel(0x01, 0xf88077a0);
 		/* set gpio-1 as clock 24M for camera sensor */
 	}
-#endif
+
 	return 0;
 }
 
