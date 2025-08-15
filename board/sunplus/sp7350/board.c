@@ -75,9 +75,10 @@ int board_init(void)
 
 		/* set gpio-1 as clock 24M for camera sensor */
 		reg_val = readl(0xf8800090);
-		reg_val |= 0x00300010;
+		reg_val |= 0x00300020; //GPIO1 GPIO52
 		writel(reg_val, 0xf8800090);  //enable CLK_DGO pinmux
-		writel(0x00020002, 0xf8803380);//enable GPIO Output
+		// writel(0x00020002, 0xf8803380);//enable GPIO Output GPIO1
+		writel(0x00100010, 0xf880338c);//enable GPIO Output GPIO52
 		// config to 24M
 		writel(0x01, 0xf88077a4);
 		writel(0x08, 0xf88077a8);
