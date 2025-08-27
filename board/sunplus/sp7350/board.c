@@ -289,19 +289,18 @@ int board_late_init(void)
 
 	boot_mode_check();
 
+	dl_mode_enter();
+
 	if(!env_get("bootpart")) {
 		index = 1;
 		env_set_hex("bootpart", index);
 		env_save();
-	}
-
-	dl_mode_enter();
-
-	index = env_get_hex("bootpart", 1);
-
-	if(index < 1 || index > 3) {
-		index = 1;
-		env_set_hex("bootpart", index);
+	} else {
+		index = env_get_hex("bootpart", 1);
+		if(index < 1 || index > 3) {
+			index = 1;
+			env_set_hex("bootpart", index);
+		}
 	}
 
 	for(i = 1; i < 3; i++) {
@@ -334,8 +333,10 @@ int board_late_init(void)
 			snprintf(env_buf,sizeof(env_buf),"0x%lx", info.size);
 			snprintf(var_name,sizeof(var_name),"sz_dtb%d", i);
 			env_set(var_name, env_buf);
-			if(i == index)
+			if(i == index) {
 				env_set("sz_dtb", env_buf);
+				run_command("mmc read ${addr_dst_dtb} ${addr_src_dtb} ${sz_dtb}; setenv fdtcontroladdr ${addr_dst_dtb}", 0);
+			}
 		}
 	}
 	return 0;
