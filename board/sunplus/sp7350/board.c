@@ -214,12 +214,11 @@ static void boot_mode_check(void)
 	}
 }
 
-#define GPIO_KEY_DL_DEFAULT -1
 static int key_dl_pressed(void)
 {
-	int gpio = fdtdec_get_int(gd->fdt_blob, 0, "dlkey", GPIO_KEY_DL_DEFAULT);
+	int gpio = fdtdec_get_int(gd->fdt_blob, 0, "dlkey", -1);
 
-	if (GPIO_KEY_DL_DEFAULT == gpio)
+	if (-1 == gpio)
 		return 0;
 
 	printf("dlkey: gpio%d\n", gpio);
@@ -229,38 +228,11 @@ static int key_dl_pressed(void)
 	return !gpio_get_value(gpio);
 }
 
-static void  detect_dl_mode(void)
-{
-	if(env_get("ltpflag")) {
-		int val = env_get_hex("ltpflag",0);
-		if (val == 1) {
-			val = 0;
-			env_set_hex("ltpflag", val);
-			env_save();
-			env_set("preboot", "setenv preboot; fastboot usb 1");
-		}
-	}
-}
-
 static int dl_mode_enter(void)
 {
-	int read_board_value = 0;
-	char *val="1";
-	char *name = "board_type";
-
-	read_board_value =  readl(CONFIG_BOARD_TYPE_ADDR);
-	//is dvb board?
-	if(0xfa00 == (read_board_value & 0xff00)) {
-		env_set(name, val);
-		env_save();
-	}
-
 	if (key_dl_pressed()) {
-		printf("key pressed, enter DL mode...\n");
+		printf("Enter Download Mode ... \n");
 		env_set("preboot", "setenv preboot; fastboot usb 1");
-	} else {
-		printf("key not pressed, skip DL mode...!\n");
-		detect_dl_mode();
 	}
 
 	return 0;
