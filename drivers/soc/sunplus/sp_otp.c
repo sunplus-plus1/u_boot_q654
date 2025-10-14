@@ -339,6 +339,114 @@ static int do_write_otp(struct cmd_tbl  *cmdtp, int flag, int argc, char * const
 
 	return 0;
 }
+
+static int do_write_otp_bytes(struct cmd_tbl  *cmdtp, int flag, int argc, char * const argv[])
+{
+    unsigned int addr;
+    unsigned int otp_size;
+    char *hexstr;
+    int len, i;
+    int verify = 0;
+
+    if (argc < 3 || argc > 4) {
+        return CMD_RET_USAGE;
+    }
+
+    if (argc == 4) {
+        verify = simple_strtoul(argv[3], NULL, 0);
+        if (verify != 0 && verify != 1) {
+            printf("Error: verify_flag must be 0 or 1\n");
+            return CMD_RET_USAGE;
+        }
+    }
+
+    otp_size = QAK654_EFUSE_SIZE;
+    addr = simple_strtoul(argv[1], NULL, 0);
+
+    if (((strcmp(argv[1], "0") != 0) && (addr == 0)))
+        return CMD_RET_USAGE;
+
+    if (addr >= otp_size)
+        return CMD_RET_USAGE;
+
+    hexstr = argv[2];
+    len = strlen(hexstr);
+
+    if (len % 2 != 0) {
+        printf("Error: hex string length must be even\n");
+        return CMD_RET_USAGE;
+    }
+
+    int count = len / 2;
+    if ((addr + count) > otp_size) {
+        printf("Error: write range exceeds OTP size\n");
+        return CMD_RET_USAGE;
+    }
+
+    // --- Write Loop ---
+    printf("write ... ");
+    for (i = 0; i < count; i++) {
+        char byte_str[3] = {0};
+        unsigned int data;
+        char value;
+
+        byte_str[0] = hexstr[i * 2];
+        byte_str[1] = hexstr[i * 2 + 1];
+        data = simple_strtoul(byte_str, NULL, 16);
+        value = (char)(data & 0xff);
+        // printf("%02X ", value);
+
+        if (write_otp_data(HB_GP_REG, SP_OTPRX_REG, addr + i, &value) == -1) {
+            printf("Error: write failed at addr %u\n", addr + i);
+            return CMD_RET_FAILURE;
+        }
+    }
+    printf("\n");
+#ifdef OTP_PIO_MODE
+    printf("OTP write (PIO mode) complete !! (%d bytes)\n", count);
+#else
+    printf("OTP write (HW mode) complete !! (%d bytes)\n", count);
+#endif
+
+ // --- Verify Loop ---
+    int verify_fail = 0;
+    if (verify == 1) {
+        printf("Verifying written data...\n");
+		udelay(100);
+        char value;
+        for (i = 0; i < count; i++) {
+            unsigned int read_addr = addr + i;
+            unsigned int expected = simple_strtoul((char[]){ hexstr[i*2], hexstr[i*2+1], 0 }, NULL, 16);
+
+            if (read_addr < 64) {
+                if (read_otp_data(HB_GP_REG, SP_OTPRX_REG, read_addr, &value) == -1) {
+                    printf("Error: read failed at addr %u\n", read_addr);
+                    return CMD_RET_FAILURE;
+                }
+            } else {
+                if (read_otp_key(OTP_KEY_REG, SP_OTPRX_REG, read_addr, &value) == -1) {
+                    printf("Error: read failed at addr %u\n", read_addr);
+                    return CMD_RET_FAILURE;
+                }
+            }
+            if ((unsigned char)value != (expected & 0xFF)) {
+                printf("Verify FAILED at addr %u: expected 0x%02X, got 0x%02X\n",
+                    read_addr, expected & 0xFF, (unsigned char)value);
+                verify_fail = 1;
+				break;
+            }
+        }
+    }
+
+    if (verify_fail) {
+        return CMD_RET_FAILURE;
+    } else {
+        printf("Verify SUCCESS: all %d bytes match!\n", count);
+    }
+
+    return 0;
+}
+
 #endif
 
 
@@ -350,11 +458,22 @@ U_BOOT_CMD(
 	"[OTP address (0, 1,..., 127 byte) | all (a)]"
 );
 
-	#ifdef SUPPORT_WRITE_OTP
+#ifdef SUPPORT_WRITE_OTP
+U_BOOT_CMD(
+    wotps, 4, 1, do_write_otp_bytes,
+    "write N bytes hex string to OTP (optional verify)",
+    "[OTP address] [hex string] [verify_flag]\n"
+    "  verify_flag: 0=disable (default), 1=enable\n"
+    "  Example:\n"
+    "    wotp 0 12345678      -> write 0x12 0x34 0x56 0x78 (no verify)\n"
+    "    wotp 0 12345678 1    -> write then verify"
+);
+
 U_BOOT_CMD(
 	wotp, 3, 1, do_write_otp,
 	"write 1 byte data to OTP",
 	"[OTP address (0, 1,..., 127 byte)] [data (0~255)]"
 );
-	#endif
+#endif
+
 

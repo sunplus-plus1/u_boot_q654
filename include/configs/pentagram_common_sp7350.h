@@ -263,6 +263,11 @@
 #define RASPBIAN_INIT		""
 #endif
 
+#if (FIP0 == 1)
+	#define SCRIPT_START_ADDR	0x200000
+#else
+	#define SCRIPT_START_ADDR	0x180000
+#endif
 
 #define SDCARD_EXT_CMD \
 	"scriptaddr=0x1000000; " \
@@ -525,7 +530,7 @@
 	"\0" \
 "isp_common=setenv isp_ram_addr 0x1000000; " \
 	RASPBIAN_INIT \
-	"fatload $isp_if $isp_dev $isp_ram_addr /ISPBOOOT.BIN 0x800 0x180000; " \
+	"fatload $isp_if $isp_dev $isp_ram_addr /ISPBOOOT.BIN 0x800 "  __stringify(SCRIPT_START_ADDR) "; " \
 	"setenv isp_main_storage ${sp_main_storage} && printenv isp_main_storage; " \
 	"setexpr script_addr $isp_ram_addr + 0x20 && setenv script_addr 0x${script_addr} && source $script_addr; " \
 	"\0" \
