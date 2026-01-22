@@ -423,6 +423,8 @@ void DRV_mipitx_Init_1(int is_mipi_dsi_tx, int width, int height)
 	//G204_MIPITX_REG0->sft_cfg[12] = 0x00000030; //vtf = sync pluse
 	G204_MIPITX_REG0->sft_cfg[12] = 0x00001030; //vtf = sync event
 
+	G205_MIPITX_REG1->sft_cfg[9] = 0x0000002e; //PHY for Clock-Lane PHASE delay setting
+
 	G205_MIPITX_REG1->sft_cfg[6] = 0x00101331; //PHY Reset(under normal mode)
 
 	DRV_mipitx_pllclk_init();
